@@ -1,0 +1,126 @@
+*{
+    padding: 0px;
+    margin: 0px;
+}
+body{
+    display: grid;
+    grid-template-rows: 90px auto 2fr 1fr;
+    width: 100vw;
+    height: 100vh;
+}
+
+button{
+    width: 100px;
+    height: 50px;
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+
+.header{
+    position: sticky;
+    top: 0vh;
+    background-color: #e8c991;
+    height: 90px;
+    display: grid;
+    align-items: center;
+}
+#backgroundImage{
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    opacity: 0.25;
+    object-fit: cover;
+    z-index: -1;
+}
+
+
+#lobby{
+    display: grid;
+    gap: 75px;
+    grid-template-columns: 1fr 1fr;
+}
+.title{
+    padding: 20px;
+    margin-bottom: 60px;
+    font-size: 80px;
+    text-align: center;
+}
+
+
+form.playerCustomization{
+    display: grid;
+    grid-template: auto auto 1fr / auto auto;
+    height: 300px;
+    width: 100%;
+    gap: 20px;
+    justify-content: right;
+    align-items: center;
+    padding: 20px;
+}
+form.playerCustomization label{
+    font-weight: bold;
+    font-size: 40px;
+    padding-left: 10px;
+    grid-area: 1 / 1 / 2 / 3;
+}
+form.playerCustomization input.playerName{
+    font-size: 30px;
+    border-radius: 15px;
+    padding-left: 10px;
+    height: 50px;
+    grid-area: 2 / 1 / 3 / 2;
+}
+form.playerCustomization input.colorSelect{
+    align-self: center;
+    width: 50px;
+    height: 50px;
+    grid-area: 2 / 2 / 3 / 3;
+}
+form.playerCustomization input.joinGame{
+    width: 300px;
+    height: 75px;
+    border-radius: 50px;
+    font-size: 40px;
+    background-color: #e8c991;
+    grid-area: 3 / 1 / 4 / 3;
+    margin-top: 20px;
+}
+#startGame{
+    justify-self: center;
+    width: 500px;
+    height: 100px;
+    background-color: black;
+    color: white;
+    font-size: 50px;
+    font-weight: bold;;
+    border-radius: 10px;
+}
+
+
+ul#playerList{
+    list-style-type: none;
+    font-size: 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: left;
+}
+#playerList .player{
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 30px;
+}
+#playerList .player .playerColor{
+    width: 50px;
+    height: 50px;
+}
+#playerList #leaveLobbyButton{
+    width: 30px;
+    height: 30px;
+    font-size: 25px;
+    color: white;
+    border-radius: 100%;
+    background-color: rgb(134, 11, 11);
+}

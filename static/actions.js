@@ -1,12 +1,12 @@
 export const allActions = [
-    // BASIC ACTIONS    
+// BASIC ACTIONS    
     {
         "name": "Steal",
         "image": "",
         "isWork": "false",
         "isSteal": "true",
         "isTargetting": "true",
-        "effect": "steal(player, player.playedCard[1], 0)",
+        "effect": "steal(player, players[player.playedCard[1]], 0)",
         "priority": "false",
         "cost": "undefined",
         "isBasicAction": "true",
@@ -43,9 +43,9 @@ export const allActions = [
         "name": "Reciprocate",
         "image": "",
         "isWork": "false",
-        "isSteal": "if(player.playedCard[1].playedCard[0].isSteal)",
+        "isSteal": "if(players[player.playedCard[1]].playedCard[0].isSteal)",
         "isTargetting": "true",
-        "effect": "if(player.playedCard[1].playedCard[0].isSteal){steal(player, player.playedCard[1], 7)}",
+        "effect": "if(players[player.playedCard[1]].playedCard[0].isSteal){steal(player, players[player.playedCard[1]], 7)}",
         "priority": "",
         "cost": "undefined",
         "isBasicAction": "true",
@@ -65,7 +65,7 @@ export const allActions = [
         "isSecondaryBA": "false",
         "isOneShot": "false",
     },
-    // VariableBasicActions
+// VariableBasicActions
     {
         "name": "Bless",
         "image": "",
@@ -85,7 +85,7 @@ export const allActions = [
         "isWork": "true",
         "isSteal": "false",
         "isTargetting": "true",
-        "effect": "player.work(-2); player.playedCard[1].numCoins+=5; donate(player.playedCard[i], player, 4)",
+        "effect": "player.work(-2); players[player.playedCard[1]].numCoins+=5; donate(players[player.playedCard[i]], player, 4)",
         "priority": "false",
         "cost": "undefined",
         "isBasicAction": "true",
@@ -98,7 +98,7 @@ export const allActions = [
         "isWork": "true",
         "isSteal": "true",
         "isTargetting": "true",
-        "effect": "player.work(1); player.playedCard[1].numCoins += 1",
+        "effect": "player.work(1); players[player.playedCard[1]].numCoins += 1",
         "priority": "false",
         "cost": "undefined",
         "isBasicAction": "true",

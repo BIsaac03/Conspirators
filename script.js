@@ -1,9 +1,65 @@
 import {allActions} from "./static/actions.js";
 
+import express from "express";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+/////// SOCKETIO SETUP
+const app = express();
+const httpServer = createServer(app);
+const port = process.env.PORT || 3000 ;
+
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/index.html');
+});
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/static/client.js');
+});
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/static/styles.css');
+});
+
+app.use("/static", express.static('./static/'));
+
+const io = new Server(httpServer, {
+    cors: {
+        origin: "http://127.0.0.1:5500",
+}
+});
+
+io.use((socket, next) => {
+    currentID = socket.handshake.auth.token;
+    next();
+});
+
+let currentID = undefined;
 const players = [];
 
-function makePlayer(selectedBAs){
+/////////// SERVER EVENTS
+io.on("connection", (socket) => {
+    socket.on("joinGame", (playerName, playerColor) => {
+        const newPlayer = makePlayer([], playerName, playerColor);
+        players.push(newPlayer);
+    });
+
+    socket.on("chosenAction", (playerNum, action, target) => {
+        players[playerNum].playedCard = [action, target];
+        players[playerNum].isReady = true;
+    })
+})
+
+httpServer.listen(port, function () {
+    var host = httpServer.address().address
+    var port = httpServer.address().port
+    console.log('App listening at https://%s:%s', host, port)
+});
+
+function makePlayer(selectedBAs, name, color){
     const createStartingHand = (selectedBAs) => {
         const steal = allActions.find(action => action.name == "Steal");
         const work = allActions.find(action => action.name == "Work");
@@ -16,7 +72,7 @@ function makePlayer(selectedBAs){
         if (selectedBAs.length == 0){
             let variableBAs = allActions.filter(action => action.isVariableBasicAction == "true");
             for (let i = 0; i < 2; i++){
-                `BA${i}` = variableBAs.splice(Math.floor(Math.random()*variableBAs.length), 1)[0];
+                BA2 = variableBAs.splice(Math.floor(Math.random()*variableBAs.length), 1)[0];
             }
         }
         else{
@@ -35,8 +91,11 @@ function makePlayer(selectedBAs){
     let investedCoins = 0;
     let stealResistance = 0;
     const playerNum = players.length;
+    let isReady = true;
+    const playerName = name
+    const playerColor = color
 
-    return {hand, discard, playedCard, numCardSwaps, numCoins, investedCoins, stealResistance, playerNum}
+    return {hand, discard, playedCard, numCardSwaps, numCoins, investedCoins, stealResistance, playerNum, playerName, playerColor, isReady}
 }
 
 function makeForSale(presetCards){

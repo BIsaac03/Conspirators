@@ -1,0 +1,26 @@
+{
+  "name": "conspirators",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/BIsaac03/Conspirators#readme",
+  "bugs": {
+    "url": "https://github.com/BIsaac03/Conspirators/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BIsaac03/Conspirators.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node script.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1",
+    "tinycolor2": "^1.6.0"
+  }
+}
