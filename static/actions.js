@@ -2,7 +2,7 @@ export const allActions = [
 // BASIC ACTIONS    
     {
         "name": "Steal",
-        "image": "",
+        "image": "static/Images/Actions/Steal.png",
         "isWork": "false",
         "isSteal": "true",
         "isTargetting": "true",
@@ -15,7 +15,7 @@ export const allActions = [
     },
     {
         "name": "Work",
-        "image": "",
+        "image": "static/Images/Actions/Work.png",
         "isWork": "true",
         "isSteal": "false",
         "isTargetting": "false",
@@ -28,7 +28,7 @@ export const allActions = [
     },
     {
         "name": "Defend",
-        "image": "",
+        "image": "static/Images/Actions/Defend.png",
         "isWork": "false",
         "isSteal": "false",
         "isTargetting": "false",
@@ -41,12 +41,12 @@ export const allActions = [
     },
     {
         "name": "Reciprocate",
-        "image": "",
+        "image": "static/Images/Actions/Reciprocate.png",
         "isWork": "false",
         "isSteal": "if(players[player.playedCard[1]].playedCard[0].isSteal)",
         "isTargetting": "true",
         "effect": "if(players[player.playedCard[1]].playedCard[0].isSteal){steal(player, players[player.playedCard[1]], 7)}",
-        "priority": "",
+        "priority": "false",
         "cost": "undefined",
         "isBasicAction": "true",
         "isSecondaryBA": "false",
@@ -54,7 +54,7 @@ export const allActions = [
     },
     {
         "name": "Rest",
-        "image": "",
+        "image": "static/Images/Actions/Rest.png",
         "isWork": "false",
         "isSteal": "false",
         "isTargetting": "false",
@@ -68,7 +68,7 @@ export const allActions = [
 // VariableBasicActions
     {
         "name": "Bless",
-        "image": "",
+        "image": "static/Images/Actions/Bless.png",
         "isWork": "false",
         "isSteal": "false",
         "isTargetting": "true",
@@ -81,7 +81,7 @@ export const allActions = [
     },
     {
         "name": "Cooperate",
-        "image": "",
+        "image": "static/Images/Actions/Cooperate/png",
         "isWork": "true",
         "isSteal": "false",
         "isTargetting": "true",
@@ -94,7 +94,7 @@ export const allActions = [
     },
     {
         "name": "Help",
-        "image": "",
+        "image": "static/Images/Actions/Help.png",
         "isWork": "true",
         "isSteal": "true",
         "isTargetting": "true",
@@ -107,7 +107,7 @@ export const allActions = [
     },
     {
         "name": "Prepare",
-        "image": "",
+        "image": "static/Images/Actions/Prepare.png",
         "isWork": "true",
         "isSteal": "false",
         "isTargetting": "false",

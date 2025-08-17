@@ -4,8 +4,33 @@ let myPlayerNum = undefined;
 const bodyElement = document.body;
 createLobby();
 
-socket.on("reconnection", (players) => {
-        displayStats(players);
+socket.on("reconnection", (players, playerNum) => {
+    myPlayerNum = playerNum;
+    displayStats(players);
+
+    if (!players[playerNum].isinGame){
+        
+    }
+    else if (!players[playerNum].isReady){
+        if (players[playerNum].waitingOn == "selectAction"){
+
+        }
+        else if (players[playerNum].waitingOn == "selectTarget"){
+
+        }
+        else if (players[playerNum].waitingOn == "useCardSwap"){
+
+        }
+        else if (players[playerNum].waitingOn == "recoverCards"){
+
+        }
+        else if (players[playerNum].waitingOn == "donate"){
+
+        }
+        else if (players[playerNum].waitingOn == "purchaseCards"){
+
+        }
+    }
 })
 
 socket.on("chooseAction", (players) => {
