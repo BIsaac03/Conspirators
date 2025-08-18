@@ -1,38 +1,90 @@
+if (document.cookie === undefined){
+    document.cookie = "userID="+Math.random().toString(36).substring(1, 30);
+}
+
 const socket = io.connect("http://localhost:3000");
 
 let myPlayerNum = undefined;
 const bodyElement = document.body;
-createLobby();
 
-socket.on("reconnection", (players, playerNum) => {
-    myPlayerNum = playerNum;
-    displayStats(players);
-
-    if (!players[playerNum].isinGame){
-        
+socket.on("newPlayer", (isGameInProgress) => {
+    if (isGameInProgress){
+        gameInProgressError();
     }
-    else if (!players[playerNum].isReady){
-        if (players[playerNum].waitingOn == "selectAction"){
-
-        }
-        else if (players[playerNum].waitingOn == "selectTarget"){
-
-        }
-        else if (players[playerNum].waitingOn == "useCardSwap"){
-
-        }
-        else if (players[playerNum].waitingOn == "recoverCards"){
-
-        }
-        else if (players[playerNum].waitingOn == "donate"){
-
-        }
-        else if (players[playerNum].waitingOn == "purchaseCards"){
-
-        }
+    else{
+        createLobby();
     }
 })
 
+socket.on("reconnection", (players, reconnectedPlayer, isGameInProgress) => {
+    bodyElement.innerHTML = "";
+
+    if (!reconnectedPlayer.isinGame){
+        if (isGameInProgress){
+            gameInProgressError();
+        }
+        else{
+            createLobby(players);
+            joinedLobbyUpdate();
+            for (let i = 0; i < players.length; i++){
+                modifyPlayerList(players[i].playerID, players[i].playerName, players[i].playerColor);
+            }
+        }
+    }
+    else{
+        myPlayerNum = reconnectedPlayer.playerNum;
+
+        displayStats(players);
+
+        if (!reconnectedPlayer.isReady){
+            if (reconnectedPlayer.waitingOn == "selectAction"){
+    
+            }
+            else if (reconnectedPlayer.waitingOn == "selectTarget"){
+    
+            }
+            else if (reconnectedPlayer.waitingOn == "useCardSwap"){
+    
+            }
+            else if (reconnectedPlayer.waitingOn == "recoverCards"){
+    
+            }
+            else if (reconnectedPlayer.waitingOn == "donate"){
+    
+            }
+            else if (reconnectedPlayer.waitingOn == "purchaseCards"){
+    
+            }
+        }
+    } 
+})
+
+socket.on("displayExistingPlayers", (players) => {
+    for (let i = 0; i < players.length; i++){
+        modifyPlayerList(players[i].playerID, players[i].playerName, players[i].playerColor);
+    }
+})
+socket.on("modifyPlayerList", (playerID, newPlayerName, newPlayerColor) => {
+    modifyPlayerList(playerID, newPlayerName, newPlayerColor);
+})
+socket.on("playerKicked", (playerID) => {
+    const playerList = document.getElementById("playerList");
+    const playerDOM = document.getElementById(playerID);
+    playerList.removeChild(playerDOM);
+
+    if (document.cookie == playerID){
+        const joinGameButton = document.getElementsByClassName("joinGame")[0];
+        joinGameButton.value = "Join Game";
+        startGameButton = document.getElementById("startGame");
+        startGameButton.style.display = "none";
+    }
+})
+
+
+
+socket.on("createGameSpace", (players) => {
+    createGameSpace(players);
+})
 socket.on("chooseAction", (players) => {
     actionSelection(players, myPlayerNum);
 })
@@ -78,24 +130,34 @@ function createLobby(){
         playerColor.value = preferredColor;
     }
     
-    const submitBtn = document.createElement("input");
-    submitBtn.classList.add("joinGame");
-    submitBtn.setAttribute("type", "submit");
-    submitBtn.setAttribute("value", "Join Game");
-    submitBtn.addEventListener("click", () => {
+    const joinGameButton = document.createElement("input");
+    joinGameButton.classList.add("joinGame");
+    joinGameButton.setAttribute("type", "submit");
+    joinGameButton.setAttribute("value", "Join Game");
+    joinGameButton.addEventListener("click", () => {
         const name = playerName.value;
         const color = playerColor.value;
         if (name != ""){
             localStorage.setItem('chosenName', name);
             localStorage.setItem('preferredColor', color);
-            socket.emit("joinGame", name, color);
+            socket.emit("playerJoinedLobby", document.cookie, name, color);
         }
     })
+
+    const startGameButton = document.createElement("button");
+    startGameButton.id = "startGame";
+    startGameButton.textContent = "Start Game"
+    startGameButton.addEventListener("click", () => {
+        if (confirm("Are you sure you want to start the game? New players will not be able to join an in-progress game.")){
+            socket.emit("startGame");
+        }
+    })
+    startGameButton.style.display = "none";
     
     playerCustomization.appendChild(label);
     playerCustomization.appendChild(playerName);
     playerCustomization.appendChild(playerColor);
-    playerCustomization.appendChild(submitBtn);
+    playerCustomization.appendChild(joinGameButton);
     
     const playerListDOM = document.createElement("ul");
     playerListDOM.id = "playerList"
@@ -103,7 +165,92 @@ function createLobby(){
     
     lobby.appendChild(playerCustomization);
     lobby.appendChild(playerListDOM);
+    lobby.appendChild(startGameButton);
     bodyElement.appendChild(lobby);
+}
+
+function joinedLobbyUpdate(){
+    const joinGameButton = document.getElementsByClassName("joinGame")[0];
+    joinGameButton.value = "Update";
+    const startGameButton = document.getElementById("startGame");
+    startGameButton.style.display = "block";
+}
+
+function modifyPlayerList(playerID, playerName, playerColor){
+    const playerList = document.getElementById("playerList");
+    if (playerList != undefined){
+        const existingPlayer = document.getElementById(playerID);
+        if (existingPlayer === null){
+            const player = document.createElement("div");
+            console.log(playerID);
+            console.log(document.cookie)
+            player.id = playerID;
+            player.classList.add("player");
+    
+            const playerColorDOM = document.createElement("div");
+            playerColorDOM.classList.add("playerColor");
+            playerColorDOM.style.backgroundColor = playerColor[0];
+            player.appendChild(playerColorDOM);
+    
+            const playerNameDOM = document.createElement("li");
+            playerNameDOM.classList.add("playerName");
+            playerNameDOM.textContent = playerName;
+            player.appendChild(playerNameDOM);
+    
+                const leaveLobbyButton = document.createElement("button");
+                leaveLobbyButton.id = "leaveLobbyButton";
+                leaveLobbyButton.textContent = "X";
+                leaveLobbyButton.addEventListener("click", () => {
+                    socket.emit("leftLobby", playerID);
+                })
+                player.appendChild(leaveLobbyButton)
+    
+            playerList.appendChild(player);
+    
+        }
+        else{
+            existingPlayer.children[0].style.backgroundColor = playerColor[0];
+            existingPlayer.children[1].textContent = playerName;
+        }
+    }
+}
+
+function createGameSpace(players){
+    const userID = document.cookie;
+    const thisPlayer = players.find(player => player.playerID == userID);
+    myPlayerNum = thisPlayer.playerNum;
+    
+    bodyElement.innerHTML = "";
+    const gameSpace = document.createElement("div");
+    gameSpace.id = "gameSpace";
+
+    for (let i = 0; i < players.length; i++){
+        const playerSpace = document.createElement("div");
+        playerSpace.id = "player"+i;
+
+        if (i == myPlayerNum){
+            const handIcon = document.createElement("img");
+            handIcon.src = "static/Images/Icons/hand.svg";
+            const discardIcon = document.createElement("img");
+            discardIcon.sec = "static/Images/Icons/discard.svg";
+
+            const coinsInVault = document.createElement("div");
+            const vaultIcon = document.createElement("img");
+            vaultIcon.src = "static/Images/Icons/safe.svg";
+            const numCoinsInVault = document.createElement("p");
+            coinsInVault.appendChild(vaultIcon);
+            coinsInVault.appendChild(numCoinsInVault);
+
+            playerSpace.classList.add("myself");
+            playerSpace.appendChild(handIcon, discardIcon, coinsInVault);
+        }
+        else{
+
+        }
+
+        gameSpace.appendChild(playerSpace);
+    }
+    bodyElement.appendChild(gameSpace);
 }
 
 function actionSelection(players, playerNum){
@@ -229,11 +376,20 @@ function examineDiscard(player){
 
 }
 
+function gameInProgressError(){
+    bodyElement.innerHTML = "";
+    const error = document.createElement("div");
+    error.id = "error";
+    const errorMessage = document.createElement("p");
+    errorMessage.textContent = "A game is already in progress. All players in the game must leave before a new game can be started.";
+    error.appendChild(errorMessage);
+    bodyElement.appendChild(error)
+}
 
 // removing informative popups
 document.addEventListener("click", (e) => {
-    const discardPopUp = document.getElementById("discardPopUp");
-    if (discardPopUp != undefined && !discardPopUp.contains(e.target)){
-        discardPopUp.remove();
+    const popUp = document.getElementById("popUp");
+    if (popUp != undefined && !popUp.contains(e.target)){
+        popUp.remove();
     }
 })

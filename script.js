@@ -37,15 +37,55 @@ io.use((socket, next) => {
     next();
 });
 
+let isGameInProgress = false;
 let currentID = undefined;
 const players = [];
 
 /////////// SERVER EVENTS
 io.on("connection", (socket) => {
-    socket.on("joinGame", (playerName, playerColor) => {
-        const newPlayer = makePlayer([], playerName, playerColor);
-        players.push(newPlayer);
+    const existingPlayer = players.find(player => player.playerID == currentID);
+    if (existingPlayer != undefined) {
+        socket.emit("reconnection", existingPlayer, players, isGameInProgress);
+    }
+    else{socket.emit("newPlayer", isGameInProgress);}
+
+    socket.emit("displayExistingPlayers", players);
+
+    socket.on("nameTaken", (duplicateName) => {
+        alert("The name \""+duplicateName+"\" is already being used by another player!");
+    })
+
+    socket.on("playerJoinedLobby", (playerID, playerName, playerColor) => {
+        let colorSpecs = [playerColor, false];
+
+        const existingName = players.find(player => player.playerName == playerName);
+        const existingPlayer = players.find(player => player.playerID == playerID);
+
+        if (existingName != undefined && existingName.playerID != playerID){
+            socket.emit("nameTaken", playerName);
+        }
+        else if (existingPlayer == undefined){
+            const newPlayer = makePlayer([], playerID, playerName, colorSpecs);
+            players.push(newPlayer);
+            io.emit("modifyPlayerList", playerID, playerName, colorSpecs);
+        }
+        else{
+            existingPlayer.playerName = playerName;
+            existingPlayer.playerColor = colorSpecs;
+            io.emit("modifyPlayerList", playerID, playerName, colorSpecs);
+        }      
     });
+
+    socket.on("startGame", () => {
+        const alreadyStarted = players.find(player => player.isinGame);
+        if (alreadyStarted == undefined){
+            for (let i = 0; i < players.length; i++){
+                players.isinGame = true;
+            }
+            isGameInProgress = true;
+            io.emit("createGameSpace", players);
+        }
+    })
 
     socket.on("chosenAction", (playerNum, action, target) => {
         players[playerNum].playedCard = [action, target];
@@ -59,7 +99,7 @@ httpServer.listen(port, function () {
     console.log('App listening at https://%s:%s', host, port)
 });
 
-function makePlayer(selectedBAs, name, color){
+function makePlayer(selectedBAs, ID, name, color){
     const createStartingHand = (selectedBAs) => {
         const steal = allActions.find(action => action.name == "Steal");
         const work = allActions.find(action => action.name == "Work");
@@ -91,11 +131,14 @@ function makePlayer(selectedBAs, name, color){
     let investedCoins = 0;
     let stealResistance = 0;
     const playerNum = players.length;
-    let isReady = true;
+    const playerID = ID;
     const playerName = name
     const playerColor = color
+    let isReady = true;
+    let isinGame = false;
+    let waitingOn = undefined;
 
-    return {hand, discard, playedCard, numCardSwaps, numCoins, investedCoins, stealResistance, playerNum, playerName, playerColor, isReady}
+    return {hand, discard, playedCard, numCardSwaps, numCoins, investedCoins, stealResistance, playerNum, playerID, playerName, playerColor, isinGame, isReady, waitingOn}
 }
 
 function makeForSale(presetCards){
@@ -136,15 +179,17 @@ function resolveOrderedActions(players){
     for (let i = 1; i < 5; i++){
         for (let j = 0; j < players.length; j++)
         if (players[j].playedCards[0].priority == i){
-            // !!!! resolve card effects
+            const player = players.find(player => player.playerNum == j);
+            eval(player.playedCard[0].effect);
         }
     }
+    resolveUnorderedActions(players);
 }
 
 function resolveUnorderedActions(players){
     for (let i = 0; i < players.length; i++){
         const player = players.find(player => player.playerNum == i);
-        eval(players[i].effect)
+        eval(player.playerdCard[0].effect);
     }
 }
 
@@ -160,7 +205,7 @@ function steal(stealer, stealFrom, modification){
 
 function rest(player, modification){
     let numActionsToReturn = Math.ceil(player.discard.length/2);
-    if (modification == undefined){
+    if (modification != undefined){
         numActionsToReturn = modification;
     }
     // allow player to return up to numActionsToReturn
