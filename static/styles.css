@@ -18,7 +18,6 @@ button{
     font-size: 16px;
 }
 
-
 .header{
     position: sticky;
     top: 0vh;
@@ -35,11 +34,3 @@ button{
     object-fit: cover;
     z-index: -1;
 }
-
-
-
-
-
-
-
-
