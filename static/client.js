@@ -1,6 +1,6 @@
 import { createLobby, joinedLobbyUpdate, modifyPlayerList } from "./lobby.js";
 
-if (document.cookie === undefined){
+if (document.cookie == ""){
     document.cookie = "userID="+Math.random().toString(36).substring(1, 30);
 }
 
@@ -19,18 +19,18 @@ socket.on("newPlayer", (isGameInProgress) => {
 })
 
 socket.on("reconnection", (players, reconnectedPlayer, isGameInProgress) => {
-    bodyElement.innerHTML = "";
+//    bodyElement.innerHTML = "";
 
-    if (!reconnectedPlayer.isinGame){
+    if (!reconnectedPlayer.isInGame){
         if (isGameInProgress){
             gameInProgressError();
         }
         else{
             createLobby(bodyElement, socket);
-            joinedLobbyUpdate();
             for (let i = 0; i < players.length; i++){
                 modifyPlayerList(players[i].playerID, players[i].playerName, players[i].playerColor);
             }
+            joinedLobbyUpdate();
         }
     }
     else{
