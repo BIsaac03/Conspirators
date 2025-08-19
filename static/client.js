@@ -14,7 +14,7 @@ socket.on("newPlayer", (isGameInProgress) => {
         gameInProgressError();
     }
     else{
-        lobby.createLobby(document, bodyElement, socket);
+        lobby.createLobby(bodyElement, socket);
     }
 })
 
@@ -26,12 +26,12 @@ socket.on("reconnection", (players, reconnectedPlayer, isGameInProgress) => {
             gameInProgressError();
         }
         else{
-            lobby.createLobby(document, bodyElement, socket);
+            lobby.createLobby(bodyElement, socket);
             for (let i = 0; i < players.length; i++){
                 console.log("modify")
-                lobby.modifyPlayerList(socket, document, players[i].playerID, players[i].playerName, players[i].playerColor);
+                lobby.modifyPlayerList(players[i].playerID, players[i].playerName, players[i].playerColor, socket);
             }
-            lobby.joinedLobbyUpdate(document);
+            lobby.joinedLobbyUpdate();
         }
     }
     else{
@@ -64,12 +64,12 @@ socket.on("reconnection", (players, reconnectedPlayer, isGameInProgress) => {
 
 socket.on("displayExistingPlayers", (players) => {
     for (let i = 0; i < players.length; i++){
-        lobby.modifyPlayerList(socket, document, players[i].playerID, players[i].playerName, players[i].playerColor);
+        lobby.modifyPlayerList(players[i].playerID, players[i].playerName, players[i].playerColor, socket);
     }
 })
 socket.on("modifyPlayerList", (playerID, newPlayerName, newPlayerColor) => {
-    lobby.modifyPlayerList(socket, document, playerID, newPlayerName, newPlayerColor);
-    lobby.joinedLobbyUpdate(document);
+    lobby.modifyPlayerList(playerID, newPlayerName, newPlayerColor, socket);
+    lobby.joinedLobbyUpdate();
 })
 socket.on("playerKicked", (playerID) => {
     const playerList = document.getElementById("playerList");

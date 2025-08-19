@@ -13,7 +13,8 @@ function createLobby(bodyElement, socket){
     
     const playerCustomization = document.createElement("form");
     playerCustomization.classList.add("playerCustomization");
-    
+    playerCustomization.addEventListener('submit', (e) => e.preventDefault());
+
     const label = document.createElement("label");
     label.setAttribute("for", "playerName");
     label.textContent =  "Player Name:";
@@ -44,12 +45,14 @@ function createLobby(bodyElement, socket){
     joinGameButton.setAttribute("type", "submit");
     joinGameButton.setAttribute("value", "Join Game");
     joinGameButton.addEventListener("click", () => {
+
         const name = playerName.value;
         const color = playerColor.value;
         if (name != ""){
             localStorage.setItem('chosenName', name);
             localStorage.setItem('preferredColor', color);
             socket.emit("playerJoinedLobby", document.cookie, name, color);
+            joinedLobbyUpdate(document);
         }
     })
 
@@ -61,7 +64,7 @@ function createLobby(bodyElement, socket){
             socket.emit("startGame");
         }
     })
-    startGameButton.style.display = "none";
+    startGameButton.style.display = "none";  
     
     playerCustomization.appendChild(label);
     playerCustomization.appendChild(playerName);
@@ -85,14 +88,12 @@ function joinedLobbyUpdate(){
     startGameButton.style.display = "block";
 }
 
-function modifyPlayerList(playerID, playerName, playerColor){
+function modifyPlayerList(playerID, playerName, playerColor, socket){
     const playerList = document.getElementById("playerList");
     if (playerList != undefined){
         const existingPlayer = document.getElementById(playerID);
         if (existingPlayer === null){
             const player = document.createElement("div");
-            console.log(playerID);
-            console.log(document.cookie)
             player.id = playerID;
             player.classList.add("player");
     
@@ -106,14 +107,13 @@ function modifyPlayerList(playerID, playerName, playerColor){
             playerNameDOM.textContent = playerName;
             player.appendChild(playerNameDOM);
     
-                const leaveLobbyButton = document.createElement("button");
-                leaveLobbyButton.id = "leaveLobbyButton";
-                leaveLobbyButton.textContent = "X";
-                leaveLobbyButton.addEventListener("click", () => {
-                    socket.emit("leftLobby", playerID);
-                })
-                player.appendChild(leaveLobbyButton)
-    
+            const leaveLobbyButton = document.createElement("button");
+            leaveLobbyButton.id = "leaveLobbyButton";
+            leaveLobbyButton.textContent = "X";
+            leaveLobbyButton.addEventListener("click", () => {
+                socket.emit("leftLobby", playerID);
+            })
+            player.appendChild(leaveLobbyButton)
             playerList.appendChild(player);
     
         }
