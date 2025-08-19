@@ -5,6 +5,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { gameInProgressError } from "./static/lobby.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -45,7 +46,6 @@ const players = [];
 io.on("connection", (socket) => {
     const existingPlayer = players.find(player => player.playerID == currentID);
     if (existingPlayer != undefined) {
-        console.log("reconnecting");
         socket.emit("reconnection", existingPlayer, players, isGameInProgress);
     }
     else{socket.emit("newPlayer", isGameInProgress);}
@@ -53,24 +53,31 @@ io.on("connection", (socket) => {
     socket.emit("displayExistingPlayers", players);
 
     socket.on("playerJoinedLobby", (playerID, playerName, playerColor) => {
-        let colorSpecs = [playerColor, false];
+        console.log(isGameInProgress);
 
-        const existingName = players.find(player => player.playerName == playerName);
-        const existingPlayer = players.find(player => player.playerID == playerID);
-
-        if (existingName != undefined && existingName.playerID != playerID){
-            socket.emit("nameTaken", playerName);
-        }
-        else if (existingPlayer == undefined){
-            const newPlayer = makePlayer([], playerID, playerName, colorSpecs);
-            players.push(newPlayer);
-            io.emit("modifyPlayerList", playerID, playerName, colorSpecs);
+        
+        if (isGameInProgress){
+            socket.emit("gameInProgress");
         }
         else{
-            existingPlayer.playerName = playerName;
-            existingPlayer.playerColor = colorSpecs;
-            io.emit("modifyPlayerList", playerID, playerName, colorSpecs);
-        }      
+            let colorSpecs = [playerColor, false];
+            const existingName = players.find(player => player.playerName == playerName);
+            const existingPlayer = players.find(player => player.playerID == playerID);
+    
+            if (existingName != undefined && existingName.playerID != playerID){
+                socket.emit("nameTakenError", playerName);
+            }
+            else if (existingPlayer == undefined){
+                const newPlayer = makePlayer([], playerID, playerName, colorSpecs);
+                players.push(newPlayer);
+                io.emit("modifyPlayerList", playerID, playerName, colorSpecs);
+            }
+            else{
+                existingPlayer.playerName = playerName;
+                existingPlayer.playerColor = colorSpecs;
+                io.emit("modifyPlayerList", playerID, playerName, colorSpecs);
+            } 
+        }
     });
 
     socket.on("leftLobby", (playerID) => {

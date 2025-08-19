@@ -17,7 +17,7 @@ const bodyElement = document.body;
 socket.on("newPlayer", (isGameInProgress) => {
     bodyElement.innerHTML = "";
     if (isGameInProgress){
-        gameInProgressError();
+        lobby.gameInProgressError(bodyElement);
     }
     else{
         lobby.createLobby(bodyElement, socket);
@@ -28,7 +28,7 @@ socket.on("reconnection", (reconnectedPlayer, players, isGameInProgress) => {
     bodyElement.innerHTML = "";
     if (!reconnectedPlayer.isInGame){
         if (isGameInProgress){
-            gameInProgressError();
+            lobby.gameInProgressError(bodyElement);
         }
         else{
             lobby.createLobby(bodyElement, socket);
@@ -73,7 +73,10 @@ socket.on("displayExistingPlayers", (players) => {
         lobby.modifyPlayerList(players[i].playerID, players[i].playerName, players[i].playerColor, socket);
     }
 })
-socket.on("nameTaken", (duplicateName) => {
+socket.on("gameInProgress", () => {
+    lobby.gameInProgressError(bodyElement);
+})
+socket.on("nameTakenError", (duplicateName) => {
     alert("The name \""+duplicateName+"\" is already being used by another player!");
 })
 socket.on("modifyPlayerList", (playerID, newPlayerName, newPlayerColor) => {
@@ -265,16 +268,6 @@ function examineDiscard(player){
     }
     discardPopUp.appendChild(actionDiv);
 
-}
-
-function gameInProgressError(){
-    bodyElement.innerHTML = "";
-    const error = document.createElement("div");
-    error.id = "error";
-    const errorMessage = document.createElement("p");
-    errorMessage.textContent = "A game is already in progress. All players in the game must leave before a new game can be started.";
-    error.appendChild(errorMessage);
-    bodyElement.appendChild(error)
 }
 
 // removing informative popups

@@ -124,4 +124,14 @@ function modifyPlayerList(playerID, playerName, playerColor, socket){
     }
 }
 
-export { createLobby, joinedLobbyUpdate, modifyPlayerList }
+function gameInProgressError(bodyElement){
+    bodyElement.innerHTML = "";
+    const error = document.createElement("div");
+    error.id = "error";
+    const errorMessage = document.createElement("p");
+    errorMessage.textContent = "A game is already in progress. All players in the game must leave before a new game can be started.";
+    error.appendChild(errorMessage);
+    bodyElement.appendChild(error)
+}
+
+export { createLobby, joinedLobbyUpdate, modifyPlayerList, gameInProgressError }
