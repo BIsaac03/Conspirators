@@ -45,6 +45,7 @@ const players = [];
 io.on("connection", (socket) => {
     const existingPlayer = players.find(player => player.playerID == currentID);
     if (existingPlayer != undefined) {
+        console.log("reconnecting");
         socket.emit("reconnection", existingPlayer, players, isGameInProgress);
     }
     else{socket.emit("newPlayer", isGameInProgress);}
@@ -76,11 +77,17 @@ io.on("connection", (socket) => {
         }      
     });
 
+    socket.on("leftLobby", (playerID) => {
+        const indexToRemove = players.findIndex(player => player.playerID = playerID);
+        players.splice(indexToRemove, 1);
+        io.emit("playerKicked", playerID);
+    })
+
     socket.on("startGame", () => {
-        const alreadyStarted = players.find(player => player.isinGame);
+        const alreadyStarted = players.find(player => player.isInGame);
         if (alreadyStarted == undefined){
             for (let i = 0; i < players.length; i++){
-                players.isinGame = true;
+                players.isInGame = true;
             }
             isGameInProgress = true;
             io.emit("createGameSpace", players);
@@ -135,10 +142,10 @@ function makePlayer(selectedBAs, ID, name, color){
     const playerName = name
     const playerColor = color
     let isReady = true;
-    let isinGame = false;
+    let isInGame = false;
     let waitingOn = undefined;
 
-    return {hand, discard, playedCard, numCardSwaps, numCoins, investedCoins, stealResistance, playerNum, playerID, playerName, playerColor, isinGame, isReady, waitingOn}
+    return {hand, discard, playedCard, numCardSwaps, numCoins, investedCoins, stealResistance, playerNum, playerID, playerName, playerColor, isInGame, isReady, waitingOn}
 }
 
 function makeForSale(presetCards){

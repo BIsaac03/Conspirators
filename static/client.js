@@ -1,4 +1,4 @@
-import { createLobby, joinedLobbyUpdate, modifyPlayerList } from "./lobby.js";
+import * as lobby from "./lobby.js";
 
 if (document.cookie == ""){
     document.cookie = "userID="+Math.random().toString(36).substring(1, 30);
@@ -14,23 +14,24 @@ socket.on("newPlayer", (isGameInProgress) => {
         gameInProgressError();
     }
     else{
-        createLobby(bodyElement, socket);
+        lobby.createLobby(document, bodyElement, socket);
     }
 })
 
 socket.on("reconnection", (players, reconnectedPlayer, isGameInProgress) => {
-//    bodyElement.innerHTML = "";
+    bodyElement.innerHTML = "";
 
     if (!reconnectedPlayer.isInGame){
         if (isGameInProgress){
             gameInProgressError();
         }
         else{
-            createLobby(bodyElement, socket);
+            lobby.createLobby(document, bodyElement, socket);
             for (let i = 0; i < players.length; i++){
-                modifyPlayerList(players[i].playerID, players[i].playerName, players[i].playerColor);
+                console.log("modify")
+                lobby.modifyPlayerList(socket, document, players[i].playerID, players[i].playerName, players[i].playerColor);
             }
-            joinedLobbyUpdate();
+            lobby.joinedLobbyUpdate(document);
         }
     }
     else{
@@ -63,11 +64,12 @@ socket.on("reconnection", (players, reconnectedPlayer, isGameInProgress) => {
 
 socket.on("displayExistingPlayers", (players) => {
     for (let i = 0; i < players.length; i++){
-        modifyPlayerList(players[i].playerID, players[i].playerName, players[i].playerColor);
+        lobby.modifyPlayerList(socket, document, players[i].playerID, players[i].playerName, players[i].playerColor);
     }
 })
 socket.on("modifyPlayerList", (playerID, newPlayerName, newPlayerColor) => {
-    modifyPlayerList(playerID, newPlayerName, newPlayerColor);
+    lobby.modifyPlayerList(socket, document, playerID, newPlayerName, newPlayerColor);
+    lobby.joinedLobbyUpdate(document);
 })
 socket.on("playerKicked", (playerID) => {
     const playerList = document.getElementById("playerList");
@@ -77,7 +79,7 @@ socket.on("playerKicked", (playerID) => {
     if (document.cookie == playerID){
         const joinGameButton = document.getElementsByClassName("joinGame")[0];
         joinGameButton.value = "Join Game";
-        startGameButton = document.getElementById("startGame");
+        const startGameButton = document.getElementById("startGame");
         startGameButton.style.display = "none";
     }
 })
