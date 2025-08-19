@@ -52,10 +52,6 @@ io.on("connection", (socket) => {
 
     socket.emit("displayExistingPlayers", players);
 
-    socket.on("nameTaken", (duplicateName) => {
-        alert("The name \""+duplicateName+"\" is already being used by another player!");
-    })
-
     socket.on("playerJoinedLobby", (playerID, playerName, playerColor) => {
         let colorSpecs = [playerColor, false];
 
@@ -78,7 +74,7 @@ io.on("connection", (socket) => {
     });
 
     socket.on("leftLobby", (playerID) => {
-        const indexToRemove = players.findIndex(player => player.playerID = playerID);
+        const indexToRemove = players.findIndex(player => player.playerID == playerID);
         players.splice(indexToRemove, 1);
         io.emit("playerKicked", playerID);
     })
@@ -87,7 +83,7 @@ io.on("connection", (socket) => {
         const alreadyStarted = players.find(player => player.isInGame);
         if (alreadyStarted == undefined){
             for (let i = 0; i < players.length; i++){
-                players.isInGame = true;
+                players[i].isInGame = true;
             }
             isGameInProgress = true;
             io.emit("createGameSpace", players);

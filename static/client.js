@@ -3,8 +3,13 @@ import * as lobby from "./lobby.js";
 if (document.cookie == ""){
     document.cookie = "userID="+Math.random().toString(36).substring(1, 30);
 }
+let userIDCookie = document.cookie;
 
-const socket = io.connect("http://localhost:3000");
+const socket = io("http://localhost:3000", {
+    auth: {
+        token: userIDCookie
+    }
+});
 
 let myPlayerNum = undefined;
 const bodyElement = document.body;
@@ -18,9 +23,8 @@ socket.on("newPlayer", (isGameInProgress) => {
     }
 })
 
-socket.on("reconnection", (players, reconnectedPlayer, isGameInProgress) => {
+socket.on("reconnection", (reconnectedPlayer, players, isGameInProgress) => {
     bodyElement.innerHTML = "";
-
     if (!reconnectedPlayer.isInGame){
         if (isGameInProgress){
             gameInProgressError();
@@ -36,7 +40,8 @@ socket.on("reconnection", (players, reconnectedPlayer, isGameInProgress) => {
     }
     else{
         myPlayerNum = reconnectedPlayer.playerNum;
-
+        
+        createGameSpace(players)
         displayStats(players);
 
         if (!reconnectedPlayer.isReady){
@@ -67,9 +72,11 @@ socket.on("displayExistingPlayers", (players) => {
         lobby.modifyPlayerList(players[i].playerID, players[i].playerName, players[i].playerColor, socket);
     }
 })
+socket.on("nameTaken", (duplicateName) => {
+    alert("The name \""+duplicateName+"\" is already being used by another player!");
+})
 socket.on("modifyPlayerList", (playerID, newPlayerName, newPlayerColor) => {
     lobby.modifyPlayerList(playerID, newPlayerName, newPlayerColor, socket);
-    lobby.joinedLobbyUpdate();
 })
 socket.on("playerKicked", (playerID) => {
     const playerList = document.getElementById("playerList");
@@ -107,6 +114,7 @@ function createGameSpace(players){
     for (let i = 0; i < players.length; i++){
         const playerSpace = document.createElement("div");
         playerSpace.id = "player"+i;
+        playerSpace.setAttribute("transform", "rotate("+i*360/players.length+"deg) translateX(250px)")
 
         if (i == myPlayerNum){
             const handIcon = document.createElement("img");
