@@ -4,6 +4,7 @@
     padding: 0px;
     margin: 0px;
 }
+
 body{
     display: grid;
     grid-template-rows: 90px auto 2fr 1fr;
@@ -33,4 +34,26 @@ button{
     opacity: 0.25;
     object-fit: cover;
     z-index: -1;
+}
+
+#gameSpace{
+    top: 15vh;
+    position: relative;
+    justify-self: center;
+    width: 700px;
+    height: 700px;
+    border-radius: 50%;
+    background-color: blanchedalmond;
+}
+#gameSpace>div[id^="player"]{
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    transform: translateX(250px) translateY(250px);
+    background-color: #3f353a;
+    border-radius: 50%;
+}
+
+#gameSpace>div[id^="player"] img{
+    width: 75px;
 }

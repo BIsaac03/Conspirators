@@ -15,6 +15,7 @@ let myPlayerNum = undefined;
 const bodyElement = document.body;
 
 socket.on("newPlayer", (isGameInProgress) => {
+    bodyElement.innerHTML = "";
     if (isGameInProgress){
         gameInProgressError();
     }
@@ -40,7 +41,7 @@ socket.on("reconnection", (reconnectedPlayer, players, isGameInProgress) => {
     }
     else{
         myPlayerNum = reconnectedPlayer.playerNum;
-        
+
         createGameSpace(players)
         displayStats(players);
 
@@ -111,10 +112,12 @@ function createGameSpace(players){
     const gameSpace = document.createElement("div");
     gameSpace.id = "gameSpace";
 
+    const radianOffset = Math.PI/2 - myPlayerNum*2*Math.PI/players.length;
     for (let i = 0; i < players.length; i++){
         const playerSpace = document.createElement("div");
         playerSpace.id = "player"+i;
-        playerSpace.setAttribute("transform", "rotate("+i*360/players.length+"deg) translateX(250px)")
+        playerSpace.style.top = "calc(0px + calc(350px*sin("+(i*2*Math.PI/players.length + radianOffset)%(2*Math.PI)+")))";
+        playerSpace.style.left = "calc(0px + calc(350px*cos("+(i*2*Math.PI/players.length + radianOffset)%(2*Math.PI)+")))";
 
         if (i == myPlayerNum){
             const handIcon = document.createElement("img");
