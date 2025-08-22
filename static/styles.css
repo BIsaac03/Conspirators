@@ -47,13 +47,25 @@ button{
 }
 #gameSpace>div[id^="player"]{
     position: absolute;
+    display: grid;
+    left: calc(50% - 200px);
+    top: calc(50% - 100px);
+    width: 400px;
+    height: 200px;
+}
+div[id^="player"] .playerIcon{
     width: 200px;
     height: 200px;
-    transform: translateX(250px) translateY(250px);
     background-color: #3f353a;
     border-radius: 50%;
 }
+div[id^="player"] .playedCard{
+    position: absolute;
+    width: 100px;
+    height: 50px;
+    background-color: brown;
+}
 
-#gameSpace>div[id^="player"] img{
+div[id^="player"] img{
     width: 75px;
 }

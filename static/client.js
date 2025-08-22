@@ -106,6 +106,30 @@ socket.on("chooseAction", (players) => {
 
 
 
+function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
+    // NUMS GET BIGGER CLOCKWISE
+    const totalInsideAngle = 180 * (numPlayers - 2);
+    const totalPlayerSelectionAngle = totalInsideAngle / numPlayers;
+    const angleModPerPlayer = totalPlayerSelectionAngle / (numPlayers -1);  
+    
+            // CALCULATIONS
+            // (myPlayerNum + X) % numPlayers == targetPlayerNum
+            // myPlayerNum + X == numPlayers*k + targetPlayerNum
+            // X = numPlayers*k + targetPlayerNum - myPlayerNum
+    let distanceClockwise = undefined;
+    if (numPlayers*0 + targetPlayerNum - myPlayerNum > 0){
+        distanceClockwise = numPlayers*0 + targetPlayerNum - myPlayerNum
+    }
+    else {
+        distanceClockwise = numPlayers*1 + targetPlayerNum - myPlayerNum
+    }
+    const playersOffCenter = distanceClockwise - numPlayers/2;
+    console.log(playersOffCenter)
+    const targetAngle =  2*playersOffCenter*angleModPerPlayer;
+
+    return targetAngle;
+}
+
 function createGameSpace(players){
     const userID = document.cookie;
     const thisPlayer = players.find(player => player.playerID == userID);
@@ -119,8 +143,16 @@ function createGameSpace(players){
     for (let i = 0; i < players.length; i++){
         const playerSpace = document.createElement("div");
         playerSpace.id = "player"+i;
-        playerSpace.style.top = "calc(0px + calc(350px*sin("+(i*2*Math.PI/players.length + radianOffset)%(2*Math.PI)+")))";
-        playerSpace.style.left = "calc(0px + calc(350px*cos("+(i*2*Math.PI/players.length + radianOffset)%(2*Math.PI)+")))";
+        playerSpace.style.transform = "rotate("+(2*Math.PI * i/players.length + radianOffset)+"rad) translateX(500px)"; 
+
+        const playerIcon = document.createElement("div");
+        playerIcon.classList.add("playerIcon");
+
+        const playedCard = document.createElement("img");
+        playedCard.classList.add("playedCard");        
+        
+        playerSpace.appendChild(playerIcon);
+        playerSpace.appendChild(playedCard);
 
         if (i == myPlayerNum){
             const handIcon = document.createElement("img");
@@ -139,12 +171,18 @@ function createGameSpace(players){
             playerSpace.appendChild(handIcon, discardIcon, coinsInVault);
         }
         else{
-
+            let i = 0
         }
-
+        
         gameSpace.appendChild(playerSpace);
     }
     bodyElement.appendChild(gameSpace);
+
+
+    for (let i = 0; i < players.length; i++) {         
+        const playedCard = document.querySelector(`#player${i} .playedCard`);
+        playedCard.style.transform = "rotate("+calculateTargetAngle(i, (i+1)%players.length, players.length)+"deg)";
+    }
 }
 
 function actionSelection(players, playerNum){
@@ -195,6 +233,19 @@ function actionSelection(players, playerNum){
     confirm.textContent = "Confirm";
     confirm.addEventListener("click", () => {
         if (actionToPlay != undefined && targetSelection.value >= 0){
+
+            const endPoint = document.querySelector(`#player${targetSelection.value} .playerIcon`).getBoundingClientRect();
+            const startPoint = document.querySelector(`#player${myPlayerNum} .playerIcon`).getBoundingClientRect();
+
+            const midX = ((endPoint.top + endPoint.bottom)/2 + (startPoint.top + startPoint.bottom)/2)/2;
+            const midY = ((endPoint.top + endPoint.bottom)/2 + (startPoint.top + startPoint.bottom)/2)/2;
+
+            const playedCardDOM = document.querySelector(`#player${myPlayerNum} .playedCard`);
+            playedCardDOM.left = midX;
+            playedCardDOM.right = midY;
+            playedCardDOM.style.display = "block";
+
+
             socket.emit("chosenAction", myPlayerNum, actionToPlay, targetSelection.value);
             actionSelectionDiv.remove()
         }
