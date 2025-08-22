@@ -119,7 +119,6 @@ function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
             // myPlayerNum + X == numPlayers*k + targetPlayerNum
             // X = numPlayers*k + targetPlayerNum - myPlayerNum
     let distanceClockwise = undefined;
-    console.log(distanceClockwise)
     if (numPlayers*0 + targetPlayerNum - myPlayerNum > 0){
         distanceClockwise = numPlayers*0 + targetPlayerNum - myPlayerNum;
     }
@@ -127,7 +126,6 @@ function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
         distanceClockwise = numPlayers*1 + targetPlayerNum - myPlayerNum;
     }
     const playersOffCenter = distanceClockwise - numPlayers/2;
-    console.log(playersOffCenter)
     const targetAngle =  2*playersOffCenter*angleModPerPlayer;
 
     return targetAngle;
@@ -224,11 +222,11 @@ function actionSelection(players, playerNum){
         const possibleAction = document.createElement("img");
         possibleAction.src = players[playerNum].hand[i][0].image;
         possibleAction.addEventListener("click", () => {
-            const previousSelection = document.getElementById("selected");
+            const previousSelection = document.getElementById("selectedCard");
             if (previousSelection != undefined){
                 previousSelection.id = "";
             }
-            actionDiv.id = "selected";
+            actionDiv.id = "selectedCard";
             actionToPlay = players[playerNum].hand[i][0];
 
         })
@@ -244,7 +242,31 @@ function actionSelection(players, playerNum){
         if (i != myPlayerNum){
             const playerIcon = document.querySelector(`#player${i} .playerIcon`);
             playerIcon.addEventListener("mouseover", () => {
-                orientCardToPlayer(i, players.length);
+                if (targetPlayerNum == undefined){
+                    orientCardToPlayer(i, players.length);
+                }
+            })
+            playerIcon.addEventListener("click", () => {
+
+                const myCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
+                if (targetPlayerNum == undefined){
+                    myCard.style.border = "3px solid black";
+                    playerIcon.id = "selectedPlayer";
+                    targetPlayerNum = i;
+                }
+                else if (targetPlayerNum == i){
+                    myCard.style.border = "3px dashed cyan";
+                    playerIcon.id = "";
+                    targetPlayerNum = undefined;
+                }
+                else{
+                    const previousSelection = document.getElementById("selectedPlayer");
+                    previousSelection.id = "";
+                    playerIcon.id = "selectedPlayer";
+                    
+                    orientCardToPlayer(i, players.length);
+                    targetPlayerNum = i;
+                }
             })
         }
     }
