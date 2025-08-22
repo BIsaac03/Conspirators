@@ -99,6 +99,7 @@ socket.on("playerKicked", (playerID) => {
 
 socket.on("createGameSpace", (players) => {
     createGameSpace(players);
+    displayStats();
 })
 socket.on("chooseAction", (players) => {
     actionSelection(players, myPlayerNum);
@@ -183,8 +184,22 @@ function createGameSpace(players){
 
     for (let i = 0; i < players.length; i++) {         
         const playedCard = document.querySelector(`#player${i} .playedCard`);
+        playedCard.src = "./static/Images/Actions/Steal.png";
         const targetAngle = calculateTargetAngle(i, (i+1)%players.length, players.length);
-        playedCard.style.transform = "translateY("+(-200*Math.sin(targetAngle))+"px) translateX("+(200*(1-Math.cos(targetAngle)))+"px)  rotate("+targetAngle+"rad)";
+        playedCard.style.transform = "translateY("+(-200*Math.sin(targetAngle))+"px) translateX("+(200*(1-Math.cos(targetAngle)))+"px)  rotate("+(targetAngle-Math.PI/2)+"rad)";
+        playedCard.addEventListener("mouseover", () => {
+            const blownUpAction = document.createElement("img");
+            blownUpAction.src = playedCard.src;
+            blownUpAction.id = "blownUp";
+            bodyElement.appendChild(blownUpAction);
+            playedCard.style.opacity = 0.3;
+
+        })
+        playedCard.addEventListener("mouseout", () => {
+            playedCard.style.opacity = 1.0;
+            const blownUpAction = document.getElementById("blownUp");
+            blownUpAction.remove();
+        })
     }
 }
 
@@ -258,21 +273,24 @@ function actionSelection(players, playerNum){
 }
 
 function displayStats(players){
+    const statsSidebar = document.createElement("div");
+    statsSidebar.id = "statsSidebar";
+
     for (let i = 0; i < players.length; i++){
         const playerDisplay = document.createElement("div");
-        playerDisplay.id = "playerDisplay"+i;
+        playerDisplay.id = "playerDisplay"+((myPlayerNum + i)%players.length);
 
         const playerName = document.createElement("p");
-        playerName.textContent = players[i].playerName;
+        playerName.textContent = players[(myPlayerNum + i)%players.length].playerName;
         playerName.classList.add("playerName");
         const numCardsInHand = document.createElement("p");
-        numCardsInHand.textContent = players[i].hand.length;
+        numCardsInHand.textContent = players[(myPlayerNum + i)%players.length].hand.length;
         numCardsInHand.classList.add("handNum");
         const numCardsInDiscard = document.createElement("p");
-        numCardsInDiscard.textContent = players[i].discard.length;
+        numCardsInDiscard.textContent = players[(myPlayerNum + i)%players.length].discard.length;
         numCardsInDiscard.classList.add("discardNum");
         const numCoins = document.createElement("p");
-        numCoins.textContent = players[i].numCoins;
+        numCoins.textContent = players[(myPlayerNum + i)%players.length].numCoins;
         numCoins.classList.add("numCoins");
 
         playerDisplay.appendChild(playerName);
@@ -280,12 +298,14 @@ function displayStats(players){
         playerDisplay.appendChild(numCardsInDiscard);
         playerDisplay.appendChild(numCoins);
 
-        if (i == myPlayerNum){
+        if (i == 0){
             const numCoinsInvested = document.createElement("p");
-            numCoinsInvested.textContent = players[i].investedCoins;
+            numCoinsInvested.textContent = players[0].investedCoins;
             numCoinsInvested.classList.add("coinsInvested");
         }
+        statsSidebar.appendChild(playerDisplay);
     }
+    bodyElement.appendChild(statsSidebar);
 }
 
 function updateStats(players){

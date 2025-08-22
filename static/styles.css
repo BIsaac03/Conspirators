@@ -36,6 +36,37 @@ button{
     z-index: -1;
 }
 
+#statsSidebar{
+    position: absolute;
+    top: 0vh;
+    left: 85vw;
+    height: 100vh;
+    width: 15vw;
+    display: grid;
+    background-color: beige;
+}
+#statsSidebar div[id^="playerDisplay"]{
+    display: grid;
+    gap: 10px;
+    font-size: 25px;
+}
+#statsSidebar .playerName{
+    font-size: 40px;
+    font-weight: bold;
+}
+#statsSidebar div{
+    padding: 30px;
+    font-size: 25px;
+}
+
+#blownUp{
+    position: absolute;
+    align-self: center;
+    justify-self: center;
+    width: 300px;
+    z-index: 5;
+}
+
 #gameSpace{
     top: 15vh;
     position: relative;
@@ -63,9 +94,7 @@ div[id^="player"] .playerIcon{
 div[id^="player"] .playedCard{
     align-self: center;
     justify-self: center;
-    width: 100px;
-    height: 50px;
-    background-color: brown;
+    width: 125px;
 }
 
 div[id^="player"] #handIcon{
