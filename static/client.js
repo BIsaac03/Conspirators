@@ -99,7 +99,7 @@ socket.on("playerKicked", (playerID) => {
 
 socket.on("createGameSpace", (players) => {
     createGameSpace(players);
-    displayStats();
+    displayStats(players);
 })
 socket.on("chooseAction", (players) => {
     actionSelection(players, myPlayerNum);
@@ -118,6 +118,7 @@ function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
             // myPlayerNum + X == numPlayers*k + targetPlayerNum
             // X = numPlayers*k + targetPlayerNum - myPlayerNum
     let distanceClockwise = undefined;
+    console.log(distanceClockwise)
     if (numPlayers*0 + targetPlayerNum - myPlayerNum > 0){
         distanceClockwise = numPlayers*0 + targetPlayerNum - myPlayerNum;
     }
@@ -131,6 +132,12 @@ function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
     return targetAngle;
 }
 
+function orientCardToPlayer(targetPlayerNum, numPlayers){
+    const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
+    const targetAngle = calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers);
+    myPlayedCard.style.transform = "translateY("+(-200*Math.sin(targetAngle))+"px) translateX("+(200*(1-Math.cos(targetAngle)))+"px)  rotate("+(targetAngle-Math.PI/2)+"rad)";       
+
+}
 function createGameSpace(players){
     const userID = document.cookie;
     const thisPlayer = players.find(player => player.playerID == userID);
@@ -150,43 +157,10 @@ function createGameSpace(players){
         playerIcon.classList.add("playerIcon");
 
         const playedCard = document.createElement("img");
-        playedCard.classList.add("playedCard");        
-        
-        playerSpace.appendChild(playedCard);
-        playerSpace.appendChild(playerIcon);
+        playedCard.classList.add("playedCard");
+        playedCard.src = "static/Images/Actions/Defend.png";
+        playedCard.style.transform = 'rotate(-90deg)';
 
-
-        if (i == myPlayerNum){
-            const handIcon = document.createElement("img");
-            handIcon.src = "static/Images/Icons/hand.svg";
-            handIcon.id = "handIcon";
-            const discardIcon = document.createElement("img");
-            discardIcon.sec = "static/Images/Icons/discard.svg";
-
-            const coinsInVault = document.createElement("div");
-            const vaultIcon = document.createElement("img");
-            vaultIcon.src = "static/Images/Icons/safe.svg";
-            const numCoinsInVault = document.createElement("p");
-            coinsInVault.appendChild(vaultIcon);
-            coinsInVault.appendChild(numCoinsInVault);
-
-            playerSpace.classList.add("myself");
-            playerSpace.appendChild(handIcon, discardIcon, coinsInVault);
-        }
-        else{
-            let i = 0
-        }
-        
-        gameSpace.appendChild(playerSpace);
-    }
-    bodyElement.appendChild(gameSpace);
-
-
-    for (let i = 0; i < players.length; i++) {         
-        const playedCard = document.querySelector(`#player${i} .playedCard`);
-        playedCard.src = "./static/Images/Actions/Steal.png";
-        const targetAngle = calculateTargetAngle(i, (i+1)%players.length, players.length);
-        playedCard.style.transform = "translateY("+(-200*Math.sin(targetAngle))+"px) translateX("+(200*(1-Math.cos(targetAngle)))+"px)  rotate("+(targetAngle-Math.PI/2)+"rad)";
         playedCard.addEventListener("mouseover", () => {
             const blownUpAction = document.createElement("img");
             blownUpAction.src = playedCard.src;
@@ -194,34 +168,53 @@ function createGameSpace(players){
             bodyElement.appendChild(blownUpAction);
             playedCard.style.opacity = 0.3;
 
+            playedCard.addEventListener("mouseout", () => {
+                const blownUpAction = document.getElementById("blownUp");
+                if (blownUpAction != undefined && !blownUpAction.matches(':hover')){
+                    playedCard.style.opacity = 1.0;
+                    blownUpAction.remove();
+                }
+            })
+            blownUpAction.addEventListener("mouseout", () => {
+                if (!playedCard.matches(':hover')){
+                    playedCard.style.opacity = 1.0;
+                    blownUpAction.remove();
+                }
+            })
         })
-        playedCard.addEventListener("mouseout", () => {
-            playedCard.style.opacity = 1.0;
-            const blownUpAction = document.getElementById("blownUp");
-            blownUpAction.remove();
-        })
+
+        
+        playerSpace.appendChild(playedCard);
+        playerSpace.appendChild(playerIcon);
+
+
+        if (i == myPlayerNum){
+            playerSpace.classList.add("myself");
+            const handIcon = document.createElement("img");
+            handIcon.src = "static/Images/Icons/hand.svg";
+            handIcon.id = "handIcon";
+
+            const discardIcon = document.createElement("img");
+            //discardIcon.src = "static/Images/Icons/discard.svg";
+
+            playerSpace.appendChild(handIcon, discardIcon);
+        }
+        else{
+
+
+        }
+        
+        gameSpace.appendChild(playerSpace);
     }
+    bodyElement.appendChild(gameSpace);
 }
 
 function actionSelection(players, playerNum){
     let actionToPlay = undefined;
+    let targetPlayerNum = undefined;
 
     const actionSelectionDiv = document.createElement("div");
     actionSelectionDiv.id = "selectActionContainer";
-
-    const targetSelection = document.createElement("select");
-    targetSelection.id = "targetSelection";
-    const selectionInstructions = document.createElement("option");
-    selectionInstructions.setAttribute("value", -1);
-    targetSelection.appendChild(selectionInstructions);
-    for (let i = 0; i < players.length; i++){
-        if (players.playerNum != myPlayerNum){
-            const playerOption = document.createElement("option");
-            playerOption.textContent = players[i].playerName;
-            playerOption.setAttribute("value", i)
-            targetSelection.appendChild(playerOption);
-        }
-    }
 
     const actionSelection = document.createElement("div");
     actionSelection.id = "actionSelection";
@@ -247,28 +240,27 @@ function actionSelection(players, playerNum){
     }
     actionSelectionDiv.appendChild(actionSelection);
 
+    for (let i = 0; i < players.length; i++){
+        if (i != myPlayerNum){
+            const playerIcon = document.querySelector(`#player${myPlayerNum} .playerIcon`);
+
+            playerIcon.addEventListener("mouseover", () => {
+                orientCardToPlayer(i, players.length);
+            })
+        }
+    }
+
     const confirm = document.createElement("button");
     confirm.textContent = "Confirm";
     confirm.addEventListener("click", () => {
-        if (actionToPlay != undefined && targetSelection.value >= 0){
-
-            const endPoint = document.querySelector(`#player${targetSelection.value} .playerIcon`).getBoundingClientRect();
-            const startPoint = document.querySelector(`#player${myPlayerNum} .playerIcon`).getBoundingClientRect();
-
-            const midX = ((endPoint.top + endPoint.bottom)/2 + (startPoint.top + startPoint.bottom)/2)/2;
-            const midY = ((endPoint.top + endPoint.bottom)/2 + (startPoint.top + startPoint.bottom)/2)/2;
-
-            const playedCardDOM = document.querySelector(`#player${myPlayerNum} .playedCard`);
-            playedCardDOM.left = midX;
-            playedCardDOM.right = midY;
-            playedCardDOM.style.display = "block";
-
-
-            socket.emit("chosenAction", myPlayerNum, actionToPlay, targetSelection.value);
+        if (actionToPlay != undefined && targetPlayerNum != undefined){
+            socket.emit("chosenAction", myPlayerNum, actionToPlay, targetPlayerNum);
+            // 
+            confirm.remove();
             actionSelectionDiv.remove()
         }
     })
-    actionSelectionDiv.appendChild(confirm);
+    bodyElement.appendChild(confirm);
     bodyElement.appendChild(actionSelectionDiv);
 }
 
@@ -299,9 +291,13 @@ function displayStats(players){
         playerDisplay.appendChild(numCoins);
 
         if (i == 0){
-            const numCoinsInvested = document.createElement("p");
-            numCoinsInvested.textContent = players[0].investedCoins;
-            numCoinsInvested.classList.add("coinsInvested");
+            const coinsInVault = document.createElement("div");
+            const vaultIcon = document.createElement("img");
+            vaultIcon.src = "static/Images/Icons/safe.svg";
+            const numCoinsInVault = document.createElement("p");
+            numCoinsInVault.textContent = players[0].investedCoins;
+            coinsInVault.appendChild(vaultIcon);
+            coinsInVault.appendChild(numCoinsInVault);
         }
         statsSidebar.appendChild(playerDisplay);
     }
