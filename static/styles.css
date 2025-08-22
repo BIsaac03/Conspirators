@@ -48,6 +48,7 @@ button{
 #gameSpace>div[id^="player"]{
     position: absolute;
     display: grid;
+    grid-template: 200px auto / 200px auto;
     left: calc(50% - 200px);
     top: calc(50% - 100px);
     width: 400px;
@@ -60,12 +61,16 @@ div[id^="player"] .playerIcon{
     border-radius: 50%;
 }
 div[id^="player"] .playedCard{
-    position: absolute;
+    align-self: center;
+    justify-self: center;
     width: 100px;
     height: 50px;
     background-color: brown;
 }
 
-div[id^="player"] img{
+div[id^="player"] #handIcon{
+    grid-area: 2 / 2 / 3 / 3;
+    justify-self: center;
+    transform: rotate(-90deg);
     width: 75px;
 }

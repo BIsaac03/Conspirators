@@ -108,7 +108,7 @@ socket.on("chooseAction", (players) => {
 
 function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
     // NUMS GET BIGGER CLOCKWISE
-    const totalInsideAngle = 180 * (numPlayers - 2);
+    const totalInsideAngle = Math.PI * (numPlayers - 2);
     const totalPlayerSelectionAngle = totalInsideAngle / numPlayers;
     const angleModPerPlayer = totalPlayerSelectionAngle / (numPlayers -1);  
     
@@ -143,7 +143,7 @@ function createGameSpace(players){
     for (let i = 0; i < players.length; i++){
         const playerSpace = document.createElement("div");
         playerSpace.id = "player"+i;
-        playerSpace.style.transform = "rotate("+(2*Math.PI * i/players.length + radianOffset)+"rad) translateX(500px)"; 
+        playerSpace.style.transform = "rotate("+(2*Math.PI * i/players.length + radianOffset)+"rad) translateX(300px)"; 
 
         const playerIcon = document.createElement("div");
         playerIcon.classList.add("playerIcon");
@@ -151,12 +151,14 @@ function createGameSpace(players){
         const playedCard = document.createElement("img");
         playedCard.classList.add("playedCard");        
         
-        playerSpace.appendChild(playerIcon);
         playerSpace.appendChild(playedCard);
+        playerSpace.appendChild(playerIcon);
+
 
         if (i == myPlayerNum){
             const handIcon = document.createElement("img");
             handIcon.src = "static/Images/Icons/hand.svg";
+            handIcon.id = "handIcon";
             const discardIcon = document.createElement("img");
             discardIcon.sec = "static/Images/Icons/discard.svg";
 
@@ -181,7 +183,8 @@ function createGameSpace(players){
 
     for (let i = 0; i < players.length; i++) {         
         const playedCard = document.querySelector(`#player${i} .playedCard`);
-        playedCard.style.transform = "rotate("+calculateTargetAngle(i, (i+1)%players.length, players.length)+"deg)";
+        const targetAngle = calculateTargetAngle(i, (i+1)%players.length, players.length);
+        playedCard.style.transform = "translateY("+(-200*Math.sin(targetAngle))+"px) translateX("+(150*(1-Math.cos(targetAngle)))+"px)  rotate("+targetAngle+"rad)";
     }
 }
 
