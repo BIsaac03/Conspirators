@@ -42,8 +42,9 @@ socket.on("reconnection", (reconnectedPlayer, players, isGameInProgress) => {
     else{
         myPlayerNum = reconnectedPlayer.playerNum;
 
-        createGameSpace(players)
+        createGameSpace(players);
         displayStats(players);
+        actionSelection(players, myPlayerNum);
 
         if (!reconnectedPlayer.isReady){
             if (reconnectedPlayer.waitingOn == "selectAction"){
@@ -183,7 +184,6 @@ function createGameSpace(players){
             })
         })
 
-        
         playerSpace.appendChild(playedCard);
         playerSpace.appendChild(playerIcon);
 
@@ -242,8 +242,7 @@ function actionSelection(players, playerNum){
 
     for (let i = 0; i < players.length; i++){
         if (i != myPlayerNum){
-            const playerIcon = document.querySelector(`#player${myPlayerNum} .playerIcon`);
-
+            const playerIcon = document.querySelector(`#player${i} .playerIcon`);
             playerIcon.addEventListener("mouseover", () => {
                 orientCardToPlayer(i, players.length);
             })
@@ -251,6 +250,7 @@ function actionSelection(players, playerNum){
     }
 
     const confirm = document.createElement("button");
+    confirm.id = "confirm";
     confirm.textContent = "Confirm";
     confirm.addEventListener("click", () => {
         if (actionToPlay != undefined && targetPlayerNum != undefined){
