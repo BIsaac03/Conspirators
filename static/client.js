@@ -292,6 +292,22 @@ function actionSelection(players, playerNum){
 
     const displayVisibilitySlider = document.createElement("div");
     displayVisibilitySlider.id = "displayVisibilitySlider";
+    const sliderIcon = document.createElement("img");
+
+    sliderIcon.src = "/static/Images/Icons/collapse.svg";
+    displayVisibilitySlider.addEventListener("click", () => {
+
+        if (sliderIcon.src.includes("/static/Images/Icons/collapse.svg")){
+            const translation = actionSelectionDiv.offsetWidth - 40;
+            actionSelectionDiv.style.transform = "translateX(-"+translation+"px)";
+            sliderIcon.src = "/static/Images/Icons/expand.svg";
+        }
+        else{
+            actionSelectionDiv.style.transform = "";
+            sliderIcon.src = "/static/Images/Icons/collapse.svg";
+        }
+    })
+    displayVisibilitySlider.appendChild(sliderIcon);
     actionSelectionDiv.appendChild(displayVisibilitySlider);
 
     const confirm = document.createElement("button");
@@ -386,8 +402,11 @@ function examineDiscard(player){
 
 // removing informative popups
 document.addEventListener("click", (e) => {
-    const popUp = document.getElementById("popUp");
-    if (popUp != undefined && !popUp.contains(e.target)){
-        popUp.remove();
+    const actionSelectionDiv = document.getElementById("selectActionContainer");
+    if (actionSelectionDiv != undefined && !actionSelectionDiv.contains(e.target)){
+        const translation = actionSelectionDiv.offsetWidth - 40;
+        actionSelectionDiv.style.transform = "translateX(-"+translation+"px)";
+        const sliderIcon = document.querySelector(`#displayVisibilitySlider img`);
+        sliderIcon.src = "/static/Images/Icons/expand.svg";
     }
 })
