@@ -44,6 +44,7 @@ socket.on("reconnection", (reconnectedPlayer, players, isGameInProgress) => {
 
         createGameSpace(players);
         displayStats(players);
+        createCardDisplay(reconnectedPlayer);
         actionSelection(players, myPlayerNum);
 
         if (!reconnectedPlayer.isReady){
@@ -137,6 +138,7 @@ function orientCardToPlayer(targetPlayerNum, numPlayers){
     myPlayedCard.style.transform = "translateY("+(-200*Math.sin(targetAngle))+"px) translateX("+(200*(1-Math.cos(targetAngle)))+"px)  rotate("+(targetAngle-Math.PI/2)+"rad)";       
 
 }
+
 function createGameSpace(players){
     const userID = document.cookie;
     const thisPlayer = players.find(player => player.playerID == userID);
@@ -207,18 +209,12 @@ function createGameSpace(players){
     bodyElement.appendChild(gameSpace);
 }
 
-function actionSelection(players, playerNum){
-    let actionToPlay = undefined;
-    let targetPlayerNum = undefined;
-
-    const actionSelectionDiv = document.createElement("div");
-    actionSelectionDiv.id = "selectActionContainer";
-
-
+function createCardDisplay(player){
+    const actionDisplayDiv = document.createElement("div");
+    actionDisplayDiv.id = "actionDisplayDiv";
 
     const cardLocationToggle = document.createElement("div");
     cardLocationToggle.id = "cardLocationToggle";
-
     const handToggle = document.createElement("button");
     handToggle.id = "handToggle";
     handToggle.textContent = "Hand";
@@ -228,33 +224,66 @@ function actionSelection(players, playerNum){
 
     cardLocationToggle.appendChild(discardToggle);
     cardLocationToggle.appendChild(handToggle);
-    actionSelectionDiv.appendChild(cardLocationToggle)
+
+    const displayVisibilitySlider = document.createElement("div");
+    displayVisibilitySlider.id = "displayVisibilitySlider";
+    const sliderIcon = document.createElement("img");
+
+    sliderIcon.src = "/static/Images/Icons/expand.svg";
+    displayVisibilitySlider.addEventListener("click", () => {
+        if (sliderIcon.src.includes("/static/Images/Icons/collapse.svg")){
+            const translation = actionDisplayDiv.offsetWidth - 40;
+            actionDisplayDiv.style.transform = "translateX(-"+translation+"px)";
+            sliderIcon.src = "/static/Images/Icons/expand.svg";
+        }
+        else{
+            actionDisplayDiv.style.transform = "";
+            sliderIcon.src = "/static/Images/Icons/collapse.svg";
+        }
+    })
+    displayVisibilitySlider.appendChild(sliderIcon);
+    actionDisplayDiv.appendChild(cardLocationToggle)
+    actionDisplayDiv.appendChild(displayVisibilitySlider);
 
 
 
     const actionSelection = document.createElement("div");
     actionSelection.id = "actionSelection";
 
-    for (let i = 0; i < players[playerNum].hand.length; i++){
+    for (let i = 0; i < player.hand.length; i++){
         const actionDiv = document.createElement("div");
         const possibleAction = document.createElement("img");
-        possibleAction.src = players[playerNum].hand[i][0].image;
+        possibleAction.src = player.hand[i][0].image;
         possibleAction.addEventListener("click", () => {
-            const previousSelection = document.getElementById("selectedCard");
-            if (previousSelection != undefined){
-                previousSelection.id = "";
-            }
-            actionDiv.id = "selectedCard";
-            actionToPlay = players[playerNum].hand[i][0];
+            if (player.waitingOn == "selectAction"){
+                const previousSelection = document.getElementById("selectedCard");
+                if (previousSelection != undefined){
+                    previousSelection.id = "";
+                }
+                actionDiv.id = "selectedCard";
 
+                const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
+                myPlayedCard.src = player.hand[i][0].image;
+                myPlayedCard.style.display = "block";
+                // !!!!!!!!!!!! should set card display back to "none" after actions resolved
+            }
         })
+
         const numberOfAction = document.createElement("p");
-        numberOfAction.textContent = "x"+players[playerNum].hand[i][1];
+        numberOfAction.textContent = "x"+player.hand[i][1];
         actionDiv.appendChild(possibleAction);
         actionDiv.appendChild(numberOfAction);
         actionSelection.appendChild(actionDiv);
     }
-    actionSelectionDiv.appendChild(actionSelection);
+    actionDisplayDiv.appendChild(actionSelection);
+
+    bodyElement.appendChild(actionDisplayDiv);
+    const translation = actionDisplayDiv.offsetWidth - 40;
+    actionDisplayDiv.style.transform = "translateX(-"+translation+"px)";
+}
+
+function actionSelection(players, playerNum){
+    let targetPlayerNum = undefined;
 
     for (let i = 0; i < players.length; i++){
         if (i != myPlayerNum){
@@ -289,40 +318,19 @@ function actionSelection(players, playerNum){
         }
     }
 
-
-    const displayVisibilitySlider = document.createElement("div");
-    displayVisibilitySlider.id = "displayVisibilitySlider";
-    const sliderIcon = document.createElement("img");
-
-    sliderIcon.src = "/static/Images/Icons/collapse.svg";
-    displayVisibilitySlider.addEventListener("click", () => {
-
-        if (sliderIcon.src.includes("/static/Images/Icons/collapse.svg")){
-            const translation = actionSelectionDiv.offsetWidth - 40;
-            actionSelectionDiv.style.transform = "translateX(-"+translation+"px)";
-            sliderIcon.src = "/static/Images/Icons/expand.svg";
-        }
-        else{
-            actionSelectionDiv.style.transform = "";
-            sliderIcon.src = "/static/Images/Icons/collapse.svg";
-        }
-    })
-    displayVisibilitySlider.appendChild(sliderIcon);
-    actionSelectionDiv.appendChild(displayVisibilitySlider);
-
     const confirm = document.createElement("button");
     confirm.id = "confirm";
     confirm.textContent = "Confirm";
     confirm.addEventListener("click", () => {
-        if (actionToPlay != undefined && targetPlayerNum != undefined){
+        const actionToPlayDOM = document.getElementById("selectedCard");
+        if (actionToPlayDOM != undefined && targetPlayerNum != undefined){
+            const actionToPlay = players[myPlayerNum].hand.find(action => actionToPlayDOM.image.includes(action.image));
             socket.emit("chosenAction", myPlayerNum, actionToPlay, targetPlayerNum);
             // 
             confirm.remove();
-            actionSelectionDiv.remove()
         }
     })
     bodyElement.appendChild(confirm);
-    bodyElement.appendChild(actionSelectionDiv);
 }
 
 function displayStats(players){

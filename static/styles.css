@@ -112,7 +112,7 @@ div[id^="player"] #handIcon{
     width: 75px;
 }
 
-#selectActionContainer{
+#actionDisplayDiv{
     position: absolute;
     align-self: center;
     width: fit-content;
