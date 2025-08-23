@@ -99,6 +99,12 @@ io.on("connection", (socket) => {
     socket.on("chosenAction", (playerNum, action, target) => {
         players[playerNum].playedCard = [action, target];
         players[playerNum].isReady = true;
+
+        if (!players.some(player => player.isReady == false)){
+            io.emit("revealActions", players);
+            players.forEach((player) => {player.waitingOn = "actionExecution"; player.isReady = false});
+            resolveOrderedActions(players);
+        }
     })
 })
 
@@ -186,28 +192,24 @@ function resolveOrderedActions(players){
     const workValue = establishWorkValue(playedCard);
     // adjust iterations to equal number of IN-GAME ordered cards-1
     for (let i = 1; i < 5; i++){
-        for (let j = 0; j < players.length; j++)
-        if (players[j].playedCards[0].priority == i){
-            const player = players.find(player => player.playerNum == j);
+        players.forEach((player) => {if (player.playedCard[0].priority == i) {
             eval(player.playedCard[0].effect);
-        }
+        }})
     }
     resolveUnorderedActions(players);
 }
 
 function resolveUnorderedActions(players){
-    for (let i = 0; i < players.length; i++){
-        const player = players.find(player => player.playerNum == i);
-        eval(player.playerdCard[0].effect);
-    }
+    players.forEach((player) => eval(player.playerdCard[0].effect));
+    players.forEach((player) => eval(player.playerdCard[0].effect));
 }
 
 function work(worker, modification){
-    worker.numCoins += (workValue + modification);
+    worker.numCoins += (4 + modification); // !!!!!!!!! should vary based on number of workers
 }
 
 function steal(stealer, stealFrom, modification){
-    const coinsToSteal = Math.min(4 + modification, stealFrom.numCoins); // should vary based on number of steals
+    const coinsToSteal = Math.min(4 + modification, stealFrom.numCoins); // !!!!!!!!!!!!!! should vary based on number of steals
     stealer.numCoins += coinsToSteal;
     stealFrom.numCoins -= coinsToSteal;
 }

@@ -107,6 +107,12 @@ socket.on("createGameSpace", (players) => {
 socket.on("chooseAction", (players) => {
     actionSelection(players, myPlayerNum);
 })
+socket.on("revealActions", (players) => {
+    players.forEach((player) => {
+        const playedCard = document.querySelector(`player${player.playerNum} .playedCard`);
+        playedCard.src = player.playedCard[0].image;
+    })
+})
 
 
 
@@ -188,23 +194,6 @@ function createGameSpace(players){
         playerSpace.appendChild(playedCard);
         playerSpace.appendChild(playerIcon);
 
-
-        if (i == myPlayerNum){
-            playerSpace.classList.add("myself");
-            const handIcon = document.createElement("img");
-            handIcon.src = "static/Images/Icons/hand.svg";
-            handIcon.id = "handIcon";
-
-            const discardIcon = document.createElement("img");
-            //discardIcon.src = "static/Images/Icons/discard.svg";
-
-            playerSpace.appendChild(handIcon, discardIcon);
-        }
-        else{
-
-
-        }
-        
         gameSpace.appendChild(playerSpace);
     }
     bodyElement.appendChild(gameSpace);
@@ -213,8 +202,6 @@ function createGameSpace(players){
 function createCardDisplay(player){
     const actionDisplayDiv = document.createElement("div");
     actionDisplayDiv.id = "actionDisplayDiv";
-
-    /// !!!!!!!!! HEIGHT SHOULD STAY CONSTANT
 
     const discardToggleDiv = document.createElement("div");
     discardToggleDiv.id = "discardToggleDiv";
@@ -354,7 +341,7 @@ function actionSelection(players, playerNum){
         if (actionToPlayDOM != undefined && targetPlayerNum != undefined){
             const actionToPlay = players[myPlayerNum].hand.find(action => actionToPlayDOM.src.includes(action.image));
             socket.emit("chosenAction", myPlayerNum, actionToPlay, targetPlayerNum);
-            // 
+            console.log(actionToPlay, targetPlayerNum);
             confirm.remove();
         }
     })
