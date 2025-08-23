@@ -214,11 +214,15 @@ function actionSelection(players, playerNum){
     const actionSelectionDiv = document.createElement("div");
     actionSelectionDiv.id = "selectActionContainer";
 
+    const cardLocationToggle = document.createElement("div");
+    cardLocationToggle.id = "cardLocationToggle";
+    actionSelectionDiv.appendChild(cardLocationToggle)
+
     const actionSelection = document.createElement("div");
     actionSelection.id = "actionSelection";
+
     for (let i = 0; i < players[playerNum].hand.length; i++){
         const actionDiv = document.createElement("div");
-        actionDiv.id = "actionDiv";
         const possibleAction = document.createElement("img");
         possibleAction.src = players[playerNum].hand[i][0].image;
         possibleAction.addEventListener("click", () => {
@@ -348,7 +352,6 @@ function examineDiscard(player){
 
     for (let i = 0; i < player.discard.length; i++){
         const actionDiv = document.createElement("div");
-        actionDiv.id = "actionDiv";
 
         const action = document.createElement("img");
         action.src = player.discard[i][0].image

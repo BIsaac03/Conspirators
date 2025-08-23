@@ -107,6 +107,41 @@ div[id^="player"] #handIcon{
     width: 75px;
 }
 
+#selectActionContainer{
+    position: absolute;
+    align-self: center;
+    width: fit-content;
+    display: grid;
+    grid-template-rows: 50px fit-content;
+    padding: 20px;
+    background-color: #000000d5;
+    z-index: 6;
+
+}
+#actionSelection{
+    display: grid;
+    grid-template: auto auto / repeat(4, auto);
+    gap: 25px;
+}
+#cardLocationToggle{
+    align-self: center;
+    height: 50px;
+    width: 100%;
+    grid-column: 1 / 2;
+}
+#actionSelection div{
+    display: grid;
+    grid-template-rows: 1fr auto;
+    justify-items: center;
+    font-size: 36px;
+    font-weight: bold;
+    color: white;
+}
+#actionSelection img{
+    width: 250px;
+    border-radius: 11%;
+}
+
 #selectedPlayer{
     border: 5px solid purple;
 }
