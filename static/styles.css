@@ -142,12 +142,17 @@ div[id^="player"] #handIcon{
     width: 100%;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    align-items: center;
-    justify-items: center;
-    background-color: #6e6e6ed5;
+
     font-family: "callistoMT"
 }
-#cardLocationToggle button{
+#cardLocationToggle>div{
+    display: grid;
+    align-items: center;
+    justify-items: center;
+    width: 100%;
+    height: 100%;
+}
+#cardLocationToggle>div>button{
     width: 400px;
     font-size: 36px;
 }

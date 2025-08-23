@@ -214,17 +214,39 @@ function createCardDisplay(player){
     const actionDisplayDiv = document.createElement("div");
     actionDisplayDiv.id = "actionDisplayDiv";
 
+    /// !!!!!!!!! HEIGHT SHOULD STAY CONSTANT
+
+    const discardToggleDiv = document.createElement("div");
+    discardToggleDiv.id = "discardToggleDiv";
+    discardToggleDiv.classList.add("cardLocationToggle");
+    discardToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
+    const discardToggle = document.createElement("button");
+    discardToggle.textContent = "Discard"
+    discardToggleDiv.addEventListener("click", () => {
+        discardToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
+        handToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
+        displayCards(player, player.discard);
+    })
+    discardToggleDiv.appendChild(discardToggle);
+
+    const handToggleDiv = document.createElement("div");
+    handToggleDiv.id = "handToggleDiv";
+    handToggleDiv.classList.add("cardLocationToggle");
+    handToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
+    const handToggle = document.createElement("button");
+    handToggle.textContent = "Hand";
+    handToggleDiv.addEventListener("click", () => {
+        handToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
+        discardToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
+        displayCards(player, player.hand);
+    })
+    handToggleDiv.appendChild(handToggle);
+
     const cardLocationToggle = document.createElement("div");
     cardLocationToggle.id = "cardLocationToggle";
-    const handToggle = document.createElement("button");
-    handToggle.id = "handToggle";
-    handToggle.textContent = "Hand";
-    const discardToggle = document.createElement("button");
-    discardToggle.id = "discardToggle";
-    discardToggle.textContent = "Discard"
+    cardLocationToggle.appendChild(discardToggleDiv);
+    cardLocationToggle.appendChild(handToggleDiv);
 
-    cardLocationToggle.appendChild(discardToggle);
-    cardLocationToggle.appendChild(handToggle);
 
     const displayVisibilitySlider = document.createElement("div");
     displayVisibilitySlider.id = "displayVisibilitySlider";
@@ -240,23 +262,34 @@ function createCardDisplay(player){
         else{
             actionDisplayDiv.style.transform = "";
             sliderIcon.src = "/static/Images/Icons/collapse.svg";
+            displayCards(player, player.hand);
         }
     })
     displayVisibilitySlider.appendChild(sliderIcon);
-    actionDisplayDiv.appendChild(cardLocationToggle)
+
+    actionDisplayDiv.appendChild(cardLocationToggle);
     actionDisplayDiv.appendChild(displayVisibilitySlider);
-
-
 
     const actionSelection = document.createElement("div");
     actionSelection.id = "actionSelection";
 
-    for (let i = 0; i < player.hand.length; i++){
+    actionDisplayDiv.appendChild(actionSelection);
+
+    bodyElement.appendChild(actionDisplayDiv);
+    const translation = actionDisplayDiv.offsetWidth - 40;
+    actionDisplayDiv.style.transform = "translateX(-"+translation+"px)";
+}
+
+function displayCards(player, cardsToDisplay){
+    const actionSelection = document.getElementById("actionSelection");
+    actionSelection.innerHTML = "";
+
+    for (let i = 0; i < cardsToDisplay.length; i++){
         const actionDiv = document.createElement("div");
         const possibleAction = document.createElement("img");
-        possibleAction.src = player.hand[i][0].image;
+        possibleAction.src = cardsToDisplay[i][0].image;
         possibleAction.addEventListener("click", () => {
-            if (player.waitingOn == "selectAction"){
+            if (cardsToDisplay == player.hand && player.waitingOn == "selectAction"){
                 const previousSelection = document.getElementById("selectedCard");
                 if (previousSelection != undefined){
                     previousSelection.id = "";
@@ -264,23 +297,17 @@ function createCardDisplay(player){
                 actionDiv.id = "selectedCard";
 
                 const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
-                myPlayedCard.src = player.hand[i][0].image;
-                myPlayedCard.style.display = "block";
-                // !!!!!!!!!!!! should set card display back to "none" after actions resolved
+                myPlayedCard.src = cardsToDisplay[i][0].image;
+                // !!!!!!!!!!!! should set card src to non-descript back after actions resolved
             }
         })
 
         const numberOfAction = document.createElement("p");
-        numberOfAction.textContent = "x"+player.hand[i][1];
+        numberOfAction.textContent = "x"+cardsToDisplay[i][1];
         actionDiv.appendChild(possibleAction);
         actionDiv.appendChild(numberOfAction);
         actionSelection.appendChild(actionDiv);
     }
-    actionDisplayDiv.appendChild(actionSelection);
-
-    bodyElement.appendChild(actionDisplayDiv);
-    const translation = actionDisplayDiv.offsetWidth - 40;
-    actionDisplayDiv.style.transform = "translateX(-"+translation+"px)";
 }
 
 function actionSelection(players, playerNum){
