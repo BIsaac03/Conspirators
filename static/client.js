@@ -170,29 +170,31 @@ function createGameSpace(players){
 
         const playedCard = document.createElement("img");
         playedCard.classList.add("playedCard");
-        playedCard.src = "static/Images/Actions/back2.png";
+        playedCard.src = "static/Images/Actions/back.png";
         playedCard.style.transform = 'rotate(-90deg)';
 
         playedCard.addEventListener("mouseover", () => {
-            const blownUpAction = document.createElement("img");
-            blownUpAction.src = playedCard.src;
-            blownUpAction.id = "blownUp";
-            bodyElement.appendChild(blownUpAction);
-            playedCard.style.opacity = 0.3;
-
-            playedCard.addEventListener("mouseout", () => {
-                const blownUpAction = document.getElementById("blownUp");
-                if (blownUpAction != undefined && !blownUpAction.matches(':hover')){
-                    playedCard.style.opacity = 1.0;
-                    blownUpAction.remove();
-                }
-            })
-            blownUpAction.addEventListener("mouseout", () => {
-                if (!playedCard.matches(':hover')){
-                    playedCard.style.opacity = 1.0;
-                    blownUpAction.remove();
-                }
-            })
+            if (!playedCard.src.includes("static/Images/Actions/back.png")){
+                const blownUpAction = document.createElement("img");
+                blownUpAction.src = playedCard.src;
+                blownUpAction.id = "blownUp";
+                bodyElement.appendChild(blownUpAction);
+                playedCard.style.opacity = 0.3;
+    
+                playedCard.addEventListener("mouseout", () => {
+                    const blownUpAction = document.getElementById("blownUp");
+                    if (blownUpAction != undefined && !blownUpAction.matches(':hover')){
+                        playedCard.style.opacity = 1.0;
+                        blownUpAction.remove();
+                    }
+                })
+                blownUpAction.addEventListener("mouseout", () => {
+                    if (!playedCard.matches(':hover')){
+                        playedCard.style.opacity = 1.0;
+                        blownUpAction.remove();
+                    }
+                })
+            }
         })
 
         playerSpace.appendChild(playedCard);
@@ -242,7 +244,7 @@ function createCardDisplay(player){
     displayVisibilitySlider.id = "displayVisibilitySlider";
     const sliderIcon = document.createElement("img");
     sliderIcon.id = "sliderIcon";
-    sliderIcon.src = "/static/Images/Icons/expand.svg";
+    sliderIcon.src = "/static/Images/Icons/collapse.svg";
     displayVisibilitySlider.appendChild(sliderIcon);
     displayVisibilitySlider.addEventListener("click", openCloseDisplay);
     
