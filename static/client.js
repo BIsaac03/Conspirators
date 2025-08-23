@@ -102,6 +102,7 @@ socket.on("playerKicked", (playerID) => {
 socket.on("createGameSpace", (players) => {
     createGameSpace(players);
     displayStats(players);
+    createCardDisplay(players[myPlayerNum]);
 })
 socket.on("chooseAction", (players) => {
     actionSelection(players, myPlayerNum);
@@ -322,9 +323,9 @@ function actionSelection(players, playerNum){
     confirm.id = "confirm";
     confirm.textContent = "Confirm";
     confirm.addEventListener("click", () => {
-        const actionToPlayDOM = document.getElementById("selectedCard");
+        const actionToPlayDOM = document.querySelector("#selectedCard img");
         if (actionToPlayDOM != undefined && targetPlayerNum != undefined){
-            const actionToPlay = players[myPlayerNum].hand.find(action => actionToPlayDOM.image.includes(action.image));
+            const actionToPlay = players[myPlayerNum].hand.find(action => actionToPlayDOM.src.includes(action.image));
             socket.emit("chosenAction", myPlayerNum, actionToPlay, targetPlayerNum);
             // 
             confirm.remove();
@@ -410,10 +411,10 @@ function examineDiscard(player){
 
 // removing informative popups
 document.addEventListener("click", (e) => {
-    const actionSelectionDiv = document.getElementById("selectActionContainer");
-    if (actionSelectionDiv != undefined && !actionSelectionDiv.contains(e.target)){
-        const translation = actionSelectionDiv.offsetWidth - 40;
-        actionSelectionDiv.style.transform = "translateX(-"+translation+"px)";
+    const actionDisplayDiv = document.getElementById("actionDisplayDiv");
+    if (actionDisplayDiv != undefined && !actionDisplayDiv.contains(e.target)){
+        const translation = actionDisplayDiv.offsetWidth - 40;
+        actionDisplayDiv.style.transform = "translateX(-"+translation+"px)";
         const sliderIcon = document.querySelector(`#displayVisibilitySlider img`);
         sliderIcon.src = "/static/Images/Icons/expand.svg";
     }

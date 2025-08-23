@@ -53,9 +53,6 @@ io.on("connection", (socket) => {
     socket.emit("displayExistingPlayers", players);
 
     socket.on("playerJoinedLobby", (playerID, playerName, playerColor) => {
-        console.log(isGameInProgress);
-
-        
         if (isGameInProgress){
             socket.emit("gameInProgress");
         }
@@ -91,9 +88,11 @@ io.on("connection", (socket) => {
         if (alreadyStarted == undefined){
             for (let i = 0; i < players.length; i++){
                 players[i].isInGame = true;
+                players[i].waitingOn = "selectAction";
             }
             isGameInProgress = true;
             io.emit("createGameSpace", players);
+            socket.emit("chooseAction", players)
         }
     })
 
@@ -130,7 +129,7 @@ function makePlayer(selectedBAs, ID, name, color){
             BA2 = selectedBAs[1];
         }
 
-        return [[steal, 3], [work, 3], [defend, 1], [reciprocate, 1], [rest, 1], [BA1, 1], [BA2, 1]];
+        return [[steal, 3], [work, 3], [defend, 1], [reciprocate, 1], [rest, 1]];
     }
 
     const hand = createStartingHand(selectedBAs);
