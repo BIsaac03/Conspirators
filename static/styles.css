@@ -115,7 +115,8 @@ div[id^="player"] #handIcon{
 #actionDisplayDiv{
     position: absolute;
     align-self: center;
-    width: fit-content;
+    width: 75vw;
+    height: 87vh;
     display: grid;
     grid-template: 70px auto / auto 40px;
     z-index: 6;
@@ -130,7 +131,7 @@ div[id^="player"] #handIcon{
 }
 #displayVisibilitySlider{
     grid-area: 1 / 2 / 3 / 3;
-    width: 40px;
+    width: 70px;
     height: 100%;
     display: grid;
     align-items: center;
@@ -142,7 +143,6 @@ div[id^="player"] #handIcon{
     width: 100%;
     display: grid;
     grid-template-columns: 1fr 1fr;
-
     font-family: "callistoMT"
 }
 #cardLocationToggle>div{
@@ -153,7 +153,7 @@ div[id^="player"] #handIcon{
     height: 100%;
 }
 #cardLocationToggle>div>button{
-    width: 400px;
+    width: 50%;
     font-size: 36px;
 }
 #actionSelection div{

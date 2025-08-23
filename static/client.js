@@ -108,10 +108,10 @@ socket.on("chooseAction", (players) => {
     actionSelection(players, myPlayerNum);
 })
 socket.on("revealActions", (players) => {
-    players.forEach((player) => {
-        const playedCard = document.querySelector(`player${player.playerNum} .playedCard`);
-        playedCard.src = player.playedCard[0].image;
-    })
+    revealActions(players);
+})
+socket.on("updateStats", (players) => {
+    updateStats(players);
 })
 
 
@@ -139,10 +139,10 @@ function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
     return targetAngle;
 }
 
-function orientCardToPlayer(targetPlayerNum, numPlayers){
-    const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
-    const targetAngle = calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers);
-    myPlayedCard.style.transform = "translateY("+(-200*Math.sin(targetAngle))+"px) translateX("+(200*(1-Math.cos(targetAngle)))+"px)  rotate("+(targetAngle-Math.PI/2)+"rad)";       
+function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
+    const playedCard = document.querySelector(`#player${originPlayerNum} .playedCard`);
+    const targetAngle = calculateTargetAngle(originPlayerNum, targetPlayerNum, numPlayers);
+    playedCard.style.transform = "translateY("+(-200*Math.sin(targetAngle))+"px) translateX("+(200*(1-Math.cos(targetAngle)))+"px)  rotate("+(targetAngle-Math.PI/2)+"rad)";       
 
 }
 
@@ -166,7 +166,7 @@ function createGameSpace(players){
 
         const playedCard = document.createElement("img");
         playedCard.classList.add("playedCard");
-        playedCard.src = "static/Images/Actions/Defend.png";
+        playedCard.src = "static/Images/Actions/back2.png";
         playedCard.style.transform = 'rotate(-90deg)';
 
         playedCard.addEventListener("mouseover", () => {
@@ -305,7 +305,7 @@ function actionSelection(players, playerNum){
             const playerIcon = document.querySelector(`#player${i} .playerIcon`);
             playerIcon.addEventListener("mouseover", () => {
                 if (targetPlayerNum == undefined){
-                    orientCardToPlayer(i, players.length);
+                    orientCardToPlayer(myPlayerNum, i, players.length);
                 }
             })
             playerIcon.addEventListener("click", () => {
@@ -326,7 +326,7 @@ function actionSelection(players, playerNum){
                     previousSelection.id = "";
                     playerIcon.id = "selectedPlayer";
                     
-                    orientCardToPlayer(i, players.length);
+                    orientCardToPlayer(myPlayerNum, i, players.length);
                     targetPlayerNum = i;
                 }
             })
@@ -339,15 +339,30 @@ function actionSelection(players, playerNum){
     confirm.addEventListener("click", () => {
         const actionToPlayDOM = document.querySelector("#selectedCard img");
         if (actionToPlayDOM != undefined && targetPlayerNum != undefined){
-            const actionToPlay = players[myPlayerNum].hand.find(action => actionToPlayDOM.src.includes(action.image));
-            socket.emit("chosenAction", myPlayerNum, actionToPlay, targetPlayerNum);
-            console.log(actionToPlay, targetPlayerNum);
+            const actionToPlay = players[myPlayerNum].hand.find(action => actionToPlayDOM.src.includes(action[0].image));
+            socket.emit("chosenAction", myPlayerNum, actionToPlay[0], targetPlayerNum);
+
+            // remove card-orienting event listeners
+            for (let i = 0; i < players.length; i++){
+                if (i != myPlayerNum){
+                    const oldPlayerIcon = document.querySelector(`#player${i} .playerIcon`);
+                    var newPlayerIcon = oldPlayerIcon.cloneNode(true);
+                    oldPlayerIcon.parentNode.replaceChild(newPlayerIcon, oldPlayerIcon);
+                }
+            }
             confirm.remove();
-        }
+        }  
     })
     bodyElement.appendChild(confirm);
 }
 
+function revealActions(players){
+    players.forEach((player) => {
+        const playedCard = document.querySelector(`#player${player.playerNum} .playedCard`);
+        playedCard.src = player.playedCard[0].image;
+        orientCardToPlayer(player.playerNum, player.playedCard[1], players.length);
+    })
+}
 function displayStats(players){
     const statsSidebar = document.createElement("div");
     statsSidebar.id = "statsSidebar";
@@ -359,20 +374,21 @@ function displayStats(players){
         const playerName = document.createElement("p");
         playerName.textContent = players[(myPlayerNum + i)%players.length].playerName;
         playerName.classList.add("playerName");
+        const numCoins = document.createElement("p");
+        numCoins.textContent = players[(myPlayerNum + i)%players.length].numCoins;
+        numCoins.classList.add("numCoins");
         const numCardsInHand = document.createElement("p");
         numCardsInHand.textContent = players[(myPlayerNum + i)%players.length].hand.length;
         numCardsInHand.classList.add("handNum");
         const numCardsInDiscard = document.createElement("p");
         numCardsInDiscard.textContent = players[(myPlayerNum + i)%players.length].discard.length;
         numCardsInDiscard.classList.add("discardNum");
-        const numCoins = document.createElement("p");
-        numCoins.textContent = players[(myPlayerNum + i)%players.length].numCoins;
-        numCoins.classList.add("numCoins");
+
 
         playerDisplay.appendChild(playerName);
+        playerDisplay.appendChild(numCoins);
         playerDisplay.appendChild(numCardsInHand);
         playerDisplay.appendChild(numCardsInDiscard);
-        playerDisplay.appendChild(numCoins);
 
         if (i == 0){
             const coinsInVault = document.createElement("div");
@@ -397,7 +413,7 @@ function updateStats(players){
         const numCoins = document.querySelector(`#playerDisplay${i} .numCoins`);
         numCoins.textContent = players[i].numCoins;
 
-        if (i == myPlayerNum){
+        if (i == 68){//myPlayerNum){
             const numCoinsInvested = (`#playerDisplay${i} .coinsInvested`);
             numCoinsInvested.textContent = players[i].investedCoins;
         }

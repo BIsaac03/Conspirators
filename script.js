@@ -100,7 +100,8 @@ io.on("connection", (socket) => {
         players[playerNum].playedCard = [action, target];
         players[playerNum].isReady = true;
 
-        if (!players.some(player => player.isReady == false)){
+        const keepWaiting = players.find(player => player.isReady == false)
+        if (keepWaiting == undefined){
             io.emit("revealActions", players);
             players.forEach((player) => {player.waitingOn = "actionExecution"; player.isReady = false});
             resolveOrderedActions(players);
@@ -149,7 +150,7 @@ function makePlayer(selectedBAs, ID, name, color){
     const playerID = ID;
     const playerName = name
     const playerColor = color
-    let isReady = true;
+    let isReady = false;
     let isInGame = false;
     let waitingOn = undefined;
 
@@ -189,7 +190,7 @@ function establishWorkValue(playedCards){
 }
 
 function resolveOrderedActions(players){
-    const workValue = establishWorkValue(playedCard);
+    //const workValue = establishWorkValue(playedCard);
     // adjust iterations to equal number of IN-GAME ordered cards-1
     for (let i = 1; i < 5; i++){
         players.forEach((player) => {if (player.playedCard[0].priority == i) {
@@ -200,8 +201,10 @@ function resolveOrderedActions(players){
 }
 
 function resolveUnorderedActions(players){
-    players.forEach((player) => eval(player.playerdCard[0].effect));
-    players.forEach((player) => eval(player.playerdCard[0].effect));
+    players.forEach((player) => {if (player.playedCard[0].priority == 0) {
+        eval(player.playedCard[0].effect);
+    }})
+    io.emit("updateStats", players);
 }
 
 function work(worker, modification){
