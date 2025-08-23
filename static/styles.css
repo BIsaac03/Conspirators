@@ -1,5 +1,10 @@
 @import "./lobby.css";
 
+@font-face {
+    font-family: "callistoMT";
+    src: url("/static/CallistoMT.ttf");
+}
+
 *{
     padding: 0px;
     margin: 0px;
@@ -112,22 +117,37 @@ div[id^="player"] #handIcon{
     align-self: center;
     width: fit-content;
     display: grid;
-    grid-template-rows: 50px fit-content;
-    padding: 20px;
-    background-color: #000000d5;
+    grid-template: 70px auto / auto 50px;
     z-index: 6;
-
 }
 #actionSelection{
     display: grid;
     grid-template: auto auto / repeat(4, auto);
     gap: 25px;
+    overflow: auto;
+    padding: 20px;
+    background-color: #000000d5;
+}
+#displayVisibilitySlider{
+    grid-area: 1 / 2 / 3 / 3;
+    width: 50px;
+    height: 100%;
+    background-color: burlywood;
 }
 #cardLocationToggle{
     align-self: center;
-    height: 50px;
+    height: 70px;
     width: 100%;
-    grid-column: 1 / 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    justify-items: center;
+    background-color: #6e6e6ed5;
+    font-family: "callistoMT"
+}
+#cardLocationToggle button{
+    width: 400px;
+    font-size: 36px;
 }
 #actionSelection div{
     display: grid;

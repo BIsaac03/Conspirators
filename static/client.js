@@ -214,9 +214,23 @@ function actionSelection(players, playerNum){
     const actionSelectionDiv = document.createElement("div");
     actionSelectionDiv.id = "selectActionContainer";
 
+
+
     const cardLocationToggle = document.createElement("div");
     cardLocationToggle.id = "cardLocationToggle";
+
+    const handToggle = document.createElement("button");
+    handToggle.id = "handToggle";
+    handToggle.textContent = "Hand";
+    const discardToggle = document.createElement("button");
+    discardToggle.id = "discardToggle";
+    discardToggle.textContent = "Discard"
+
+    cardLocationToggle.appendChild(discardToggle);
+    cardLocationToggle.appendChild(handToggle);
     actionSelectionDiv.appendChild(cardLocationToggle)
+
+
 
     const actionSelection = document.createElement("div");
     actionSelection.id = "actionSelection";
@@ -274,6 +288,11 @@ function actionSelection(players, playerNum){
             })
         }
     }
+
+
+    const displayVisibilitySlider = document.createElement("div");
+    displayVisibilitySlider.id = "displayVisibilitySlider";
+    actionSelectionDiv.appendChild(displayVisibilitySlider);
 
     const confirm = document.createElement("button");
     confirm.id = "confirm";
