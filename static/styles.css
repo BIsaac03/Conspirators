@@ -116,7 +116,7 @@ div[id^="player"] #handIcon{
     position: absolute;
     align-self: center;
     width: 75vw;
-    height: 87vh;
+    height: 90vh;
     display: grid;
     grid-template: 70px auto / auto 40px;
     z-index: 6;
@@ -160,6 +160,7 @@ div[id^="player"] #handIcon{
     display: grid;
     grid-template-rows: 1fr auto;
     justify-items: center;
+    align-items: end;
     font-size: 36px;
     font-weight: bold;
     color: white;

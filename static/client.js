@@ -45,6 +45,8 @@ socket.on("reconnection", (reconnectedPlayer, players, isGameInProgress) => {
         createGameSpace(players);
         displayStats(players);
         createCardDisplay(reconnectedPlayer);
+        openCloseDisplay();
+        displayCards(reconnectedPlayer.playerNum, reconnectedPlayer.hand);
         actionSelection(players, myPlayerNum);
 
         if (!reconnectedPlayer.isReady){
@@ -103,6 +105,8 @@ socket.on("createGameSpace", (players) => {
     createGameSpace(players);
     displayStats(players);
     createCardDisplay(players[myPlayerNum]);
+    openCloseDisplay();
+    displayCards(players[myPlayerNum], players[myPlayerNum].hand);
 })
 socket.on("chooseAction", (players) => {
     actionSelection(players, myPlayerNum);
@@ -234,26 +238,14 @@ function createCardDisplay(player){
     cardLocationToggle.appendChild(discardToggleDiv);
     cardLocationToggle.appendChild(handToggleDiv);
 
-
     const displayVisibilitySlider = document.createElement("div");
     displayVisibilitySlider.id = "displayVisibilitySlider";
     const sliderIcon = document.createElement("img");
-
+    sliderIcon.id = "sliderIcon";
     sliderIcon.src = "/static/Images/Icons/expand.svg";
-    displayVisibilitySlider.addEventListener("click", () => {
-        if (sliderIcon.src.includes("/static/Images/Icons/collapse.svg")){
-            const translation = actionDisplayDiv.offsetWidth - 40;
-            actionDisplayDiv.style.transform = "translateX(-"+translation+"px)";
-            sliderIcon.src = "/static/Images/Icons/expand.svg";
-        }
-        else{
-            actionDisplayDiv.style.transform = "";
-            sliderIcon.src = "/static/Images/Icons/collapse.svg";
-            displayCards(player, player.hand);
-        }
-    })
     displayVisibilitySlider.appendChild(sliderIcon);
-
+    displayVisibilitySlider.addEventListener("click", openCloseDisplay);
+    
     actionDisplayDiv.appendChild(cardLocationToggle);
     actionDisplayDiv.appendChild(displayVisibilitySlider);
 
@@ -263,8 +255,21 @@ function createCardDisplay(player){
     actionDisplayDiv.appendChild(actionSelection);
 
     bodyElement.appendChild(actionDisplayDiv);
-    const translation = actionDisplayDiv.offsetWidth - 40;
-    actionDisplayDiv.style.transform = "translateX(-"+translation+"px)";
+}
+
+function openCloseDisplay(){
+    const actionDisplayDiv = document.getElementById("actionDisplayDiv");
+    const sliderIcon = document.getElementById("sliderIcon");
+    if (sliderIcon.src.includes("/static/Images/Icons/expand.svg")){
+        actionDisplayDiv.style.transform = "";
+        sliderIcon.src = "/static/Images/Icons/collapse.svg";
+    }
+    else {
+        const translation = actionDisplayDiv.offsetWidth - 40;
+        actionDisplayDiv.style.transform = "translateX(-"+translation+"px)";
+        const sliderIcon = document.querySelector(`#displayVisibilitySlider img`);
+        sliderIcon.src = "/static/Images/Icons/expand.svg";
+    }
 }
 
 function displayCards(player, cardsToDisplay){
@@ -285,7 +290,7 @@ function displayCards(player, cardsToDisplay){
 
                 const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
                 myPlayedCard.src = cardsToDisplay[i][0].image;
-                // !!!!!!!!!!!! should set card src to non-descript back after actions resolved
+                openCloseDisplay();
             }
         })
 
@@ -440,12 +445,10 @@ function examineDiscard(player){
 }
 
 // removing informative popups
-document.addEventListener("click", (e) => {
+/*document.addEventListener("click", (e) => {
     const actionDisplayDiv = document.getElementById("actionDisplayDiv");
     if (actionDisplayDiv != undefined && !actionDisplayDiv.contains(e.target)){
-        const translation = actionDisplayDiv.offsetWidth - 40;
-        actionDisplayDiv.style.transform = "translateX(-"+translation+"px)";
-        const sliderIcon = document.querySelector(`#displayVisibilitySlider img`);
-        sliderIcon.src = "/static/Images/Icons/expand.svg";
+        openCloseDisplay();
     }
 })
+*/
