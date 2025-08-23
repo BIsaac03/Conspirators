@@ -43,7 +43,7 @@ socket.on("reconnection", (reconnectedPlayer, players, isGameInProgress) => {
         myPlayerNum = reconnectedPlayer.playerNum;
 
         createGameSpace(players);
-        displayStats(players);
+        createStats(players);
         createCardDisplay(reconnectedPlayer);
         openCloseDisplay();
         displayCards(reconnectedPlayer.playerNum, reconnectedPlayer.hand);
@@ -99,11 +99,10 @@ socket.on("playerKicked", (playerID) => {
     }
 })
 
-
-
 socket.on("createGameSpace", (players) => {
     createGameSpace(players);
-    displayStats(players);
+    createStats(players);
+    updateStats(players);
     createCardDisplay(players[myPlayerNum]);
     openCloseDisplay();
     displayCards(players[myPlayerNum], players[myPlayerNum].hand);
@@ -117,8 +116,6 @@ socket.on("revealActions", (players) => {
 socket.on("updateStats", (players) => {
     updateStats(players);
 })
-
-
 
 function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
     // NUMS GET BIGGER CLOCKWISE
@@ -370,7 +367,8 @@ function revealActions(players){
         orientCardToPlayer(player.playerNum, player.playedCard[1], players.length);
     })
 }
-function displayStats(players){
+
+function createStats(players){
     const statsSidebar = document.createElement("div");
     statsSidebar.id = "statsSidebar";
 
@@ -380,32 +378,39 @@ function displayStats(players){
 
         const playerName = document.createElement("p");
         playerName.textContent = players[(myPlayerNum + i)%players.length].playerName;
+        playerName.color = players[(myPlayerNum + i)%players.length].playerColor[0];
         playerName.classList.add("playerName");
+
+        const coinsIcon = document.createElement("img");
+        coinsIcon.src = "static/Images/Icons/coins.png";
         const numCoins = document.createElement("p");
-        numCoins.textContent = players[(myPlayerNum + i)%players.length].numCoins;
         numCoins.classList.add("numCoins");
+        
+        const vaultIcon = document.createElement("img");
+        vaultIcon.src = "static/Images/Icons/safe.svg";
+        const numCoinsInVault = document.createElement("p");
+        numCoinsInVault.classList.add("numCoinsInVault");
+
+        const handIcon = document.createElement("img");
+        handIcon.src = "static/Images/Icons/hand.svg";
         const numCardsInHand = document.createElement("p");
-        numCardsInHand.textContent = players[(myPlayerNum + i)%players.length].hand.length;
         numCardsInHand.classList.add("handNum");
+
+        const discardIcon = document.createElement("img");
+        discardIcon.src = "static/Images/Icons/discard.png";
         const numCardsInDiscard = document.createElement("p");
-        numCardsInDiscard.textContent = players[(myPlayerNum + i)%players.length].discard.length;
         numCardsInDiscard.classList.add("discardNum");
 
-
         playerDisplay.appendChild(playerName);
+        playerDisplay.appendChild(coinsIcon);
         playerDisplay.appendChild(numCoins);
+        playerDisplay.appendChild(vaultIcon);
+        playerDisplay.appendChild(numCoinsInVault);
+        playerDisplay.appendChild(handIcon);
         playerDisplay.appendChild(numCardsInHand);
+        playerDisplay.appendChild(discardIcon);
         playerDisplay.appendChild(numCardsInDiscard);
-
-        if (i == 0){
-            const coinsInVault = document.createElement("div");
-            const vaultIcon = document.createElement("img");
-            vaultIcon.src = "static/Images/Icons/safe.svg";
-            const numCoinsInVault = document.createElement("p");
-            numCoinsInVault.textContent = players[0].investedCoins;
-            coinsInVault.appendChild(vaultIcon);
-            coinsInVault.appendChild(numCoinsInVault);
-        }
+        
         statsSidebar.appendChild(playerDisplay);
     }
     bodyElement.appendChild(statsSidebar);
@@ -420,37 +425,10 @@ function updateStats(players){
         const numCoins = document.querySelector(`#playerDisplay${i} .numCoins`);
         numCoins.textContent = players[i].numCoins;
 
-        if (i == 68){//myPlayerNum){
-            const numCoinsInvested = (`#playerDisplay${i} .coinsInvested`);
-            numCoinsInvested.textContent = players[i].investedCoins;
+        const numCoinsInVault = (`#playerDisplay${i} .numCoinsInVault`);
+        if (i == myPlayerNum){
+            numCoinsInVault.textContent = players[i].investedCoins;
         }
+        else{numCoinsInVault.textContent = '?'};
     }
 }
-
-function examineDiscard(player){
-    const discardPopUp = document.createElement("div");
-    discardPopUp.id = "discardPopUp";
-
-    for (let i = 0; i < player.discard.length; i++){
-        const actionDiv = document.createElement("div");
-
-        const action = document.createElement("img");
-        action.src = player.discard[i][0].image
-        const numCopies = document.createElement("p");
-        numCopies.textContent = "x"+player.discard[i][1];
-
-        actionDiv.appendChild(action);
-        actionDiv.appendChild(numCopies);
-    }
-    discardPopUp.appendChild(actionDiv);
-
-}
-
-// removing informative popups
-/*document.addEventListener("click", (e) => {
-    const actionDisplayDiv = document.getElementById("actionDisplayDiv");
-    if (actionDisplayDiv != undefined && !actionDisplayDiv.contains(e.target)){
-        openCloseDisplay();
-    }
-})
-*/
