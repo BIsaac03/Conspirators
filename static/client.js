@@ -148,6 +148,13 @@ socket.on("updateStats", (players) => {
     updateStats(players);
 })
 
+
+socket.on("notification", (playerNum, notification) => {
+    if (playerNum == myPlayerNum){
+        displayNotification(notification);
+    }
+})
+
 function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
     // NUMS GET BIGGER CLOCKWISE
     const totalInsideAngle = Math.PI * (numPlayers - 2);
@@ -521,4 +528,26 @@ function updateStats(players){
         }
         else{numCoinsInVault.textContent = '?'};
     }
+}
+
+function displayNotification(notification){
+    const notificationDiv = document.createElement("div");
+    notificationDiv.id = "notificationDiv";
+
+    const notificationContent = document.createElement("p");
+    notificationContent.id = "notification";
+    notificationContent.textContent = notification;
+
+    const closeNotifiction = document.createElement("button");
+    closeNotifiction.id = "closeNotification";
+    closeNotifiction.textContent = "X";
+    closeNotifiction.addEventListener("click", () => {
+        notificationDiv.remove();
+    })
+
+    notificationDiv.appendChild(notificationContent);
+    const notificationContainer = document.getElementById("notificationContainer");
+    notificationContainer.appendChild(notificationDiv);
+
+    setTimeout(() => {notification.remove()}, 60000);
 }
