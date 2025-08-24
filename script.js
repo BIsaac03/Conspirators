@@ -92,7 +92,7 @@ io.on("connection", (socket) => {
             }
             isGameInProgress = true;
             io.emit("createGameSpace", players);
-            socket.emit("chooseAction", players)
+            socket.emit("selectAction", players)
         }
     })
 
@@ -115,6 +115,28 @@ io.on("connection", (socket) => {
             players.forEach((player) => {player.waitingOn = "actionExecution"; player.isReady = false});
             resolveOrderedActions(players);
         }
+    })
+
+    socket.on("returnCardsToHand", (playerNum, retrievedCards) => {
+        retrievedCards.forEach(card => {
+            discardEntry = players[playerNum].discard.find(entry => entry[0] == card);
+            handEntry = players[playerNum].hand.find(entry => entry[0] == card);
+
+            if (discardEntry[1] == 1){
+                const indexToRemove = players[playerNum].discard.findIndex(discardEntry);
+                players[playerNum].discard.splice(indexToRemove, 1);
+            }
+            else{
+                discardEntry[1] -= 1;
+            }
+            
+            if (handEntry == undefined){
+                players[playerNum].hand.push([card, 1]);
+            }
+            else{
+                handEntry[1] += 1;
+            }
+        })
     })
 })
 
@@ -226,12 +248,14 @@ function steal(stealer, stealFrom, modification){
     stealFrom.numCoins -= coinsToSteal;
 }
 
-function rest(player, modification){
+function rest(player, override){
     let numActionsToReturn = Math.ceil(player.discard.length/2);
-    if (modification != undefined){
-        numActionsToReturn = modification;
+    if (override != undefined){
+        numActionsToReturn = override;
     }
-    // allow player to return up to numActionsToReturn
+    player.isReady = false;  
+    player.waitingOn = "retrieveCards"
+    io.emit("retrieveCards", player, numActionsToReturn);
 }
 
 function donate(giver, receiver, maxCoins){
@@ -242,7 +266,7 @@ function roundEndCleanup(players){
     players.forEach(player => {
         const duplicateActions = player.discard.find(entry => entry[0] == player.playedCard[0])
         if (duplicateActions == undefined){
-            player.discard.push([player.playedCard[0]][1]);
+            player.discard.push([player.playedCard[0], 1]);
         }
         else{
             duplicateActions[1] += 1;
