@@ -418,11 +418,17 @@ function retrieveCards(player, numCardsToRetrieve){
     const confirm = document.createElement("button");
     confirm.id = confirm;
     confirm.addEventListener("click", () => {
-        const retrievedActions = document.querySelectorAll(".retrieving");
-        if (totalRetrievals.length == numCardsToRetrieve){
-            retr
+        const retrievedActions = document.querySelectorAll(".retrieveIcon p");
+        const totalRetrievedCards = [];
+        retrievedActions.forEach(action => {
+            for (let i = 0; i < action.textContent; i++){
+                const returnedCard = player.discard.find(card => card.image == action.parentElement.parentElement.src);
+                totalRetrievedCards.push(returnedCard);
+            }
+        })
+        if (totalRetrievedCards.length == numCardsToRetrieve){
+            socket.emit("returnCardsToHand", myPlayerNum, totalRetrievedCards);
         }
-        socket.emit("returnCardsToHand", myPlayerNum, retrievedActions);
     })
 }
 
