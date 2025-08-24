@@ -59,7 +59,7 @@ socket.on("reconnection", (reconnectedPlayer, players, isGameInProgress) => {
             else if (reconnectedPlayer.waitingOn == "useCardSwap"){
     
             }
-            else if (reconnectedPlayer.waitingOn == "recoverCards"){
+            else if (reconnectedPlayer.waitingOn == "retrieveCards"){
     
             }
             else if (reconnectedPlayer.waitingOn == "donate"){
@@ -107,11 +107,16 @@ socket.on("createGameSpace", (players) => {
     openCloseDisplay();
     displayCards(players[myPlayerNum], players[myPlayerNum].hand);
 })
-socket.on("chooseAction", (players) => {
+socket.on("selectAction", (players) => {
     actionSelection(players, myPlayerNum);
 })
 socket.on("revealActions", (players) => {
     revealActions(players);
+})
+socket.on("retrieveCards", (player, numCardsToRetrieve) =>{
+    if (player.playerNum == myPlayerNum){
+        retrieveCards(player, numCardsToRetrieve);
+    }
 })
 socket.on("updateStats", (players) => {
     updateStats(players);
@@ -291,9 +296,35 @@ function displayCards(player, cardsToDisplay){
                 myPlayedCard.src = cardsToDisplay[i][0].image;
                 openCloseDisplay();
             }
+            if (cardsToDisplay == player.discard && player.waitingOn == "retrieveCards"){
+                const remainingRetrievals = document.getElementById("remainingRetrievals");
+                const numDuplicateRetrievals = document.querySelector(`.retrieveIcon p.${i}`);
+
+                if (numDuplicateRetrievals == undefined && remainingRetrievals.textContent > 0){
+                    const retrieveIcon = document.createElement("div");
+                    retrieveIcon.classList.add("retrieveIcon");
+                    const numDuplicateRetrievals = document.createElement("p");
+                    numDuplicateRetrievals.classList.add(i);
+                    retrieveIcon.appendChild(numDuplicateRetrievals);
+                    possibleAction.appendChild(retrieveIcon);
+                    numDuplicateRetrievals.textContent = 1;
+                    remainingRetrievals.textContent -= 1;
+                }
+                else{
+                    if (cardsToDisplay[1][i] > numDuplicateRetrievals.textContent && remainingRetrievals.textContent > 0){
+                        numDuplicateRetrievals.textContent += 1;
+                        remainingRetrievals.textContent -= 1;
+                    }
+                    else{
+                        remainingRetrievals.textContent += 1;
+                        numDuplicateRetrievals.parentNode.remove();
+                    } 
+                }
+            }
         })
 
         const numberOfAction = document.createElement("p");
+        numberOfAction.classList.add("numberOfActions");
         numberOfAction.textContent = "x"+cardsToDisplay[i][1];
         actionDiv.appendChild(possibleAction);
         actionDiv.appendChild(numberOfAction);
@@ -365,6 +396,33 @@ function revealActions(players){
         const playedCard = document.querySelector(`#player${player.playerNum} .playedCard`);
         playedCard.src = player.playedCard[0].image;
         orientCardToPlayer(player.playerNum, player.playedCard[1], players.length);
+    })
+}
+
+function retrieveCards(player, numCardsToRetrieve){
+    // pull up relevant display
+    const discardToggleDiv = document.getElementById("discardToggleDiv");
+    const handToggleDiv = document.getElementById("handToggleDiv");
+    const sliderIcon = document.getElementById("sliderIcon");
+    discardToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
+    handToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
+    displayCards(player, player.discard);
+    if (sliderIcon.src == "/static/Images/Icons/collapse.svg"){
+        openCloseDisplay();
+    }
+
+    const remainingRetrievals = document.createElement("p");
+    remainingRetrievals.id = "remainingRetrievals"
+    remainingRetrievals.textContent = numCardsToRetrieve;
+
+    const confirm = document.createElement("button");
+    confirm.id = confirm;
+    confirm.addEventListener("click", () => {
+        const retrievedActions = document.querySelectorAll(".retrieving");
+        if (totalRetrievals.length == numCardsToRetrieve){
+            retr
+        }
+        socket.emit("returnCardsToHand", myPlayerNum, retrievedActions);
     })
 }
 
