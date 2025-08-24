@@ -100,6 +100,15 @@ io.on("connection", (socket) => {
         players[playerNum].playedCard = [action, target];
         players[playerNum].isReady = true;
 
+        // remove played card from hand
+        indexOfSelectedAction = players[playerNum].hand.findIndex(entry => entry[0] == action);
+        if (players[playerNum].hand[indexOfSelectedAction][1] == 1){
+            players[playerNum].hand.splice(indexOfSelectedAction, 1);
+        }
+        else{
+            players[playerNum].hand[indexOfSelectedAction][1] -= 1;
+        }
+
         const keepWaiting = players.find(player => player.isReady == false)
         if (keepWaiting == undefined){
             io.emit("revealActions", players);
@@ -144,7 +153,7 @@ function makePlayer(selectedBAs, ID, name, color){
     let playedCard = undefined;
     let numCardSwaps
     let numCoins = 0;
-    let investedCoins = 0;
+    let numCoinsInVault = 0;
     let stealResistance = 0;
     const playerNum = players.length;
     const playerID = ID;
@@ -154,7 +163,7 @@ function makePlayer(selectedBAs, ID, name, color){
     let isInGame = false;
     let waitingOn = undefined;
 
-    return {hand, discard, playedCard, numCardSwaps, numCoins, investedCoins, stealResistance, playerNum, playerID, playerName, playerColor, isInGame, isReady, waitingOn}
+    return {hand, discard, playedCard, numCardSwaps, numCoins, numCoinsInVault, stealResistance, playerNum, playerID, playerName, playerColor, isInGame, isReady, waitingOn}
 }
 
 function makeForSale(presetCards){
@@ -227,4 +236,16 @@ function rest(player, modification){
 
 function donate(giver, receiver, maxCoins){
 
+}
+
+function roundEndCleanup(players){
+    players.forEach(player => {
+        const duplicateActions = player.discard.find(entry => entry[0] == player.playedCard[0])
+        if (duplicateActions == undefined){
+            player.discard.push([player.playedCard[0]][1]);
+        }
+        else{
+            duplicateActions[1] += 1;
+        }
+    })
 }
