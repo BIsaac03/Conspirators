@@ -113,10 +113,36 @@ socket.on("selectAction", (players) => {
 socket.on("revealActions", (players) => {
     revealActions(players);
 })
-socket.on("retrieveCards", (player, numCardsToRetrieve) =>{
+socket.on("retrieveCards", (player, numCardsToRetrieve) => {
     if (player.playerNum == myPlayerNum){
         retrieveCards(player, numCardsToRetrieve);
     }
+})
+socket.on("donate", (giver, receiver, maxCoins, context) => {
+    const donationScreen = document.createElement("div");
+    donationScreen.id = "donationScreen";
+
+    const contextMessage = document.createElement("p");
+    contextMessage.id = "donationContext";
+    contextMessage.textContent = context;
+
+    if (myPlayerNum == giver.playerNum){
+        const donationEntry = document.createElement("input");
+        donationEntry.type = "number";
+        donationEntry.max = maxCoins;
+
+        const submit = document.createElement("button");
+        submit.id = "submit";
+        submit.addEventListener("click", () => {
+            if (donationEntry.value >= 0 && donationEntry.value <= maxCoins){
+                socket.emit("gaveDonation", giver, receiver, donationEntry.value);
+            }
+        })
+        donationScreen.appendChild(donationEntry);
+    }
+
+    donationScreen.appendChild(contextMessage);
+    bodyElement.appendChild(donationScreen);
 })
 socket.on("updateStats", (players) => {
     updateStats(players);

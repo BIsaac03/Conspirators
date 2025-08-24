@@ -138,6 +138,12 @@ io.on("connection", (socket) => {
             }
         })
     })
+
+    socket.on("gaveDonation", (giver, receiver, coins) => {
+        giver.numCoins -= coins;
+        receiver.numCoins += coins;
+        io.emit("notification", receiver.playerNum, giver.playerName+" gave you "+coins+" coins!");
+    })
 })
 
 httpServer.listen(port, function () {
@@ -258,8 +264,9 @@ function rest(player, override){
     io.emit("retrieveCards", player, numActionsToReturn);
 }
 
-function donate(giver, receiver, maxCoins){
-
+function donate(giver, receiver, maxCoins, context){
+    const realMaxCoins = Math.min(maxCoins, giver.numCoins);
+    io.emit("donate", giver, receiver, realMaxCoins, context)
 }
 
 function roundEndCleanup(players){
