@@ -44,18 +44,21 @@ button{
 #statsSidebar{
     position: absolute;
     top: 0vh;
-    left: 85vw;
+    left: 80vw;
     height: 100vh;
-    width: 15vw;
+    width: 20vw;
     display: grid;
     background-color: beige;
 }
 #statsSidebar div[id^="playerDisplay"]{
     display: grid;
+    grid-template: repeat(2, 70px) / repeat(4, 50px) ;
     gap: 10px;
+    font-weight: bold;
     font-size: 25px;
 }
 #statsSidebar .playerName{
+    grid-area: 1 / 1 / 2 / 5;
     font-size: 40px;
     font-weight: bold;
 }
@@ -63,12 +66,15 @@ button{
     padding: 30px;
     font-size: 25px;
 }
+#statsSidebar img{
+    width: 50px;
+}
 
 #blownUp{
     position: absolute;
     align-self: center;
     justify-self: center;
-    width: 300px;
+    width: 30vh;
     border-radius: 10%;
     z-index: 5;
 }
@@ -77,23 +83,23 @@ button{
     position: absolute;
     justify-self: center;
     align-self: center;
-    width: 700px;
-    height: 700px;
+    width: 70vh;
+    height: 70vh;
     border-radius: 50%;
     background-color: blanchedalmond;
 }
 #gameSpace>div[id^="player"]{
     position: absolute;
     display: grid;
-    grid-template: 200px auto / 200px auto;
-    left: calc(50% - 200px);
-    top: calc(50% - 100px);
-    width: 400px;
-    height: 200px;
+    grid-template: 20vh auto / 20vh auto;
+    left: calc(50% - 20vh);
+    top: calc(50% - 10vh);
+    width: 40vh;
+    height: 20vh;
 }
 div[id^="player"] .playerIcon{
-    width: 200px;
-    height: 200px;
+    width: 20vh;
+    height: 20vh;
     background-color: #3f353a;
     border-radius: 50%;
 }
@@ -115,7 +121,7 @@ div[id^="player"] #handIcon{
 #actionDisplayDiv{
     position: absolute;
     align-self: center;
-    width: 75vw;
+    width: 120vh;
     height: 90vh;
     display: grid;
     grid-template: 70px auto / auto 40px;
@@ -123,10 +129,9 @@ div[id^="player"] #handIcon{
 }
 #actionSelection{
     display: grid;
-    grid-template: auto auto / repeat(4, auto);
-    gap: 25px;
+    grid-template: repeat(auto-fit, 50%) / repeat(4, 25%);
+    row-gap: 5px;
     overflow: auto;
-    padding: 20px;
     background-color: #000000d5;
 }
 #displayVisibilitySlider{
@@ -158,15 +163,18 @@ div[id^="player"] #handIcon{
 }
 #actionSelection div{
     display: grid;
-    grid-template-rows: 1fr auto;
+    grid-template-rows: auto auto;
     justify-items: center;
     align-items: end;
-    font-size: 36px;
+    padding: 5%;
+}
+#actionSelection div p{
+    font-size: 200%;
     font-weight: bold;
     color: white;
 }
 #actionSelection img{
-    width: 250px;
+    width: 100%;
     border-radius: 11%;
 }
 
@@ -180,4 +188,10 @@ div[id^="player"] #handIcon{
     justify-self: center;
     height: 75px;
     width: 75px;
+}
+
+#retrieveDiv{
+    position: absolute;
+    display: grid;
+
 }
