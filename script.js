@@ -92,7 +92,7 @@ io.on("connection", (socket) => {
             }
             isGameInProgress = true;
             io.emit("createGameSpace", players);
-            socket.emit("selectAction", players)
+            io.emit("selectAction", players);
         }
     })
 
@@ -100,19 +100,23 @@ io.on("connection", (socket) => {
         players[playerNum].playedCard = [action, target];
         players[playerNum].isReady = true;
 
-        // remove played card from hand
-        indexOfSelectedAction = players[playerNum].hand.findIndex(entry => entry[0] == action);
+        // remove played card from hand    
+        // !!! rests should not be discarded 
+        const indexOfSelectedAction = players[playerNum].hand.findIndex(entry => entry[0].name == action.name);
+        console.log(indexOfSelectedAction)
         if (players[playerNum].hand[indexOfSelectedAction][1] == 1){
             players[playerNum].hand.splice(indexOfSelectedAction, 1);
         }
         else{
             players[playerNum].hand[indexOfSelectedAction][1] -= 1;
         }
+        socket.emit("updateCards", players, true);
 
         const keepWaiting = players.find(player => player.isReady == false)
         if (keepWaiting == undefined){
+            console.log("reveal");
             io.emit("revealActions", players);
-            players.forEach((player) => {player.waitingOn = "actionExecution"; player.isReady = false});
+            // ??? make players wait?
             resolveOrderedActions(players);
         }
     })
@@ -137,6 +141,8 @@ io.on("connection", (socket) => {
                 handEntry[1] += 1;
             }
         })
+        players[playerNum].isReady = true;
+        checkEndOfRound();
     })
 
     socket.on("gaveDonation", (giver, receiver, coins) => {
@@ -172,7 +178,6 @@ function makePlayer(selectedBAs, ID, name, color){
             BA1 = selectedBAs[0];
             BA2 = selectedBAs[1];
         }
-
         return [[steal, 3], [work, 3], [defend, 1], [reciprocate, 1], [rest, 1]];
     }
 
@@ -241,9 +246,30 @@ function resolveUnorderedActions(players){
     players.forEach((player) => {if (player.playedCard[0].priority == 0) {
         eval(player.playedCard[0].effect);
     }})
-    io.emit("updateStats", players);
+    checkEndOfRound()
 }
 
+function checkEndOfRound(){
+    const waitingOn = players.find(player => player.isReady == false);
+    if (waitingOn == undefined){
+        roundEndCleanup();
+        io.emit("updateStats", players);
+        io.emit("updateCards", players, false);
+    }
+
+    if (checkGameEnd() == false){
+        // !!! should set isWaiting and isReady
+        io.emit("selectAction", players);
+    }
+    else{
+        
+    }
+}
+
+function checkGameEnd(){
+    // !!! should check if end condition met
+    return false
+}
 function work(worker, modification){
     worker.numCoins += (4 + modification); // !!!!!!!!! should vary based on number of workers
 }
@@ -269,7 +295,7 @@ function donate(giver, receiver, maxCoins, context){
     io.emit("donate", giver, receiver, realMaxCoins, context)
 }
 
-function roundEndCleanup(players){
+function roundEndCleanup(){
     players.forEach(player => {
         const duplicateActions = player.discard.find(entry => entry[0] == player.playedCard[0])
         if (duplicateActions == undefined){
