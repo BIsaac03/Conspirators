@@ -43,30 +43,38 @@ socket.on("reconnection", (reconnectedPlayer, players, isGameInProgress) => {
         myPlayerNum = reconnectedPlayer.playerNum;
 
         createGameSpace(players);
+        createNotificationContainer();
         createStats(players);
+        updateStats(players);
         createCardDisplay(reconnectedPlayer);
         openCloseDisplay();
         displayCards(reconnectedPlayer.playerNum, reconnectedPlayer.hand);
-        actionSelection(players, myPlayerNum);
 
         if (!reconnectedPlayer.isReady){
             if (reconnectedPlayer.waitingOn == "selectAction"){
-    
-            }
-            else if (reconnectedPlayer.waitingOn == "selectTarget"){
-    
+                actionSelection(players, myPlayerNum);
             }
             else if (reconnectedPlayer.waitingOn == "useCardSwap"){
     
             }
             else if (reconnectedPlayer.waitingOn == "retrieveCards"){
-    
+                // !!! should store number of retrieved cards
+                retrieveCards(reconnectedPlayer, 2);
             }
             else if (reconnectedPlayer.waitingOn == "donate"){
     
             }
             else if (reconnectedPlayer.waitingOn == "purchaseCards"){
     
+            }
+        }
+
+        else{
+            if (reconnectedPlayer.waitingOn == "selectAction"){
+                const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
+                myPlayedCard.src = reconnectedPlayer.playedCard[0].image;
+                myPlayedCard.style.border = "3px solid black";
+                orientCardToPlayer(myPlayerNum, reconnectedPlayer.playedCard[1], players.length);
             }
         }
     } 
@@ -101,6 +109,7 @@ socket.on("playerKicked", (playerID) => {
 
 socket.on("createGameSpace", (players) => {
     createGameSpace(players);
+    createNotificationContainer();
     createStats(players);
     updateStats(players);
     createCardDisplay(players[myPlayerNum]);
@@ -148,6 +157,12 @@ socket.on("updateStats", (players) => {
     updateStats(players);
 })
 
+socket.on("updateCards", (players, hand) => {
+    if (hand){
+        displayCards(players[myPlayerNum], players[myPlayerNum].hand)
+    }
+    else {displayCards(players[myPlayerNum], players[myPlayerNum].discard)}
+})
 
 socket.on("notification", (playerNum, notification) => {
     if (playerNum == myPlayerNum){
@@ -181,7 +196,7 @@ function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
 function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
     const playedCard = document.querySelector(`#player${originPlayerNum} .playedCard`);
     const targetAngle = calculateTargetAngle(originPlayerNum, targetPlayerNum, numPlayers);
-    playedCard.style.transform = "translateY("+(-200*Math.sin(targetAngle))+"px) translateX("+(200*(1-Math.cos(targetAngle)))+"px)  rotate("+(targetAngle-Math.PI/2)+"rad)";       
+    playedCard.style.transform = "translateY("+(-20*Math.sin(targetAngle))+"vh) translateX("+(20*(1-Math.cos(targetAngle)))+"vh)  rotate("+(targetAngle-Math.PI/2)+"rad)";       
 
 }
 
@@ -198,7 +213,7 @@ function createGameSpace(players){
     for (let i = 0; i < players.length; i++){
         const playerSpace = document.createElement("div");
         playerSpace.id = "player"+i;
-        playerSpace.style.transform = "rotate("+(2*Math.PI * i/players.length + radianOffset)+"rad) translateX(250px)"; 
+        playerSpace.style.transform = "rotate("+(2*Math.PI * i/players.length + radianOffset)+"rad) translateX(25vh)"; 
 
         const playerIcon = document.createElement("div");
         playerIcon.classList.add("playerIcon");
@@ -238,6 +253,12 @@ function createGameSpace(players){
         gameSpace.appendChild(playerSpace);
     }
     bodyElement.appendChild(gameSpace);
+}
+
+function createNotificationContainer(){
+    const notificationContainer = document.createElement("div");
+    notificationContainer.id = "notificationContainer";
+    bodyElement.appendChild(notificationContainer);
 }
 
 function createCardDisplay(player){
@@ -298,12 +319,14 @@ function openCloseDisplay(){
     const actionDisplayDiv = document.getElementById("actionDisplayDiv");
     const sliderIcon = document.getElementById("sliderIcon");
     if (sliderIcon.src.includes("/static/Images/Icons/expand.svg")){
-        actionDisplayDiv.style.transform = "";
+        actionDisplayDiv.style.left = "0vw";
+        actionDisplayDiv.style.right = "";
         sliderIcon.src = "/static/Images/Icons/collapse.svg";
     }
     else {
-        const translation = actionDisplayDiv.offsetWidth - 40;
-        actionDisplayDiv.style.transform = "translateX(-"+translation+"px)";
+        const cardLocationToggle = document.getElementById("cardLocationToggle");
+        actionDisplayDiv.style.right = "calc(100vw - 4vh)";
+        actionDisplayDiv.style.left = "";
         const sliderIcon = document.querySelector(`#displayVisibilitySlider img`);
         sliderIcon.src = "/static/Images/Icons/expand.svg";
     }
@@ -366,6 +389,7 @@ function displayCards(player, cardsToDisplay){
 }
 
 function actionSelection(players, playerNum){
+    displayCards(players[playerNum], players[playerNum].hand)
     let targetPlayerNum = undefined;
 
     for (let i = 0; i < players.length; i++){
@@ -440,9 +464,12 @@ function retrieveCards(player, numCardsToRetrieve){
     discardToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
     handToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
     displayCards(player, player.discard);
-    if (sliderIcon.src == "/static/Images/Icons/collapse.svg"){
+    if (sliderIcon.src == "/static/Images/Icons/expand.svg"){
         openCloseDisplay();
     }
+
+    const retrieveDiv = document.createElement("div");
+    retrieveDiv.id = "retrieveDiv";
 
     const remainingRetrievals = document.createElement("p");
     remainingRetrievals.id = "remainingRetrievals"
@@ -463,6 +490,9 @@ function retrieveCards(player, numCardsToRetrieve){
             socket.emit("returnCardsToHand", myPlayerNum, totalRetrievedCards);
         }
     })
+    retrieveDiv.appendChild(remainingRetrievals);
+    retrieveDiv.appendChild(confirm);
+    bodyElement.appendChild(retrieveDiv);
 }
 
 function createStats(players){
@@ -475,7 +505,7 @@ function createStats(players){
 
         const playerName = document.createElement("p");
         playerName.textContent = players[(myPlayerNum + i)%players.length].playerName;
-        playerName.color = players[(myPlayerNum + i)%players.length].playerColor[0];
+        playerName.style.color = players[(myPlayerNum + i)%players.length].playerColor[0];
         playerName.classList.add("playerName");
 
         const coinsIcon = document.createElement("img");
@@ -522,9 +552,9 @@ function updateStats(players){
         const numCoins = document.querySelector(`#playerDisplay${i} .numCoins`);
         numCoins.textContent = players[i].numCoins;
 
-        const numCoinsInVault = (`#playerDisplay${i} .numCoinsInVault`);
+        const numCoinsInVault = document.querySelector(`#playerDisplay${i} .numCoinsInVault`);
         if (i == myPlayerNum){
-            numCoinsInVault.textContent = players[i].investedCoins;
+            numCoinsInVault.textContent = players[i].numCoinsInVault;
         }
         else{numCoinsInVault.textContent = '?'};
     }
@@ -533,6 +563,9 @@ function updateStats(players){
 function displayNotification(notification){
     const notificationDiv = document.createElement("div");
     notificationDiv.id = "notificationDiv";
+
+    const notificationIcon = document.createElement("img");
+    notificationIcon.src = "static/Images/Icons/notification.svg"
 
     const notificationContent = document.createElement("p");
     notificationContent.id = "notification";
@@ -545,7 +578,9 @@ function displayNotification(notification){
         notificationDiv.remove();
     })
 
+    notificationDiv.appendChild(notificationIcon);
     notificationDiv.appendChild(notificationContent);
+    notificationDiv.appendChild(closeNotifiction);
     const notificationContainer = document.getElementById("notificationContainer");
     notificationContainer.appendChild(notificationDiv);
 

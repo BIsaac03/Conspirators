@@ -12,14 +12,14 @@
 
 body{
     display: grid;
-    grid-template-rows: 90px auto 2fr 1fr;
+    grid-template-rows: 9vh auto 2fr;
     width: 100vw;
     height: 100vh;
 }
 
 button{
-    width: 100px;
-    height: 50px;
+    width: 10vh;
+    height: 5vh;
     border-radius: 10px;
     font-size: 16px;
 }
@@ -28,7 +28,7 @@ button{
     position: sticky;
     top: 0vh;
     background-color: #3f353a;
-    height: 90px;
+    height: 9vh;
     display: grid;
     align-items: center;
 }
@@ -44,30 +44,32 @@ button{
 #statsSidebar{
     position: absolute;
     top: 0vh;
-    left: 80vw;
+    right: 0vw;
     height: 100vh;
-    width: 20vw;
+    width: fit-content;
     display: grid;
     background-color: beige;
 }
 #statsSidebar div[id^="playerDisplay"]{
     display: grid;
-    grid-template: repeat(2, 70px) / repeat(4, 50px) ;
-    gap: 10px;
+    grid-template: repeat(2, 7vh) / repeat(4, 5vh) ;
+    gap: 1vh;
+    justify-items: center;
+    align-items: center;
     font-weight: bold;
     font-size: 25px;
 }
 #statsSidebar .playerName{
     grid-area: 1 / 1 / 2 / 5;
-    font-size: 40px;
+    font-size: 4vh;
     font-weight: bold;
 }
 #statsSidebar div{
-    padding: 30px;
-    font-size: 25px;
+    padding: 3vh;
+    font-size: 2.5vh;
 }
 #statsSidebar img{
-    width: 50px;
+    width: 5vh;
 }
 
 #blownUp{
@@ -106,7 +108,7 @@ div[id^="player"] .playerIcon{
 div[id^="player"] .playedCard{
     align-self: center;
     justify-self: center;
-    width: 125px;
+    width: 12.5vh;
     border-radius: 13%;
     border: 3px dashed cyan;
 }
@@ -115,7 +117,7 @@ div[id^="player"] #handIcon{
     grid-area: 2 / 2 / 3 / 3;
     justify-self: center;
     transform: rotate(-90deg);
-    width: 75px;
+    width: 7.5vh;
 }
 
 #actionDisplayDiv{
@@ -124,7 +126,7 @@ div[id^="player"] #handIcon{
     width: 120vh;
     height: 90vh;
     display: grid;
-    grid-template: 70px auto / auto 40px;
+    grid-template: 7vh auto / auto 4vh;
     z-index: 6;
 }
 #actionSelection{
@@ -136,7 +138,7 @@ div[id^="player"] #handIcon{
 }
 #displayVisibilitySlider{
     grid-area: 1 / 2 / 3 / 3;
-    width: 70px;
+    width: 7vh;
     height: 100%;
     display: grid;
     align-items: center;
@@ -144,7 +146,7 @@ div[id^="player"] #handIcon{
 }
 #cardLocationToggle{
     align-self: center;
-    height: 70px;
+    height: 7vh;
     width: 100%;
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -159,7 +161,7 @@ div[id^="player"] #handIcon{
 }
 #cardLocationToggle>div>button{
     width: 50%;
-    font-size: 36px;
+    font-size: 3.6vh;
 }
 #actionSelection div{
     display: grid;
@@ -186,8 +188,8 @@ div[id^="player"] #handIcon{
     position: absolute;
     align-self: center;
     justify-self: center;
-    height: 75px;
-    width: 75px;
+    height: 7.5vh;
+    width: 7.5vh;
 }
 
 #retrieveDiv{
