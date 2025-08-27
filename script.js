@@ -109,7 +109,6 @@ io.on("connection", (socket) => {
         else{
             players[playerNum].hand[indexOfSelectedAction][1] -= 1;
         }
-        console.log(players[playerNum].hand)
         socket.emit("updateCards", players, true);
         socket.broadcast.emit("opponentActionChosen", playerNum);
 
@@ -150,6 +149,10 @@ io.on("connection", (socket) => {
         giver.numCoins -= coins;
         receiver.numCoins += coins;
         io.emit("notification", receiver.playerNum, giver.playerName+" gave you "+coins+" coins!");
+    })
+
+    socket.on("getUpdatedCards", (isHand) => {
+        socket.emit("updateCards", players, isHand);
     })
 })
 

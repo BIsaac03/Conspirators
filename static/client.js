@@ -214,7 +214,6 @@ function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
     const playedCard = document.querySelector(`#player${originPlayerNum} .playedCard`);
     const targetAngle = calculateTargetAngle(originPlayerNum, targetPlayerNum, numPlayers);
     playedCard.style.transform = "translateY("+(-20*Math.sin(targetAngle))+"vh) translateX("+(20*(1-Math.cos(targetAngle)))+"vh)  rotate("+(targetAngle-Math.PI/2)+"rad)";       
-
 }
 
 function createGameSpace(players){
@@ -292,9 +291,7 @@ function createCardDisplay(player){
     discardToggleDiv.addEventListener("click", () => {
         discardToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
         handToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
-        console.log(player.discard);
-        displayCards(player, player.discard);
-        console.log(player.discard);
+        socket.emit("getUpdatedCards", false);
     })
     discardToggleDiv.appendChild(discardToggle);
 
@@ -307,9 +304,7 @@ function createCardDisplay(player){
     handToggleDiv.addEventListener("click", () => {
         handToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
         discardToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
-        console.log(player.hand);
-        displayCards(player, player.hand);
-        console.log(player.hand);
+        socket.emit("getUpdatedCards", true);
     })
     handToggleDiv.appendChild(handToggle);
 
@@ -375,13 +370,13 @@ function displayCards(player, cardsToDisplay){
             }
             if (cardsToDisplay == player.discard && player.waitingOn == "retrieveCards"){
                 const remainingRetrievals = document.getElementById("remainingRetrievals");
-                const numDuplicateRetrievals = document.querySelector(`.retrieveIcon p.${i}`);
+                const numDuplicateRetrievals = document.querySelector(`.retrieveIcon .num${i}`);
 
                 if (numDuplicateRetrievals == undefined && remainingRetrievals.textContent > 0){
                     const retrieveIcon = document.createElement("div");
                     retrieveIcon.classList.add("retrieveIcon");
                     const numDuplicateRetrievals = document.createElement("p");
-                    numDuplicateRetrievals.classList.add(i);
+                    numDuplicateRetrievals.classList.add(`num${i}`);
                     retrieveIcon.appendChild(numDuplicateRetrievals);
                     possibleAction.appendChild(retrieveIcon);
                     numDuplicateRetrievals.textContent = 1;
