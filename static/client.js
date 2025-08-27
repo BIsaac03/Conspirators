@@ -75,6 +75,9 @@ socket.on("reconnection", (reconnectedPlayer, players, isGameInProgress) => {
                 myPlayedCard.src = reconnectedPlayer.playedCard[0].image;
                 myPlayedCard.style.border = "3px solid black";
                 orientCardToPlayer(myPlayerNum, reconnectedPlayer.playedCard[1], players.length);
+                players.forEach(player => {if (player.isReady){
+                    lockInCard(player.playerNum);
+                }})
             }
         }
     } 
@@ -119,8 +122,22 @@ socket.on("createGameSpace", (players) => {
 socket.on("selectAction", (players) => {
     actionSelection(players, myPlayerNum);
 })
+socket.on("opponentActionChosen", (playerNum) => {
+    lockInCard(playerNum);
+})
 socket.on("revealActions", (players) => {
     revealActions(players);
+})
+socket.on("resetGameDisplay", () => {
+    const selectedPlayerIcon = document.getElementById("selectedPlayer");
+    selectedPlayerIcon.id = ""
+    const playedCards = document.querySelectorAll(`.playedCard`);
+    playedCards.forEach(card => {
+        card.src = "static/Images/Actions/back.png";
+        card.style.opacity = "0.5";
+        card.style.transform = 'rotate(-90deg)';
+        card.style.border = "3px solid black";
+    })
 })
 socket.on("retrieveCards", (player, numCardsToRetrieve) => {
     if (player.playerNum == myPlayerNum){
@@ -221,6 +238,7 @@ function createGameSpace(players){
         const playedCard = document.createElement("img");
         playedCard.classList.add("playedCard");
         playedCard.src = "static/Images/Actions/back.png";
+        playedCard.style.opacity = "0.5";
         playedCard.style.transform = 'rotate(-90deg)';
 
         playedCard.addEventListener("mouseover", () => {
@@ -274,7 +292,9 @@ function createCardDisplay(player){
     discardToggleDiv.addEventListener("click", () => {
         discardToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
         handToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
+        console.log(player.discard);
         displayCards(player, player.discard);
+        console.log(player.discard);
     })
     discardToggleDiv.appendChild(discardToggle);
 
@@ -287,7 +307,9 @@ function createCardDisplay(player){
     handToggleDiv.addEventListener("click", () => {
         handToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
         discardToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
+        console.log(player.hand);
         displayCards(player, player.hand);
+        console.log(player.hand);
     })
     handToggleDiv.appendChild(handToggle);
 
@@ -324,7 +346,6 @@ function openCloseDisplay(){
         sliderIcon.src = "/static/Images/Icons/collapse.svg";
     }
     else {
-        const cardLocationToggle = document.getElementById("cardLocationToggle");
         actionDisplayDiv.style.right = "calc(100vw - 4vh)";
         actionDisplayDiv.style.left = "";
         const sliderIcon = document.querySelector(`#displayVisibilitySlider img`);
@@ -391,6 +412,8 @@ function displayCards(player, cardsToDisplay){
 function actionSelection(players, playerNum){
     displayCards(players[playerNum], players[playerNum].hand)
     let targetPlayerNum = undefined;
+    const myCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
+    myCard.style.opacity = "1";
 
     for (let i = 0; i < players.length; i++){
         if (i != myPlayerNum){
@@ -401,8 +424,6 @@ function actionSelection(players, playerNum){
                 }
             })
             playerIcon.addEventListener("click", () => {
-
-                const myCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
                 if (targetPlayerNum == undefined){
                     myCard.style.border = "3px solid black";
                     playerIcon.id = "selectedPlayer";
@@ -446,6 +467,12 @@ function actionSelection(players, playerNum){
         }  
     })
     bodyElement.appendChild(confirm);
+}
+
+function lockInCard(playerNum){
+    const playerCard = document.querySelector(`#player${playerNum} .playedCard`);
+    playerCard.style.opacity = "1";
+    playerCard.style.border = "3px solid black";
 }
 
 function revealActions(players){

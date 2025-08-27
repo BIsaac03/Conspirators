@@ -103,14 +103,15 @@ io.on("connection", (socket) => {
         // remove played card from hand    
         // !!! rests should not be discarded 
         const indexOfSelectedAction = players[playerNum].hand.findIndex(entry => entry[0].name == action.name);
-        console.log(indexOfSelectedAction)
         if (players[playerNum].hand[indexOfSelectedAction][1] == 1){
             players[playerNum].hand.splice(indexOfSelectedAction, 1);
         }
         else{
             players[playerNum].hand[indexOfSelectedAction][1] -= 1;
         }
+        console.log(players[playerNum].hand)
         socket.emit("updateCards", players, true);
+        socket.broadcast.emit("opponentActionChosen", playerNum);
 
         const keepWaiting = players.find(player => player.isReady == false)
         if (keepWaiting == undefined){
@@ -254,15 +255,20 @@ function checkEndOfRound(){
     if (waitingOn == undefined){
         roundEndCleanup();
         io.emit("updateStats", players);
+        io.emit("updateCards", players, true);
         io.emit("updateCards", players, false);
-    }
 
-    if (checkGameEnd() == false){
-        // !!! should set isWaiting and isReady
-        io.emit("selectAction", players);
-    }
-    else{
-        
+        if (checkGameEnd() == false){
+            players.forEach(player => {
+                player.isReady = false;
+                player.waitingOn = "selectAction"
+            })
+            console.log("nextRound")
+            io.emit("resetGameDisplay");
+            io.emit("selectAction", players);
+        }
+        else{
+        }
     }
 }
 
@@ -271,11 +277,11 @@ function checkGameEnd(){
     return false
 }
 function work(worker, modification){
-    worker.numCoins += (4 + modification); // !!!!!!!!! should vary based on number of workers
+    worker.numCoins += (4 + modification); // !!! should vary based on number of workers
 }
 
 function steal(stealer, stealFrom, modification){
-    const coinsToSteal = Math.min(4 + modification, stealFrom.numCoins); // !!!!!!!!!!!!!! should vary based on number of steals
+    const coinsToSteal = Math.min(4 + modification, stealFrom.numCoins); // !!! should vary based on number of steals
     stealer.numCoins += coinsToSteal;
     stealFrom.numCoins -= coinsToSteal;
 }
