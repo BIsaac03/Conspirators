@@ -136,7 +136,7 @@ socket.on("resetGameDisplay", () => {
         card.src = "static/Images/Actions/back.png";
         card.style.opacity = "0.5";
         card.style.transform = 'rotate(-90deg)';
-        card.style.border = "3px solid black";
+        card.style.border = "3px dashed cyan";
     })
 })
 socket.on("retrieveCards", (player, numCardsToRetrieve) => {
@@ -396,7 +396,7 @@ function displayCards(player, cardsToDisplay){
                         remainingRetrievals.textContent = Number(remainingRetrievals.textContent) - 1;
                     }
                     else{
-                        remainingRetrievals.textContent = Number(remainingRetrievals.textContent) + 1;
+                        remainingRetrievals.textContent = Number(remainingRetrievals.textContent) + Number(numDuplicateRetrievals.textContent);
                         numDuplicateRetrievals.parentNode.remove();
                     } 
                 }
@@ -414,6 +414,10 @@ function displayCards(player, cardsToDisplay){
 
 function actionSelection(players, playerNum){
     displayCards(players[playerNum], players[playerNum].hand)
+    const sliderIcon = document.getElementById("sliderIcon");
+    if (sliderIcon.src.includes("/static/Images/Icons/expand.svg")){
+        openCloseDisplay();
+    }
     let targetPlayerNum = undefined;
     const myCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
     myCard.style.opacity = "1";
@@ -494,7 +498,7 @@ function retrieveCards(player, numCardsToRetrieve){
     discardToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
     handToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
     displayCards(player, player.discard);
-    if (sliderIcon.src == "/static/Images/Icons/expand.svg"){
+    if (sliderIcon.src.includes("/static/Images/Icons/expand.svg")){
         openCloseDisplay();
     }
 
@@ -512,7 +516,7 @@ function retrieveCards(player, numCardsToRetrieve){
         const totalRetrievedCards = [];
         retrievedActions.forEach(action => {
             for (let i = 0; i < action.textContent; i++){
-                const returnedCard = player.discard.find(card => card.image == action.parentElement.parentElement.src);
+                const returnedAction = player.discard.find(card => card[0].image.includes(`${action.parentElement.parentElement.src}`));
                 totalRetrievedCards.push(returnedCard);
             }
         })
@@ -539,7 +543,7 @@ function createStats(players){
         playerName.classList.add("playerName");
 
         const coinsIcon = document.createElement("img");
-        coinsIcon.src = "static/Images/Icons/coins.png";
+        coinsIcon.src = "static/Images/Icons/coins.svg";
         const numCoins = document.createElement("p");
         numCoins.classList.add("numCoins");
         
@@ -554,7 +558,8 @@ function createStats(players){
         numCardsInHand.classList.add("handNum");
 
         const discardIcon = document.createElement("img");
-        discardIcon.src = "static/Images/Icons/discard.png";
+        discardIcon.src = "static/Images/Icons/discard.svg";
+        discardIcon.style.transform = 'rotate(90deg)';
         const numCardsInDiscard = document.createElement("p");
         numCardsInDiscard.classList.add("discardNum");
 
