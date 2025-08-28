@@ -123,8 +123,8 @@ io.on("connection", (socket) => {
 
     socket.on("returnCardsToHand", (playerNum, retrievedCards) => {
         retrievedCards.forEach(card => {
-            discardEntry = players[playerNum].discard.find(entry => entry[0] == card);
-            handEntry = players[playerNum].hand.find(entry => entry[0] == card);
+            const discardEntry = players[playerNum].discard.find(entry => entry[0].name == card.name);
+            const handEntry = players[playerNum].hand.find(entry => entry[0].name == card.name);
 
             if (discardEntry[1] == 1){
                 const indexToRemove = players[playerNum].discard.findIndex(discardEntry);
@@ -290,7 +290,7 @@ function steal(stealer, stealFrom, modification){
 }
 
 function rest(player, override){
-    let numActionsToReturn = Math.ceil(player.discard.length/2);
+    let numActionsToReturn = Math.ceil(countTotalCards(player.discard)/2);
     if (override != undefined){
         numActionsToReturn = override;
     }
@@ -306,7 +306,7 @@ function donate(giver, receiver, maxCoins, context){
 
 function roundEndCleanup(){
     players.forEach(player => {
-        const duplicateActions = player.discard.find(entry => entry[0] == player.playedCard[0])
+        const duplicateActions = player.discard.find(entry => entry[0].name == player.playedCard[0].name)
         if (duplicateActions == undefined){
             player.discard.push([player.playedCard[0], 1]);
         }
@@ -314,4 +314,12 @@ function roundEndCleanup(){
             duplicateActions[1] += 1;
         }
     })
+}
+
+function countTotalCards(cards){
+    let totalCards = 0;
+    cards.forEach(entry => {
+        totalCards += entry[1];
+    })
+    return totalCards;
 }

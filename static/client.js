@@ -216,6 +216,14 @@ function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
     playedCard.style.transform = "translateY("+(-20*Math.sin(targetAngle))+"vh) translateX("+(20*(1-Math.cos(targetAngle)))+"vh)  rotate("+(targetAngle-Math.PI/2)+"rad)";       
 }
 
+function countTotalCards(cards){
+    let totalCards = 0;
+    cards.forEach(entry => {
+        totalCards += entry[1];
+    })
+    return totalCards;
+}
+
 function createGameSpace(players){
     const userID = document.cookie;
     const thisPlayer = players.find(player => player.playerID == userID);
@@ -370,7 +378,7 @@ function displayCards(player, cardsToDisplay){
             }
             if (cardsToDisplay == player.discard && player.waitingOn == "retrieveCards"){
                 const remainingRetrievals = document.getElementById("remainingRetrievals");
-                const numDuplicateRetrievals = document.querySelector(`.retrieveIcon .num${i}`);
+                const numDuplicateRetrievals = document.querySelector(`.retrieveIcon p.num${i}`);
 
                 if (numDuplicateRetrievals == undefined && remainingRetrievals.textContent > 0){
                     const retrieveIcon = document.createElement("div");
@@ -378,17 +386,17 @@ function displayCards(player, cardsToDisplay){
                     const numDuplicateRetrievals = document.createElement("p");
                     numDuplicateRetrievals.classList.add(`num${i}`);
                     retrieveIcon.appendChild(numDuplicateRetrievals);
-                    possibleAction.appendChild(retrieveIcon);
+                    actionDiv.appendChild(retrieveIcon);
                     numDuplicateRetrievals.textContent = 1;
-                    remainingRetrievals.textContent -= 1;
+                    remainingRetrievals.textContent = Number(remainingRetrievals.textContent) - 1;
                 }
-                else{
-                    if (cardsToDisplay[1][i] > numDuplicateRetrievals.textContent && remainingRetrievals.textContent > 0){
-                        numDuplicateRetrievals.textContent += 1;
-                        remainingRetrievals.textContent -= 1;
+                else if (numDuplicateRetrievals != undefined){
+                    if (cardsToDisplay[i][1] > numDuplicateRetrievals.textContent && remainingRetrievals.textContent > 0){
+                        numDuplicateRetrievals.textContent = Number(numDuplicateRetrievals.textContent) + 1;
+                        remainingRetrievals.textContent = Number(remainingRetrievals.textContent) - 1;
                     }
                     else{
-                        remainingRetrievals.textContent += 1;
+                        remainingRetrievals.textContent = Number(remainingRetrievals.textContent) + 1;
                         numDuplicateRetrievals.parentNode.remove();
                     } 
                 }
@@ -568,9 +576,9 @@ function createStats(players){
 function updateStats(players){
     for (let i = 0; i < players.length; i++){
         const numCardsInHand = document.querySelector(`#playerDisplay${i} .handNum`);
-        numCardsInHand.textContent = players[i].hand.length;
+        numCardsInHand.textContent = countTotalCards(players[i].hand);
         const numCardsInDiscard = document.querySelector(`#playerDisplay${i} .discardNum`);
-        numCardsInDiscard.textContent = players[i].discard.length;
+        numCardsInDiscard.textContent = countTotalCards(players[i].discard);
         const numCoins = document.querySelector(`#playerDisplay${i} .numCoins`);
         numCoins.textContent = players[i].numCoins;
 
