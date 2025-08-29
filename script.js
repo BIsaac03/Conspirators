@@ -122,6 +122,8 @@ io.on("connection", (socket) => {
     })
 
     socket.on("returnCardsToHand", (playerNum, retrievedCards) => {
+        console.log("oh no!")
+        console.log(retrievedCards);
         retrievedCards.forEach(card => {
             const discardEntry = players[playerNum].discard.find(entry => entry[0].name == card.name);
             const handEntry = players[playerNum].hand.find(entry => entry[0].name == card.name);
@@ -188,7 +190,8 @@ function makePlayer(selectedBAs, ID, name, color){
     const hand = createStartingHand(selectedBAs);
     const discard = [];
     let playedCard = undefined;
-    let numCardSwaps
+    let numCardSwaps = 0;
+    let numRedirects = 0;
     let numCoins = 0;
     let numCoinsInVault = 0;
     let stealResistance = 0;
@@ -200,7 +203,7 @@ function makePlayer(selectedBAs, ID, name, color){
     let isInGame = false;
     let waitingOn = undefined;
 
-    return {hand, discard, playedCard, numCardSwaps, numCoins, numCoinsInVault, stealResistance, playerNum, playerID, playerName, playerColor, isInGame, isReady, waitingOn}
+    return {hand, discard, playedCard, numCardSwaps, numRedirects, numCoins, numCoinsInVault, stealResistance, playerNum, playerID, playerName, playerColor, isInGame, isReady, waitingOn}
 }
 
 function makeForSale(presetCards){

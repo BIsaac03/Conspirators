@@ -547,10 +547,15 @@ function createStats(players){
         const numCoins = document.createElement("p");
         numCoins.classList.add("numCoins");
         
-        const vaultIcon = document.createElement("img");
-        vaultIcon.src = "static/Images/Icons/safe.svg";
-        const numCoinsInVault = document.createElement("p");
-        numCoinsInVault.classList.add("numCoinsInVault");
+        const cardSwapIcon = document.createElement("img");
+        cardSwapIcon.src = "static/Images/Icons/cardSwap.svg";
+        const numCardSwaps = document.createElement("p");
+        numCardSwaps.classList.add("numCardSwaps");
+
+        const redirectIcon = document.createElement("img");
+        redirectIcon.src = "static/Images/Icons/redirect.svg";
+        const numRedirects = document.createElement("p");
+        numRedirects.classList.add("numRedirects");
 
         const handIcon = document.createElement("img");
         handIcon.src = "static/Images/Icons/hand.svg";
@@ -563,15 +568,24 @@ function createStats(players){
         const numCardsInDiscard = document.createElement("p");
         numCardsInDiscard.classList.add("discardNum");
 
+        const vaultIcon = document.createElement("img");
+        vaultIcon.src = "static/Images/Icons/safe.svg";
+        const numCoinsInVault = document.createElement("p");
+        numCoinsInVault.classList.add("numCoinsInVault");
+
         playerDisplay.appendChild(playerName);
         playerDisplay.appendChild(coinsIcon);
         playerDisplay.appendChild(numCoins);
-        playerDisplay.appendChild(vaultIcon);
-        playerDisplay.appendChild(numCoinsInVault);
+        playerDisplay.appendChild(cardSwapIcon);
+        playerDisplay.appendChild(numCardSwaps);
+        playerDisplay.appendChild(redirectIcon);
+        playerDisplay.appendChild(numRedirects);
         playerDisplay.appendChild(handIcon);
         playerDisplay.appendChild(numCardsInHand);
         playerDisplay.appendChild(discardIcon);
         playerDisplay.appendChild(numCardsInDiscard);
+        playerDisplay.appendChild(vaultIcon);
+        playerDisplay.appendChild(numCoinsInVault);
         
         statsSidebar.appendChild(playerDisplay);
     }
@@ -586,6 +600,10 @@ function updateStats(players){
         numCardsInDiscard.textContent = countTotalCards(players[i].discard);
         const numCoins = document.querySelector(`#playerDisplay${i} .numCoins`);
         numCoins.textContent = players[i].numCoins;
+        const numCardSwaps = document.querySelector(`#playerDisplay${i} .numCardSwaps`)
+        numCardSwaps.textContent = players[i].numCardSwaps;
+        const numRedirects = document.querySelector(`#playerDisplay${i} .numRedirects`)
+        numRedirects.textContent = players[i].numRedirects;
 
         const numCoinsInVault = document.querySelector(`#playerDisplay${i} .numCoinsInVault`);
         if (i == myPlayerNum){
