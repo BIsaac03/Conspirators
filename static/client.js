@@ -271,7 +271,9 @@ function createGameSpace(players){
                 })
             }
         })
-
+        playerIcon.addEventListener("click", () => {
+            displayNotification('notification trigerred');
+        })
         playerSpace.appendChild(playedCard);
         playerSpace.appendChild(playerIcon);
 
@@ -554,6 +556,7 @@ function createStats(players){
 
         const redirectIcon = document.createElement("img");
         redirectIcon.src = "static/Images/Icons/redirect.svg";
+        redirectIcon.style.transform = "rotate(110deg)";
         const numRedirects = document.createElement("p");
         numRedirects.classList.add("numRedirects");
 
@@ -604,7 +607,6 @@ function updateStats(players){
         numCardSwaps.textContent = players[i].numCardSwaps;
         const numRedirects = document.querySelector(`#playerDisplay${i} .numRedirects`)
         numRedirects.textContent = players[i].numRedirects;
-
         const numCoinsInVault = document.querySelector(`#playerDisplay${i} .numCoinsInVault`);
         if (i == myPlayerNum){
             numCoinsInVault.textContent = players[i].numCoinsInVault;
@@ -615,7 +617,7 @@ function updateStats(players){
 
 function displayNotification(notification){
     const notificationDiv = document.createElement("div");
-    notificationDiv.id = "notificationDiv";
+    notificationDiv.classList.add("notificationDiv");
 
     const notificationIcon = document.createElement("img");
     notificationIcon.src = "static/Images/Icons/notification.svg"
@@ -636,6 +638,7 @@ function displayNotification(notification){
     notificationDiv.appendChild(closeNotifiction);
     const notificationContainer = document.getElementById("notificationContainer");
     notificationContainer.appendChild(notificationDiv);
+    notificationContainer.scrollTop = 0;
 
-    setTimeout(() => {notification.remove()}, 60000);
+    setTimeout(() => {notificationDiv.remove()}, 60000);
 }

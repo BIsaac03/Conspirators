@@ -46,7 +46,7 @@ button{
     top: 0vh;
     right: 0vw;
     height: 100vh;
-    width: fit-content;
+    width: 34vh;
     display: grid;
     align-items: center;
     background-color: beige;
@@ -209,4 +209,39 @@ div[id^="player"] #handIcon{
     height: 5vh;
     border-radius: 50%;
     background-color: limegreen;
+}
+
+
+#notificationContainer{
+    position: absolute;
+    right: 34vh;
+    bottom: 0vh;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 5px;
+    height: 40vh;
+    overflow: auto;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+}
+#notificationContainer .notificationDiv{
+    width: 20vw;
+    min-height: 70px;
+    font-size: 20px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    text-align: center;
+    background-color: aquamarine;
+}
+#notificationContainer .notificationDiv img{
+    width: 20px;
+    padding: 5px;
+}
+#notificationContainer .notificationDiv button{
+    width: 20px;
+    height: 20px;
+    margin: 10px;
+    border-radius: 50%;
+    align-self: start;
 }
