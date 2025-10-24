@@ -109,7 +109,7 @@ io.on("connection", (socket) => {
         else{
             players[playerNum].hand[indexOfSelectedAction][1] -= 1;
         }
-        socket.emit("updateCards", players, true);
+        socket.emit("updateCards", players, true, false);
         socket.broadcast.emit("opponentActionChosen", playerNum);
 
         const keepWaiting = players.find(player => player.isReady == false)
@@ -153,8 +153,8 @@ io.on("connection", (socket) => {
         io.emit("notification", receiver.playerNum, giver.playerName+" gave you "+coins+" coins!");
     })
 
-    socket.on("getUpdatedCards", (isHand) => {
-        socket.emit("updateCards", players, isHand);
+    socket.on("getUpdatedCards", (isHand, shouldDisplay) => {
+        socket.emit("updateCards", players, isHand, shouldDisplay);
     })
 })
 
@@ -261,8 +261,8 @@ function checkEndOfRound(){
     if (waitingOn == undefined){
         roundEndCleanup();
         io.emit("updateStats", players);
-        io.emit("updateCards", players, true);
-        io.emit("updateCards", players, false);
+        io.emit("updateCards", players, true, false);
+        io.emit("updateCards", players, false, false);
 
         if (checkGameEnd() == false){
             players.forEach(player => {

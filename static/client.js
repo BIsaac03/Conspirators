@@ -174,11 +174,13 @@ socket.on("updateStats", (players) => {
     updateStats(players);
 })
 
-socket.on("updateCards", (players, hand) => {
-    if (hand){
+socket.on("updateCards", (players, isHand, shouldDisplay) => {
+    if (shouldDisplay){
+        openRelevantDisplay(players[myPlayerNum], isHand);
+    }
+    else{
         displayCards(players[myPlayerNum], players[myPlayerNum].hand)
     }
-    else {displayCards(players[myPlayerNum], players[myPlayerNum].discard)}
 })
 
 socket.on("notification", (playerNum, notification) => {
@@ -250,7 +252,10 @@ function createGameSpace(players){
 
         if (i == myPlayerNum){
             playedCard.addEventListener("click", () => {
-                openRelevantDisplay(players[i], true);
+                const waitingOnCard = document.getElementById("confirm");
+                if (waitingOnCard != undefined){
+                    openRelevantDisplay(players[i], true);
+                }
             })
         }
 
@@ -261,7 +266,10 @@ function createGameSpace(players){
                 blownUpAction.id = "blownUp";
                 if (i == myPlayerNum){
                     blownUpAction.addEventListener("click", () => {
-                        openRelevantDisplay(players[i], true);
+                        const waitingOnCard = document.getElementById("confirm");
+                        if (waitingOnCard != undefined){
+                            openRelevantDisplay(players[i], true);
+                        }
                     })
                 }
                 bodyElement.appendChild(blownUpAction);
@@ -307,9 +315,7 @@ function createCardDisplay(player){
     const discardToggle = document.createElement("button");
     discardToggle.textContent = "Discard"
     discardToggleDiv.addEventListener("click", () => {
-        discardToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
-        handToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
-        socket.emit("getUpdatedCards", false);
+        socket.emit("getUpdatedCards", false, true);
     })
     discardToggleDiv.appendChild(discardToggle);
 
@@ -320,9 +326,7 @@ function createCardDisplay(player){
     const handToggle = document.createElement("button");
     handToggle.textContent = "Hand";
     handToggleDiv.addEventListener("click", () => {
-        handToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
-        discardToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
-        socket.emit("getUpdatedCards", true);
+        socket.emit("getUpdatedCards", true, true);
     })
     handToggleDiv.appendChild(handToggle);
 
@@ -367,25 +371,23 @@ function openCloseDisplay(){
 }
 
 function openRelevantDisplay(player, isHand){
-    if (player.isReady == false){
-        const discardToggleDiv = document.getElementById("discardToggleDiv");
-        const handToggleDiv = document.getElementById("handToggleDiv");
-        const sliderIcon = document.getElementById("sliderIcon");
-        if (isHand){
-            handToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
-            discardToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";     
-            displayCards(player, player.hand);
-        }
-        else{
-            handToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
-            discardToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
-            displayCards(player, player.discard);
-        }
-        if (sliderIcon.src.includes("/static/Images/Icons/expand.svg")){
-            actionDisplayDiv.style.left = "0vw";
-            actionDisplayDiv.style.right = "";
-            sliderIcon.src = "/static/Images/Icons/collapse.svg";
-        }
+    const discardToggleDiv = document.getElementById("discardToggleDiv");
+    const handToggleDiv = document.getElementById("handToggleDiv");
+    const sliderIcon = document.getElementById("sliderIcon");
+    if (isHand){
+        handToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
+        discardToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";     
+        displayCards(player, player.hand);
+    }
+    else{
+        handToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
+        discardToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
+        displayCards(player, player.discard);
+    }
+    if (sliderIcon.src.includes("/static/Images/Icons/expand.svg")){
+        actionDisplayDiv.style.left = "0vw";
+        actionDisplayDiv.style.right = "";
+        sliderIcon.src = "/static/Images/Icons/collapse.svg";
     }
 }
 
@@ -398,7 +400,7 @@ function displayCards(player, cardsToDisplay){
         const possibleAction = document.createElement("img");
         possibleAction.src = cardsToDisplay[i][0].image;
         possibleAction.addEventListener("click", () => {
-            if (cardsToDisplay == player.hand && player.waitingOn == "selectAction"){
+            if (cardsToDisplay == player.hand && player.isReady == false && player.waitingOn == "selectAction"){
                 const previousSelection = document.getElementById("selectedCard");
                 if (previousSelection != undefined){
                     previousSelection.id = "";
@@ -409,7 +411,7 @@ function displayCards(player, cardsToDisplay){
                 myPlayedCard.src = cardsToDisplay[i][0].image;
                 openCloseDisplay();
             }
-            if (cardsToDisplay == player.discard && player.waitingOn == "retrieveCards"){
+            if (cardsToDisplay == player.discard && player.isReady == false && player.waitingOn == "retrieveCards"){
                 const remainingRetrievals = document.getElementById("remainingRetrievals");
                 const numDuplicateRetrievals = document.querySelector(`.retrieveIcon p.num${i}`);
 
