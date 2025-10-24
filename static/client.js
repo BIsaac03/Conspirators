@@ -248,14 +248,25 @@ function createGameSpace(players){
         playedCard.style.opacity = "0.5";
         playedCard.style.transform = 'rotate(-90deg)';
 
+        if (i == myPlayerNum){
+            playedCard.addEventListener("click", () => {
+                openRelevantDisplay(players[i], true);
+            })
+        }
+
         playedCard.addEventListener("mouseover", () => {
             if (!playedCard.src.includes("static/Images/Actions/back.png")){
                 const blownUpAction = document.createElement("img");
                 blownUpAction.src = playedCard.src;
                 blownUpAction.id = "blownUp";
+                if (i == myPlayerNum){
+                    blownUpAction.addEventListener("click", () => {
+                        openRelevantDisplay(players[i], true);
+                    })
+                }
                 bodyElement.appendChild(blownUpAction);
+
                 playedCard.style.opacity = 0.3;
-    
                 playedCard.addEventListener("mouseout", () => {
                     const blownUpAction = document.getElementById("blownUp");
                     if (blownUpAction != undefined && !blownUpAction.matches(':hover')){
@@ -270,9 +281,6 @@ function createGameSpace(players){
                     }
                 })
             }
-        })
-        playerIcon.addEventListener("click", () => {
-            displayNotification('notification trigerred');
         })
         playerSpace.appendChild(playedCard);
         playerSpace.appendChild(playerIcon);
@@ -358,6 +366,29 @@ function openCloseDisplay(){
     }
 }
 
+function openRelevantDisplay(player, isHand){
+    if (player.isReady == false){
+        const discardToggleDiv = document.getElementById("discardToggleDiv");
+        const handToggleDiv = document.getElementById("handToggleDiv");
+        const sliderIcon = document.getElementById("sliderIcon");
+        if (isHand){
+            handToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
+            discardToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";     
+            displayCards(player, player.hand);
+        }
+        else{
+            handToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
+            discardToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
+            displayCards(player, player.discard);
+        }
+        if (sliderIcon.src.includes("/static/Images/Icons/expand.svg")){
+            actionDisplayDiv.style.left = "0vw";
+            actionDisplayDiv.style.right = "";
+            sliderIcon.src = "/static/Images/Icons/collapse.svg";
+        }
+    }
+}
+
 function displayCards(player, cardsToDisplay){
     const actionSelection = document.getElementById("actionSelection");
     actionSelection.innerHTML = "";
@@ -415,11 +446,7 @@ function displayCards(player, cardsToDisplay){
 }
 
 function actionSelection(players, playerNum){
-    displayCards(players[playerNum], players[playerNum].hand)
-    const sliderIcon = document.getElementById("sliderIcon");
-    if (sliderIcon.src.includes("/static/Images/Icons/expand.svg")){
-        openCloseDisplay();
-    }
+    openRelevantDisplay(players[playerNum], true);
     let targetPlayerNum = undefined;
     const myCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
     myCard.style.opacity = "1";
@@ -493,16 +520,7 @@ function revealActions(players){
 }
 
 function retrieveCards(player, numCardsToRetrieve){
-    // pull up relevant display
-    const discardToggleDiv = document.getElementById("discardToggleDiv");
-    const handToggleDiv = document.getElementById("handToggleDiv");
-    const sliderIcon = document.getElementById("sliderIcon");
-    discardToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
-    handToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
-    displayCards(player, player.discard);
-    if (sliderIcon.src.includes("/static/Images/Icons/expand.svg")){
-        openCloseDisplay();
-    }
+    openRelevantDisplay(player, false);
 
     const retrieveDiv = document.createElement("div");
     retrieveDiv.id = "retrieveDiv";
