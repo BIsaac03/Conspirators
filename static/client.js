@@ -637,8 +637,15 @@ function displayNotification(notification){
     notificationDiv.appendChild(notificationContent);
     notificationDiv.appendChild(closeNotifiction);
     const notificationContainer = document.getElementById("notificationContainer");
+
+    let keepScrollPosition = true;
+    if (notificationContainer.scrollTop == -1*(notificationContainer.scrollHeight - notificationContainer.offsetHeight)){
+        keepScrollPosition = false;
+    }
     notificationContainer.appendChild(notificationDiv);
-    notificationContainer.scrollTop = 0;
+    if (!keepScrollPosition){
+        notificationContainer.scrollTop = -1*notificationContainer.scrollHeight;
+    }
 
     setTimeout(() => {notificationDiv.remove()}, 60000);
 }
