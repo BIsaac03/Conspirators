@@ -5,7 +5,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { gameInProgressError } from "./static/lobby.js";
+import { gameInProgressError, modifyPlayerList } from "./static/lobby.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -194,7 +194,6 @@ function makePlayer(ID, name, color){
             hand[indexOfSelectedAction][1]--;
         }
     }
-
     const discardPlayedCard = () => {
         // return Rest to hand
         if (playedCard.name === "Rest"){
@@ -216,7 +215,6 @@ function makePlayer(ID, name, color){
         unreadyPlayer("retrieveCards");
         io.emit("retrieveCards", ID, numCardsToRetrieve);
     }
-
     const retrieveSelectedCards = (cards) => {
         cards.forEach((entry) => {
             const actionInDiscard = discard.find((action) => action.name === entry[0]);
@@ -237,6 +235,21 @@ function makePlayer(ID, name, color){
                 actionInHand[1] += entry[1];
             }
         })
+    }
+
+    const setCoins = (modification, isInVault) => {
+        if (isInVault){
+            numCoinsInVault += modification;
+        }
+        else{
+            numCoins += modification;
+        }
+    }
+    const setCardSwaps = (modification) => {
+        numCardSwaps += modification;
+    }
+    const setRedirects = (modification) => {
+        numRedirects += modification;
     }
 
     const readyPlayer = () => {
@@ -305,9 +318,10 @@ function makePlayer(ID, name, color){
         }
     }
 
-    return {createStartingHand, confirmAction, discardPlayedCard, prepareToRetrieveCards, retrieveSelectedCards, readyPlayer, unreadyPlayer, getPlayerDetails, getNumCards, getCards, getItems, getCurrentAction, getRoundEffects, getPlayerStatus}
+    return {createStartingHand, confirmAction, discardPlayedCard, prepareToRetrieveCards, retrieveSelectedCards, setCoins, setCardSwaps, setRedirects, readyPlayer, unreadyPlayer, getPlayerDetails, getNumCards, getCards, getItems, getCurrentAction, getRoundEffects, getPlayerStatus}
 }
 
+/*
 function makeForSale(presetCards){
     const forSale = [];
 
@@ -327,34 +341,50 @@ function makeForSale(presetCards){
 
     return forSale;
 }
+*/
 
-function establishWorkValue(playedCards){
-    let numWorkers = 0;
-    for (let i = 0; i < playedCards.length; i++){
-        if (playedCards.isWork == true){
-            numWorkers++;
+function establishWorkValue(players){
+    // workers earn 5 coins -1 per other worker
+    let workValue = 6;
+    for (let i = 0; i < players.length; i++){
+        if (players[i].getCurrentAction().card.isWork){
+            workValue--;
         }
     }
-
-    let workValue = playedCards.length - numWorkers + Math.min(1, numWorkers - 1);
     return workValue;
 }
 
-function resolveOrderedActions(players){
-    //const workValue = establishWorkValue(playedCard);
-    // adjust iterations to equal number of IN-GAME ordered cards-1
-    for (let i = 1; i < 5; i++){
-        players.forEach((player) => {if (player.getCurrentAction().card.priority == i) {
-            eval(player.getCurrentAction().card.effect);
-        }})
+function establishStealValue(target, players){
+    // thieves steal 4 coins -1 per other thief with the same target
+    let stealValue = 5;
+    for (let i = 0; i < players.length; i++){
+        if (players[i].getCurrentAction().target == target && players[i].getCurrentAction().card.isSteal){
+            stealvalue--;
+        }
     }
-    resolveUnorderedActions(players);
+    return stealValue;
 }
 
-function resolveUnorderedActions(players){
-    players.forEach((player) => {if (player.getCurrentAction().card.priority == 0) {
-        eval(player.getCurrentAction().card.effect);
-    }})
+function resolveOrderedActions(players){
+    const workValue = establishWorkValue(players);
+
+    // !! adjust iterations to equal number of IN-GAME ordered cards-1
+    for (let i = 1; i < 5; i++){
+        players.forEach((player) => {
+            if (player.getCurrentAction().card.priority == i) {
+                eval(player.getCurrentAction().card.effect);
+            }
+        })
+    }
+    resolveUnorderedActions(players, workValue);
+}
+
+function resolveUnorderedActions(players, workValue){
+    players.forEach((player) => {
+        if (player.getCurrentAction().card.priority == 0) {
+            eval(player.getCurrentAction().card.effect);
+        }
+    })
     checkEndOfRound()
 }
 
@@ -366,8 +396,8 @@ function checkEndOfRound(){
         io.emit("updateCards", players, true, false);
         io.emit("updateCards", players, false, false);
 
-        if (checkGameEnd() == false){
-            players.forEach(player => {
+        if (!checkGameEnd()){
+            players.forEach((player) => {
                 player.unreadyPlayer("selectAction");
             })
             console.log("nextRound")
@@ -375,6 +405,7 @@ function checkEndOfRound(){
             io.emit("selectAction", players);
         }
         else{
+            // !! add end of game functionality & scoring
         }
     }
 }
@@ -383,13 +414,16 @@ function checkGameEnd(){
     // !!! should check if end condition met
     return false
 }
-function work(worker, modification){
-    // !! modify coins based on number of workers
+
+function work(worker, workValue, modification){
+    worker.setCoins(workValue + modification);
 }
 
-function steal(stealer, stealFrom, modification){
-    const coinsToSteal = Math.min(4 + modification, stealFrom.numCoins); // !!! should vary based on number of steals
-    // !! modify coins
+function steal(stealer, stealFrom, modification, players){
+    const stealValue = establishStealValue(stealFrom, players);
+    const coinsToSteal = Math.min(stealValue + modification, stealFrom.getItems().numCoins); // !!! should vary based on number of steals
+    stealer.setCoins(coinsToSteal, false);
+    stealFrom.setCoins(coinsToSteal * -1, false);
 }
 
 function donate(giver, receiver, maxCoins, context){
