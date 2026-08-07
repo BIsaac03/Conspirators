@@ -24,6 +24,29 @@ button{
     font-size: 16px;
 }
 
+#mainMenu{
+    display: grid;
+    justify-items: center;
+    padding: 5vh;
+    gap: 30vh;
+}
+#mainMenu #options{
+    display: grid;
+    gap: 5vh;
+}
+#mainMenu #options button{
+    width: max(25vw, 200px);
+}
+#mainMenu #roomCodePopUp{
+    position: relative;
+    display: grid;
+    align-items: center;
+    justify-items: center;
+    height: 10vh;
+    top: -22vh;
+    left: 30vw;
+}
+
 .header{
     position: sticky;
     top: 0vh;

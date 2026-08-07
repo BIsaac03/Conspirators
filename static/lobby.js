@@ -15,15 +15,11 @@ function createLobby(bodyElement, socket){
     playerCustomization.classList.add("playerCustomization");
     playerCustomization.addEventListener('submit', (e) => e.preventDefault());
 
-    const label = document.createElement("label");
-    label.setAttribute("for", "playerName");
-    label.textContent =  "Player Name:";
-    
     const playerName = document.createElement("input");
     playerName.classList.add("playerName");
+    playerName.setAttribute("placeholder", "Name");
     playerName.setAttribute("type", "text");
     playerName.setAttribute("maxlength", "20");
-    playerName.setAttribute("name", "playerName");
     playerName.id = "playerName";
     let chosenName = localStorage.getItem("chosenName");
     if (chosenName != undefined){
@@ -66,7 +62,6 @@ function createLobby(bodyElement, socket){
     })
     startGameButton.style.display = "none";  
     
-    playerCustomization.appendChild(label);
     playerCustomization.appendChild(playerName);
     playerCustomization.appendChild(playerColor);
     playerCustomization.appendChild(joinGameButton);

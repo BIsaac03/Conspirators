@@ -40,32 +40,47 @@ io.use((socket, next) => {
 
 let isGameInProgress = false;
 let currentID = undefined;
+const currentRoomCode = (Math.random().toString(36).slice(2, 6)).toUpperCase();
+console.log(`Room code: ${currentRoomCode}`);
 const players = [];
 
 /////////// SERVER EVENTS
 io.on("connection", (socket) => {
-    const existingPlayer = players.find(player => player.playerID == currentID);
+    const existingPlayer = players.find((player) => player.getPlayerDetails().playerID == currentID);
     if (existingPlayer != undefined) {
-        socket.emit("reconnection", existingPlayer, players, isGameInProgress);
+        //console.log(existingPlayer.getPlayerDetails().playerName)
+        socket.emit("reconnection", existingPlayer.getPlayerDetails(), existingPlayer.getCards("hand"), existingPlayer.getCurrentAction(), existingPlayer.getPlayerStatus(), players, isGameInProgress);
     }
-    else{socket.emit("newPlayer", isGameInProgress);}
+    else{
+        socket.emit("sendToMainMenu");
+    }
 
     socket.emit("displayExistingPlayers", players);
 
+    socket.on("attemptEnterRoom", (roomCode) => {
+        if (roomCode == currentRoomCode){
+            socket.emit("newPlayer", isGameInProgress);
+        }
+        else{
+            // !! add client listener
+            socket.emit("InvalidRoomCode");
+        }
+    })
     socket.on("playerJoinedLobby", (playerID, playerName, playerColor) => {
         if (isGameInProgress){
             socket.emit("gameInProgress");
         }
         else{
             let colorSpecs = [playerColor, false];
-            const existingName = players.find(player => player.playerName == playerName);
-            const existingPlayer = players.find(player => player.playerID == playerID);
+            const existingName = players.find((player) => player.getPlayerDetails().playerName == playerName);
+            const existingPlayer = players.find((player) => player.getPlayerDetails().playerID == playerID);
     
             if (existingName != undefined && existingName.playerID != playerID){
                 socket.emit("nameTakenError", playerName);
             }
             else if (existingPlayer == undefined){
-                const newPlayer = makePlayer([], playerID, playerName, colorSpecs);
+                const newPlayer = makePlayer(playerID, playerName, colorSpecs);
+                newPlayer.createStartingHand();
                 players.push(newPlayer);
                 io.emit("modifyPlayerList", playerID, playerName, colorSpecs);
             }
@@ -78,13 +93,13 @@ io.on("connection", (socket) => {
     });
 
     socket.on("leftLobby", (playerID) => {
-        const indexToRemove = players.findIndex(player => player.playerID == playerID);
+        const indexToRemove = players.findIndex((player) => player.getPlayerDetails().playerID == playerID);
         players.splice(indexToRemove, 1);
         io.emit("playerKicked", playerID);
     })
 
     socket.on("startGame", () => {
-        const alreadyStarted = players.find(player => player.isInGame);
+        const alreadyStarted = players.find((player) => player.getPlayerStatus().isInGame);
         if (alreadyStarted == undefined){
             for (let i = 0; i < players.length; i++){
                 players[i].isInGame = true;
@@ -103,7 +118,7 @@ io.on("connection", (socket) => {
         socket.emit("updateCards", players, true, false);
         socket.broadcast.emit("opponentActionChosen", playerNum);
 
-        const keepWaiting = players.find(player => player.isReady == false)
+        const keepWaiting = players.find((player) => player.getPlayerStatus().isReady == false)
         if (keepWaiting == undefined){
             console.log("reveal");
             io.emit("revealActions", players);
@@ -156,11 +171,11 @@ function makePlayer(ID, name, color){
     let waitingOn = undefined;
 
     const createStartingHand = (selectedBAs) => {
-        const steal = allActions.find(action => action.name == "Steal");
-        const work = allActions.find(action => action.name == "Work");
-        const defend = allActions.find(action => action.name == "Defend");
-        const reciprocate = allActions.find(action => action.name == "Reciprocate");
-        const rest = allActions.find(action => action.name == "Rest");
+        const steal = allActions.find((action) => action.name == "Steal");
+        const work = allActions.find((action) => action.name == "Work");
+        const defend = allActions.find((action) => action.name == "Defend");
+        const reciprocate = allActions.find((action) => action.name == "Reciprocate");
+        const rest = allActions.find((action) => action.name == "Rest");
 
         hand.push([steal, 3]);
         hand.push([work, 3]);
@@ -389,7 +404,7 @@ function resolveUnorderedActions(players, workValue){
 }
 
 function checkEndOfRound(){
-    const waitingOn = players.find(player => player.getPlayerStatus().isReady === false);
+    const waitingOn = players.find((player) => player.getPlayerStatus().isReady === false);
     if (!waitingOn){
         roundEndCleanup();
         io.emit("updateStats", players);

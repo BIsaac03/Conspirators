@@ -1,11 +1,11 @@
 #lobby{
     display: grid;
-    gap: 75px;
+    column-gap: 10vw;
     grid-template-columns: 1fr 1fr;
 }
 .title{
-    padding: 20px;
-    margin-bottom: 60px;
+    padding: 2vh;
+    margin-bottom: 6vh;
     font-size: 80px;
     text-align: center;
 }
@@ -13,8 +13,7 @@
 form.playerCustomization{
     display: grid;
     grid-template: auto auto 1fr / auto auto;
-    height: 300px;
-    width: 100%;
+    height: 50vh;
     gap: 20px;
     justify-content: right;
     align-items: center;
@@ -26,11 +25,13 @@ form.playerCustomization label{
     padding-left: 10px;
     grid-area: 1 / 1 / 2 / 3;
 }
-form.playerCustomization input.playerName{
+form.playerCustomization input[type = "text"]{
     font-size: 30px;
     border-radius: 15px;
     padding-left: 10px;
     height: 50px;
+}
+form.playerCustomization .playerName{
     grid-area: 2 / 1 / 3 / 2;
 }
 form.playerCustomization input.colorSelect{
@@ -40,8 +41,8 @@ form.playerCustomization input.colorSelect{
     grid-area: 2 / 2 / 3 / 3;
 }
 form.playerCustomization input.joinGame{
-    width: 300px;
-    height: 75px;
+    width: 35vw;
+    height: 8vh;
     border-radius: 50px;
     font-size: 40px;
     background-color: #3f353a;
