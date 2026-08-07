@@ -1,4 +1,5 @@
 import {allActions} from "./static/actions.js";
+import { Player } from "./static/player.js"
 
 import express from "express";
 import { createServer } from "http";
@@ -40,16 +41,14 @@ io.use((socket, next) => {
 
 let isGameInProgress = false;
 let currentID = undefined;
-const currentRoomCode = (Math.random().toString(36).slice(2, 6)).toUpperCase();
-console.log(`Room code: ${currentRoomCode}`);
+let currentRoomCode = undefined
 const players = [];
 
 /////////// SERVER EVENTS
 io.on("connection", (socket) => {
-    const existingPlayer = players.find((player) => player.getPlayerDetails().playerID == currentID);
+    const existingPlayer = players.find((player) => player.playerID == currentID);
     if (existingPlayer != undefined) {
-        //console.log(existingPlayer.getPlayerDetails().playerName)
-        socket.emit("reconnection", existingPlayer.getPlayerDetails(), existingPlayer.getCards("hand"), existingPlayer.getCurrentAction(), existingPlayer.getPlayerStatus(), players, isGameInProgress);
+        socket.emit("reconnection", existingPlayer, players, isGameInProgress, currentRoomCode);
     }
     else{
         socket.emit("sendToMainMenu");
@@ -57,9 +56,12 @@ io.on("connection", (socket) => {
 
     socket.emit("displayExistingPlayers", players);
 
+    socket.on("createNewLobby", (roomCode) => {
+        currentRoomCode = roomCode;
+    })
     socket.on("attemptEnterRoom", (roomCode) => {
         if (roomCode == currentRoomCode){
-            socket.emit("newPlayer", isGameInProgress);
+            socket.emit("newPlayer", isGameInProgress, roomCode);
         }
         else{
             // !! add client listener
@@ -72,14 +74,14 @@ io.on("connection", (socket) => {
         }
         else{
             let colorSpecs = [playerColor, false];
-            const existingName = players.find((player) => player.getPlayerDetails().playerName == playerName);
-            const existingPlayer = players.find((player) => player.getPlayerDetails().playerID == playerID);
+            const existingName = players.find((player) => player.playerName == playerName);
+            const existingPlayer = players.find((player) => player.playerID == playerID);
     
             if (existingName != undefined && existingName.playerID != playerID){
                 socket.emit("nameTakenError", playerName);
             }
             else if (existingPlayer == undefined){
-                const newPlayer = makePlayer(playerID, playerName, colorSpecs);
+                const newPlayer = new Player(playerID, playerName, colorSpecs, players.length);
                 newPlayer.createStartingHand();
                 players.push(newPlayer);
                 io.emit("modifyPlayerList", playerID, playerName, colorSpecs);
@@ -93,13 +95,13 @@ io.on("connection", (socket) => {
     });
 
     socket.on("leftLobby", (playerID) => {
-        const indexToRemove = players.findIndex((player) => player.getPlayerDetails().playerID == playerID);
+        const indexToRemove = players.findIndex((player) => player.playerID == playerID);
         players.splice(indexToRemove, 1);
         io.emit("playerKicked", playerID);
     })
 
     socket.on("startGame", () => {
-        const alreadyStarted = players.find((player) => player.getPlayerStatus().isInGame);
+        const alreadyStarted = players.find((player) => player.isInGame);
         if (alreadyStarted == undefined){
             for (let i = 0; i < players.length; i++){
                 players[i].isInGame = true;
@@ -118,7 +120,7 @@ io.on("connection", (socket) => {
         socket.emit("updateCards", players, true, false);
         socket.broadcast.emit("opponentActionChosen", playerNum);
 
-        const keepWaiting = players.find((player) => player.getPlayerStatus().isReady == false)
+        const keepWaiting = players.find((player) => player.isReady == false)
         if (keepWaiting == undefined){
             console.log("reveal");
             io.emit("revealActions", players);
@@ -152,190 +154,6 @@ httpServer.listen(port, function () {
     console.log('App listening at https://%s:%s', host, port)
 });
 
-function makePlayer(ID, name, color){
-    const playerNum = players.length;
-    const playerID = ID;
-    const playerName = name
-    const playerColor = color
-    const hand = [];
-    const discard = [];
-    let playedCard = undefined;
-    let currentTarget = undefined;
-    let numCardSwaps = 0;
-    let numRedirects = 0;
-    let numCoins = 0;
-    let numCoinsInVault = 0;
-    let stealResistance = 0;
-    let isInGame = false;
-    let isReady = false;
-    let waitingOn = undefined;
-
-    const createStartingHand = (selectedBAs) => {
-        const steal = allActions.find((action) => action.name == "Steal");
-        const work = allActions.find((action) => action.name == "Work");
-        const defend = allActions.find((action) => action.name == "Defend");
-        const reciprocate = allActions.find((action) => action.name == "Reciprocate");
-        const rest = allActions.find((action) => action.name == "Rest");
-
-        hand.push([steal, 3]);
-        hand.push([work, 3]);
-        hand.push([defend, 2]);
-        hand.push([reciprocate, 1]);
-        hand.push([rest, 1]);
-
-        if (!selectedBAs){
-            let variableBAs = allActions.filter(action => action.isVariableBasicAction == "true");
-            for (let i = 0; i < 2; i++){
-                const addedBA = variableBAs.splice(Math.floor(Math.random()*variableBAs.length), 1)[0];
-                hand.push([addedBA, 1]);
-            }
-        }
-        else{
-            hand.push([selectedBAs[0], 1]);
-            hand.push([selectedBAs[1], 1]);
-        }
-
-    }
-
-    const confirmAction = (card, target) => {
-        playedCard = card;
-        currentTarget = target;
-
-        const indexOfSelectedAction = hand.findIndex((entry) => entry[0].name == card.name);
-        if (hand[indexOfSelectedAction][1] === 1){
-            hand.splice(indexOfSelectedAction, 1);
-        }
-        else{
-            hand[indexOfSelectedAction][1]--;
-        }
-    }
-    const discardPlayedCard = () => {
-        // return Rest to hand
-        if (playedCard.name === "Rest"){
-            hand.push([playedCard, 1]);
-        }
-        // discard other played cards
-        else{
-            const actionInDiscard = discard.find((action) => action.name === playedCard.name);
-            if (!actionInDiscard){
-                discard.push([playedCard, 1])
-            }
-            else{
-                actionInDiscard[1]++;
-            }
-        }
-    }
-
-    const prepareToRetrieveCards = (numCardsToRetrieve) => {
-        unreadyPlayer("retrieveCards");
-        io.emit("retrieveCards", ID, numCardsToRetrieve);
-    }
-    const retrieveSelectedCards = (cards) => {
-        cards.forEach((entry) => {
-            const actionInDiscard = discard.find((action) => action.name === entry[0]);
-            const actionInHand = hand.find((action) => action.name == entry[0]);
-            // remove card from discard
-            if (actionInDiscard[1] === entry[1]){
-                const index = discard.indexOf(actionInDiscard);
-                discard.splice(index, 1);
-            }
-            else{
-                actionInDiscard[1] -= entry[1];
-            }
-            // add card to hand
-            if (!actionInHand){
-                hand.push([entry])
-            }
-            else{
-                actionInHand[1] += entry[1];
-            }
-        })
-    }
-
-    const setCoins = (modification, isInVault) => {
-        if (isInVault){
-            numCoinsInVault += modification;
-        }
-        else{
-            numCoins += modification;
-        }
-    }
-    const setCardSwaps = (modification) => {
-        numCardSwaps += modification;
-    }
-    const setRedirects = (modification) => {
-        numRedirects += modification;
-    }
-
-    const readyPlayer = () => {
-        isReady = true;
-    }
-    const unreadyPlayer = (ToDo) => {
-        isReady = false;
-        waitingOn = ToDo;
-    }
-
-    const getPlayerDetails = () => {
-        return {
-            playerNum,
-            playerID,
-            playerName,
-            playerColor
-        }
-    }
-    const getNumCards = (where) => {
-        let totalCards = 0;
-        if (where === "hand"){
-            hand.forEach((entry) => {
-                totalCards += entry[1];
-            })
-        }
-        else if (where === "discard"){
-            discard.forEach((entry) => {
-                totalCards += entry[1];
-            })
-
-        }
-        return totalCards;
-    }
-    const getCards = (where) => {
-        if (where === "hand"){
-            return hand;
-        }
-        else if (where == "discard"){
-            return discard;
-        }
-    }
-    const getItems = () => {
-        return{
-            numCardSwaps,
-            numRedirects,
-            numCoins,
-            numCoinsInVault
-        }
-    }
-    const getCurrentAction = () => {
-        return {
-            card: playedCard,
-            target: currentTarget
-        }
-    }
-    const getRoundEffects = () => {
-        return {
-            stealResistance
-        }
-    }
-    const getPlayerStatus = () => {
-        return {
-            isInGame,
-            isReady,
-            waitingOn
-        }
-    }
-
-    return {createStartingHand, confirmAction, discardPlayedCard, prepareToRetrieveCards, retrieveSelectedCards, setCoins, setCardSwaps, setRedirects, readyPlayer, unreadyPlayer, getPlayerDetails, getNumCards, getCards, getItems, getCurrentAction, getRoundEffects, getPlayerStatus}
-}
-
 /*
 function makeForSale(presetCards){
     const forSale = [];
@@ -362,7 +180,7 @@ function establishWorkValue(players){
     // workers earn 5 coins -1 per other worker
     let workValue = 6;
     for (let i = 0; i < players.length; i++){
-        if (players[i].getCurrentAction().card.isWork){
+        if (players[i].playedCard.isWork){
             workValue--;
         }
     }
@@ -373,7 +191,7 @@ function establishStealValue(target, players){
     // thieves steal 4 coins -1 per other thief with the same target
     let stealValue = 5;
     for (let i = 0; i < players.length; i++){
-        if (players[i].getCurrentAction().target == target && players[i].getCurrentAction().card.isSteal){
+        if (players[i].currentTarget == target && players[i].playedCard.isSteal){
             stealvalue--;
         }
     }
@@ -386,8 +204,8 @@ function resolveOrderedActions(players){
     // !! adjust iterations to equal number of IN-GAME ordered cards-1
     for (let i = 1; i < 5; i++){
         players.forEach((player) => {
-            if (player.getCurrentAction().card.priority == i) {
-                eval(player.getCurrentAction().card.effect);
+            if (player.playedCard.priority == i) {
+                eval(player.playedCard.effect);
             }
         })
     }
@@ -396,15 +214,15 @@ function resolveOrderedActions(players){
 
 function resolveUnorderedActions(players, workValue){
     players.forEach((player) => {
-        if (player.getCurrentAction().card.priority == 0) {
-            eval(player.getCurrentAction().card.effect);
+        if (player.playedCard.priority == 0) {
+            eval(player.playedCard.effect);
         }
     })
     checkEndOfRound()
 }
 
 function checkEndOfRound(){
-    const waitingOn = players.find((player) => player.getPlayerStatus().isReady === false);
+    const waitingOn = players.find((player) => player.isReady === false);
     if (!waitingOn){
         roundEndCleanup();
         io.emit("updateStats", players);
@@ -436,13 +254,13 @@ function work(worker, workValue, modification){
 
 function steal(stealer, stealFrom, modification, players){
     const stealValue = establishStealValue(stealFrom, players);
-    const coinsToSteal = Math.min(stealValue + modification, stealFrom.getItems().numCoins); // !!! should vary based on number of steals
+    const coinsToSteal = Math.min(stealValue + modification, stealFrom.items.numCoins); // !!! should vary based on number of steals
     stealer.setCoins(coinsToSteal, false);
     stealFrom.setCoins(coinsToSteal * -1, false);
 }
 
 function donate(giver, receiver, maxCoins, context){
-    const realMaxCoins = Math.min(maxCoins, giver.getItems().numCoins);
+    const realMaxCoins = Math.min(maxCoins, giver.items.numCoins);
     io.emit("donate", giver, receiver, realMaxCoins, context)
 }
 

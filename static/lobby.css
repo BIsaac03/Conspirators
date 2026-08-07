@@ -1,19 +1,27 @@
 #lobby{
     display: grid;
     column-gap: 10vw;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 45vw 45vw;
 }
 .title{
+    height: 10vh;
     padding: 2vh;
-    margin-bottom: 6vh;
+    margin-bottom: 4vh;
     font-size: 80px;
     text-align: center;
+}
+#roomCode{
+    position: absolute;
+    left: 90vw;
+    top: 13vh;
+    font-size: 32px;
+    color: goldenrod;
 }
 
 form.playerCustomization{
     display: grid;
-    grid-template: auto auto 1fr / auto auto;
-    height: 50vh;
+    grid-template: auto auto / auto auto;
+    height: 20vh;
     gap: 20px;
     justify-content: right;
     align-items: center;
@@ -32,22 +40,23 @@ form.playerCustomization input[type = "text"]{
     height: 50px;
 }
 form.playerCustomization .playerName{
-    grid-area: 2 / 1 / 3 / 2;
+    grid-area: 1 / 1 / 2 / 2;
 }
 form.playerCustomization input.colorSelect{
     align-self: center;
     width: 50px;
     height: 50px;
-    grid-area: 2 / 2 / 3 / 3;
+    grid-area: 1 / 2 / 2 / 3;
 }
 form.playerCustomization input.joinGame{
     width: 35vw;
-    height: 8vh;
+    height: max(8vh, 50px);
+    justify-self: center;
     border-radius: 50px;
     font-size: 40px;
     background-color: #3f353a;
     color: white;
-    grid-area: 3 / 1 / 4 / 3;
+    grid-area: 2 / 1 / 3 / 3;
     margin-top: 20px;
 }
 
@@ -79,6 +88,7 @@ ul#playerList{
 }
 
 #startGame{
+    grid-column: 1 / 3;
     justify-self: center;
     width: 500px;
     height: 100px;

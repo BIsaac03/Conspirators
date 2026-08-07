@@ -1,7 +1,12 @@
-function createLobby(bodyElement, socket){
+function createLobby(bodyElement, socket, roomCode){
     const header = document.createElement("div");
     header.classList.add("header");
     bodyElement.appendChild(header);
+
+    const code = document.createElement("p");
+    code.textContent = roomCode;
+    code.id = "roomCode";
+    bodyElement.appendChild(code);
     
     const title = document.createElement("p");
     title.classList.add("title");

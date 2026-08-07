@@ -30,6 +30,9 @@ button{
     padding: 5vh;
     gap: 30vh;
 }
+#mainMenu p{
+    font-size: 88px;
+}
 #mainMenu #options{
     display: grid;
     gap: 5vh;

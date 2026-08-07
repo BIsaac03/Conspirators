@@ -1,4 +1,5 @@
 import * as lobby from "./lobby.js";
+import { Player } from "./player.js";
 
 if (document.cookie == ""){
     document.cookie = "userID="+Math.random().toString(36).substring(1, 30);
@@ -18,33 +19,33 @@ socket.on("sendToMainMenu", () => {
     displayMainMenu();
 })
 
-socket.on("newPlayer", (isGameInProgress) => {
+socket.on("newPlayer", (isGameInProgress, roomCode) => {
     bodyElement.innerHTML = "";
     if (isGameInProgress){
         lobby.gameInProgressError(bodyElement);
     }
     else{
-        lobby.createLobby(bodyElement, socket);
+        lobby.createLobby(bodyElement, socket, roomCode);
     }
 })
 
-socket.on("reconnection", (reconnectedPlayer, players, isGameInProgress) => {
+socket.on("reconnection", (reconnectedPlayer, players, isGameInProgress, roomCode) => {
     bodyElement.innerHTML = "";
-    if (!reconnectedPlayer.getPlayerStatus().isInGame){
+    if (!reconnectedPlayer.isInGame){
         if (isGameInProgress){
             lobby.gameInProgressError(bodyElement);
         }
         else{
-            lobby.createLobby(bodyElement, socket);
+            lobby.createLobby(bodyElement, socket, roomCode);
             for (let i = 0; i < players.length; i++){
                 console.log("modify")
-                lobby.modifyPlayerList(players[i].getPlayerDetails().playerID, players[i].getPlayerDetails().playerName, players[i].getPlayerDetails().playerColor, socket);
+                lobby.modifyPlayerList(players[i].playerID, players[i].playerName, players[i].playerColor, socket);
             }
             lobby.joinedLobbyUpdate();
         }
     }
     else{
-        myPlayerNum = reconnectedPlayer.getPlayerDetails().playerNum;
+        myPlayerNum = reconnectedPlayer.playerNum;
 
         createGameSpace(players);
         createNotificationContainer();
@@ -52,35 +53,35 @@ socket.on("reconnection", (reconnectedPlayer, players, isGameInProgress) => {
         updateStats(players);
         createCardDisplay(reconnectedPlayer);
         openCloseDisplay();
-        displayCards(reconnectedPlayer.getPlayerDetails().playerNum, reconnectedPlayer.getCards("hand"));
+        displayCards(reconnectedPlayer.playerNum, reconnectedPlayer.hand);
 
-        if (!reconnectedPlayer.getPlayerStatus().isReady){
-            if (reconnectedPlayer.getPlayerStatus().waitingOn == "selectAction"){
+        if (!reconnectedPlayer.isReady){
+            if (reconnectedPlayer.waitingOn == "selectAction"){
                 actionSelection(players, myPlayerNum);
             }
-            else if (reconnectedPlayer.getPlayerStatus().waitingOn == "useCardSwap"){
+            else if (reconnectedPlayer.waitingOn == "useCardSwap"){
     
             }
-            else if (reconnectedPlayer.getPlayerStatus().waitingOn == "retrieveCards"){
+            else if (reconnectedPlayer.waitingOn == "retrieveCards"){
                 // !!! should store number of retrieved cards
                 retrieveCards(reconnectedPlayer, 2);
             }
-            else if (reconnectedPlayer.getPlayerStatus().waitingOn == "donate"){
+            else if (reconnectedPlayer.waitingOn == "donate"){
     
             }
-            else if (reconnectedPlayer.getPlayerStatus().waitingOn == "purchaseCards"){
+            else if (reconnectedPlayer.waitingOn == "purchaseCards"){
     
             }
         }
 
         else{
-            if (reconnectedPlayer.getPlayerStatus().waitingOn == "selectAction"){
+            if (reconnectedPlayer.waitingOn == "selectAction"){
                 const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
-                myPlayedCard.src = reconnectedPlayer.getCurrentAction().card.image;
+                myPlayedCard.src = reconnectedPlayer.playedCard.image;
                 myPlayedCard.style.border = "3px solid black";
-                orientCardToPlayer(myPlayerNum, reconnectedPlayer.getCurrentAction().target, players.length);
-                players.forEach(player => {if (player.getPlayerStatus().isReady){
-                    lockInCard(player.getPlayerDetails().playerNum);
+                orientCardToPlayer(myPlayerNum, reconnectedPlayer.currentTarget, players.length);
+                players.forEach(player => {if (player.isReady){
+                    lockInCard(player.playerNum);
                 }})
             }
         }
@@ -89,7 +90,7 @@ socket.on("reconnection", (reconnectedPlayer, players, isGameInProgress) => {
 
 socket.on("displayExistingPlayers", (players) => {
     for (let i = 0; i < players.length; i++){
-        lobby.modifyPlayerList(players[i].getPlayerDetails().playerID, players[i].getPlayerDetails().playerName, players[i].getPlayerDetails().playerColor, socket);
+        lobby.modifyPlayerList(players[i].playerID, players[i].playerName, players[i].playerColor, socket);
     }
 })
 socket.on("gameInProgress", () => {
@@ -144,7 +145,7 @@ socket.on("resetGameDisplay", () => {
     })
 })
 socket.on("retrieveCards", (player, numCardsToRetrieve) => {
-    if (player.getPlayerDetails().playerNum == myPlayerNum){
+    if (player.playerNum == myPlayerNum){
         retrieveCards(player, numCardsToRetrieve);
     }
 })
@@ -209,7 +210,9 @@ function displayMainMenu(){
     const createLobby = document.createElement("button");
     createLobby.textContent = "Create New Lobby";
     createLobby.addEventListener("click", () => {
-        // !! create new lobby
+        const roomCode = (Math.random().toString(36).slice(2, 6)).toUpperCase();
+        socket.emit("createNewLobby", roomCode);
+        lobby.createLobby(bodyElement, socket, roomCode);
         mainMenu.remove();
     })
     options.appendChild(createLobby);
@@ -287,8 +290,8 @@ function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
 
 function createGameSpace(players){
     const userID = document.cookie;
-    const thisPlayer = players.find((player) => player.getPlayerDetails().playerID == userID);
-    myPlayerNum = thisPlayer.getPlayerDetails().playerNum;
+    const thisPlayer = players.find((player) => player.playerID == userID);
+    myPlayerNum = thisPlayer.playerNum;
     
     bodyElement.innerHTML = "";
     const gameSpace = document.createElement("div");
@@ -436,12 +439,12 @@ function openRelevantDisplay(player, isHand){
     if (isHand){
         handToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
         discardToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";     
-        displayCards(player, player.getCards("hand"));
+        displayCards(player, player.hand);
     }
     else{
         handToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
         discardToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
-        displayCards(player, player.getCards("discard"));
+        displayCards(player, player.discard);
     }
     if (sliderIcon.src.includes("/static/Images/Icons/expand.svg")){
         actionDisplayDiv.style.left = "0vw";
@@ -459,7 +462,7 @@ function displayCards(player, cardsToDisplay){
         const possibleAction = document.createElement("img");
         possibleAction.src = cardsToDisplay[i][0].image;
         possibleAction.addEventListener("click", () => {
-            if (cardsToDisplay == player.getCards("hand") && player.getPlayerStatus().isReady == false && player.getPlayerStatus().waitingOn == "selectAction"){
+            if (cardsToDisplay == player.hand && player.isReady == false && player.waitingOn == "selectAction"){
                 const previousSelection = document.getElementById("selectedCard");
                 if (previousSelection != undefined){
                     previousSelection.id = "";
@@ -470,7 +473,7 @@ function displayCards(player, cardsToDisplay){
                 myPlayedCard.src = cardsToDisplay[i][0].image;
                 openCloseDisplay();
             }
-            if (cardsToDisplay == player.getCards("discard") && player.getPlayerStatus().isReady == false && player.getPlayerStatus().waitingOn == "retrieveCards"){
+            if (cardsToDisplay == player.discard && player.isReady == false && player.waitingOn == "retrieveCards"){
                 const remainingRetrievals = document.getElementById("remainingRetrievals");
                 const numDuplicateRetrievals = document.querySelector(`.retrieveIcon p.num${i}`);
 
@@ -574,9 +577,9 @@ function lockInCard(playerNum){
 
 function revealActions(players){
     players.forEach((player) => {
-        const playedCard = document.querySelector(`#player${player.getPlayerDetails().playerNum} .playedCard`);
-        playedCard.src = player.getCurrentAction().card.image;
-        orientCardToPlayer(player.getPlayerDetails().playerNum, player.getCurrentAction().target, players.length);
+        const playedCard = document.querySelector(`#player${player.playerNum} .playedCard`);
+        playedCard.src = player.playedCard.image;
+        orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
     })
 }
 
@@ -597,7 +600,7 @@ function retrieveCards(player, numCardsToRetrieve){
         const totalRetrievedCards = [];
         retrievedActions.forEach(action => {
             for (let i = 0; i < action.textContent; i++){
-                const returnedAction = player.getCards("discard").find((card) => card[0].image.includes(`${action.parentElement.parentElement.src}`));
+                const returnedAction = player.discard.find((card) => card[0].image.includes(`${action.parentElement.parentElement.src}`));
                 totalRetrievedCards.push(returnedCard);
             }
         })
