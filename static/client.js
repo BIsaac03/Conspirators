@@ -251,6 +251,42 @@ function displayMainMenu(){
     const tutorial = document.createElement("button");
     tutorial.textContent = "Tutorial";
     tutorial.addEventListener("click", () => {
+        const testCard = document.createElement("div");
+        testCard.id = "testCard";
+
+        const name = document.createElement("p");
+        name.textContent = "Work";
+        name.id = "name"
+        const text = document.createElement("p");
+        text.id = "text";
+        text.textContent = "Work."
+        const cost = document.createElement("p");
+        cost.id = "cost";
+        cost.textContent = "0";
+
+        const vpDiv = document.createElement("div");
+        vpDiv.id = "vp";
+        const vp = document.createElement("p");
+        vp.textContent = "0";
+        const vpIcon = document.createElement("img");
+        vpIcon.src = "./static/Images/Icons/vp.svg";
+        vpDiv.appendChild(vp);
+        vpDiv.appendChild(vpIcon);
+
+        const priority = document.createElement("p");
+        priority.id = "priority";
+        priority.textContent = "5";
+        const image = document.createElement("img");
+        image.id = "image";
+        image.src = "./static/Images/actions/red_arrow.png";
+
+        testCard.appendChild(name);
+        testCard.appendChild(text);
+        testCard.appendChild(cost);
+        testCard.appendChild(vpDiv);
+        testCard.appendChild(priority);
+        testCard.appendChild(image);
+        bodyElement.appendChild(testCard);
         // !! add tutorial
         mainMenu.remove();
     })

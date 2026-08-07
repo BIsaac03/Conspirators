@@ -49,6 +49,57 @@ button{
     top: -22vh;
     left: 30vw;
 }
+#testCard{
+    width: 183px;
+    height: 270px;
+    position: absolute;
+    justify-self: center;
+    align-self: center;
+    display: grid;
+    grid-template: 2fr 6fr 0.5fr 7fr 2fr/ 4fr 4fr 4fr;
+    justify-items: center;
+    font-size: 26px;
+    border: 2px solid black;
+    border-radius: 30px;
+}
+#cost{
+    grid-area: 5 / 1 / 6 / 2;
+    align-self: end;
+}
+#name{
+    grid-area: 1 / 1 / 2 / 4;
+    align-self: end;
+    font-size: 32px;
+}
+#text{
+    grid-area: 4 / 1 / 6 / 4;
+    align-self: center;
+    text-align: center;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+#priority{
+    grid-area: 3 / 3 / 4 / 4;
+    z-index: 1;
+    padding-left: 14px;
+    margin-top: -10px;
+}
+#vp{
+    grid-area: 5 / 3 / 6 / 4;
+    display: grid;
+}
+#vp img{
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    margin-left: -14px;
+    margin-top: -4px
+}
+#image{
+    grid-area: 2 / 1 / 4 / 4;
+    width: calc(100% + 1px);
+    border: 1px solid black;
+}
 
 .header{
     position: sticky;

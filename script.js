@@ -105,7 +105,7 @@ io.on("connection", (socket) => {
         if (alreadyStarted == undefined){
             for (let i = 0; i < players.length; i++){
                 players[i].isInGame = true;
-                players[i].unreadyPlayer("selectAction");
+                players[i].waitingOn = "selectAction";
             }
             isGameInProgress = true;
             io.emit("createGameSpace", players);
@@ -231,7 +231,8 @@ function checkEndOfRound(){
 
         if (!checkGameEnd()){
             players.forEach((player) => {
-                player.unreadyPlayer("selectAction");
+                player.isReady = false;
+                player.waitingOn = "selectAction";
             })
             console.log("nextRound")
             io.emit("resetGameDisplay");
