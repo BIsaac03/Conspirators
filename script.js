@@ -82,7 +82,15 @@ io.on("connection", (socket) => {
             }
             else if (existingPlayer == undefined){
                 const newPlayer = new Player(playerID, playerName, colorSpecs, players.length);
-                newPlayer.createStartingHand();
+                /* random BAs
+                let variableBAs = allActions.filter((action) => action.isSecondaryBA == "true");
+                for (let i = 0; i < 2; i++){
+                    const addedBA = variableBAs.splice(Math.floor(Math.random()*variableBAs.length), 1)[0];
+                    this.hand.push([addedBA, 1]);
+                }*/
+                const BA1 = allActions.find((action) => action.name == "Help");
+                const BA2 = allActions.find((action) => action.name == "Bless");
+                newPlayer.createStartingHand([BA1, BA2]);
                 players.push(newPlayer);
                 io.emit("modifyPlayerList", playerID, playerName, colorSpecs);
             }
@@ -202,7 +210,7 @@ function resolveOrderedActions(players){
     const workValue = establishWorkValue(players);
 
     // !! adjust iterations to equal number of IN-GAME ordered cards-1
-    for (let i = 1; i < 5; i++){
+    for (let i = 1; i < 6; i++){
         players.forEach((player) => {
             if (player.playedCard.priority == i) {
                 eval(player.playedCard.effect);

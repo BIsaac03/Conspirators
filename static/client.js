@@ -295,6 +295,14 @@ function displayMainMenu(){
     bodyElement.appendChild(mainMenu);
 }
 
+function calculateNumCards(where){
+    let totalCards = 0;
+        where.forEach((entry) => {
+            totalCards += entry[1];
+        })
+    return totalCards;
+}
+
 function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
     // NUMS GET BIGGER CLOCKWISE
     const totalInsideAngle = Math.PI * (numPlayers - 2);
@@ -494,6 +502,7 @@ function displayCards(player, cardsToDisplay){
     actionSelection.innerHTML = "";
 
     for (let i = 0; i < cardsToDisplay.length; i++){
+        console.log(cardsToDisplay)
         const actionDiv = document.createElement("div");
         const possibleAction = document.createElement("img");
         possibleAction.src = cardsToDisplay[i][0].image;
@@ -716,18 +725,18 @@ function createStats(players){
 function updateStats(players){
     for (let i = 0; i < players.length; i++){
         const numCardsInHand = document.querySelector(`#playerDisplay${i} .handNum`);
-        numCardsInHand.textContent = players[i].getNumCards("hand");
+        numCardsInHand.textContent = calculateNumCards(players[i].hand);
         const numCardsInDiscard = document.querySelector(`#playerDisplay${i} .discardNum`);
-        numCardsInDiscard.textContent = players[i].getNumCards("discard");
+        numCardsInDiscard.textContent = calculateNumCards(players[i].discard);
         const numCoins = document.querySelector(`#playerDisplay${i} .numCoins`);
-        numCoins.textContent = players[i].getItems().numCoins;
+        numCoins.textContent = players[i].numCoins;
         const numCardSwaps = document.querySelector(`#playerDisplay${i} .numCardSwaps`)
-        numCardSwaps.textContent = players[i].getItems().numCardSwaps;
+        numCardSwaps.textContent = players[i].numCardSwaps;
         const numRedirects = document.querySelector(`#playerDisplay${i} .numRedirects`)
-        numRedirects.textContent = players[i].getItems().numRedirects;
+        numRedirects.textContent = players[i].numRedirects;
         const numCoinsInVault = document.querySelector(`#playerDisplay${i} .numCoinsInVault`);
         if (i == myPlayerNum){
-            numCoinsInVault.textContent = players[i].getItems().numCoinsInVault;
+            numCoinsInVault.textContent = players[i].numCoinsInVault;
         }
         else{numCoinsInVault.textContent = '?'};
     }

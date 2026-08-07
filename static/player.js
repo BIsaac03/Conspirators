@@ -25,26 +25,16 @@ export class Player{
         const steal = allActions.find((action) => action.name == "Steal");
         const work = allActions.find((action) => action.name == "Work");
         const defend = allActions.find((action) => action.name == "Defend");
-        const reciprocate = allActions.find((action) => action.name == "Reciprocate");
+        const ambush = allActions.find((action) => action.name == "Ambush");
         const rest = allActions.find((action) => action.name == "Rest");
 
         this.hand.push([steal, 3]);
         this.hand.push([work, 3]);
         this.hand.push([defend, 2]);
-        this.hand.push([reciprocate, 1]);
+        this.hand.push([ambush, 1]);
         this.hand.push([rest, 1]);
-
-        if (!selectedBAs){
-            let variableBAs = allActions.filter(action => action.isVariableBasicAction == "true");
-            for (let i = 0; i < 2; i++){
-                const addedBA = variableBAs.splice(Math.floor(Math.random()*variableBAs.length), 1)[0];
-                this.hand.push([addedBA, 1]);
-            }
-        }
-        else{
-            this.hand.push([selectedBAs[0], 1]);
-            this.hand.push([selectedBAs[1], 1]);
-        }
+        this.hand.push([selectedBAs[0], 1]);
+        this.hand.push([selectedBAs[1], 1])
 
     }
 
