@@ -2,17 +2,17 @@ import * as lobby from "./lobby.js";
 import { Player } from "./player.js";
 
 if (document.cookie == ""){
-    document.cookie = "userID="+Math.random().toString(36).substring(1, 30);
+    document.cookie = "userID=p"+crypto.randomUUID();
 }
-let userIDCookie = document.cookie;
+const myID = document.cookie.slice(7);
+let myPlayerNum = undefined;
 
 const socket = io("http://localhost:3000", {
     auth: {
-        token: userIDCookie
+        token: myID
     }
 });
 
-let myPlayerNum = undefined;
 const bodyElement = document.body;
 
 socket.on("sendToMainMenu", () => {
@@ -434,7 +434,7 @@ function createCardDisplay(type){
         const discardToggle = document.createElement("button");
         discardToggle.textContent = "Discard"
         discardToggleDiv.addEventListener("click", () => {
-            socket.emit("getUpdatedCards", false, true);
+            socket.emit("getUpdatedCards", false, true, myID);
         })
         discardToggleDiv.appendChild(discardToggle);
 
@@ -445,7 +445,7 @@ function createCardDisplay(type){
         const handToggle = document.createElement("button");
         handToggle.textContent = "Hand";
         handToggleDiv.addEventListener("click", () => {
-            socket.emit("getUpdatedCards", true, true);
+            socket.emit("getUpdatedCards", true, true, myID);
         })
         handToggleDiv.appendChild(handToggle);
 
@@ -465,6 +465,7 @@ function createCardDisplay(type){
         displayVisibilityToggle.id = "shopDisplayVisibilityToggle";
         sliderIcon.src = "/static/Images/Icons/shopCollapse.svg";
         displayVisibilityToggle.addEventListener("click", openCloseShopDisplay);
+
     }
 
     bodyElement.appendChild(actionDisplayDiv);
@@ -527,7 +528,7 @@ function displayCards(player, cardsToDisplay){
     actionSelection.innerHTML = "";
 
     for (let i = 0; i < cardsToDisplay.length; i++){
-        console.log(cardsToDisplay)
+        //console.log(cardsToDisplay)
         const actionDiv = document.createElement("div");
         const possibleAction = document.createElement("img");
         possibleAction.src = cardsToDisplay[i][0].image;
@@ -623,7 +624,7 @@ function actionSelection(players, playerNum){
         const actionToPlayDOM = document.querySelector("#selectedCard img");
         if (actionToPlayDOM != undefined && targetPlayerNum != undefined){
             const actionToPlay = players[myPlayerNum].hand.find((action) => actionToPlayDOM.src.includes(action[0].image));
-            socket.emit("chosenAction", myPlayerNum, actionToPlay[0], targetPlayerNum);
+            socket.emit("chosenAction", myPlayerNum, actionToPlay[0], targetPlayerNum, myID);
 
             // remove card-orienting event listeners
             for (let i = 0; i < players.length; i++){
@@ -675,7 +676,7 @@ function retrieveCards(player, numCardsToRetrieve){
             }
         })
         if (totalRetrievedCards.length == numCardsToRetrieve){
-            socket.emit("returnCardsToHand", myPlayerNum, totalRetrievedCards);
+            socket.emit("returnCardsToHand", myPlayerNum, totalRetrievedCards, myID);
         }
     })
     retrieveDiv.appendChild(remainingRetrievals);

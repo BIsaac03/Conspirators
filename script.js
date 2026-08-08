@@ -39,49 +39,52 @@ io.use((socket, next) => {
     next();
 });
 
-let isGameInProgress = false;
 let currentID = undefined;
-let currentRoomCode = undefined
-const players = [];
+const ongoingGames = [];
 
 /////////// SERVER EVENTS
 io.on("connection", (socket) => {
-    const existingPlayer = players.find((player) => player.playerID == currentID);
-    if (existingPlayer != undefined) {
-        socket.emit("reconnection", existingPlayer, players, isGameInProgress, currentRoomCode);
+    const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == currentID));
+    if (myGame) {
+        const existingPlayer = myGame.getPlayers().find((player) => player.playerID == currentID);
+        socket.emit("reconnection", existingPlayer, myGame.getPlayers(), myGame.getGameDetails().isGameInProgress, myGame.getGameDetails().currentRoomCode);
+        socket.emit("displayExistingPlayers", myGame.getPlayers());
     }
     else{
         socket.emit("sendToMainMenu");
     }
 
-    socket.emit("displayExistingPlayers", players);
 
     socket.on("createNewLobby", (roomCode) => {
-        currentRoomCode = roomCode;
+        const shop = createShop("basic");
+        const newGame = makeGame(roomCode, shop)
+        ongoingGames.push(newGame);
     })
     socket.on("attemptEnterRoom", (roomCode) => {
-        if (roomCode == currentRoomCode){
-            socket.emit("newPlayer", isGameInProgress, roomCode);
+        const gameToFind = ongoingGames.find((game) => game.getGameDetails().roomCode == roomCode);
+        if (gameToFind){
+            socket.emit("newPlayer", gameToFind.getGameDetails().isGameInProgress, roomCode);
         }
         else{
             // !! add client listener
             socket.emit("InvalidRoomCode");
         }
     })
-    socket.on("playerJoinedLobby", (playerID, playerName, playerColor) => {
-        if (isGameInProgress){
+    socket.on("playerJoinedLobby", (playerID, playerName, playerColor, roomCode) => {
+        const myLobby = ongoingGames.find((game) => game.getGameDetails().roomCode == roomCode);
+        if (myLobby.getGameDetails().isGameInProgress){
             socket.emit("gameInProgress");
         }
         else{
             let colorSpecs = [playerColor, false];
-            const existingName = players.find((player) => player.playerName == playerName);
-            const existingPlayer = players.find((player) => player.playerID == playerID);
+            const existingName = myLobby.getPlayers().find((player) => player.playerName == playerName);
+            const existingPlayer = myLobby.getPlayers().find((player) => player.playerID == playerID);
     
             if (existingName != undefined && existingName.playerID != playerID){
                 socket.emit("nameTakenError", playerName);
             }
             else if (existingPlayer == undefined){
-                const newPlayer = new Player(playerID, playerName, colorSpecs, players.length);
+                const newPlayer = new Player(playerID, playerName, colorSpecs, myLobby.getPlayers().length);
                 /* random BAs
                 let variableBAs = allActions.filter((action) => action.isSecondaryBA == "true");
                 for (let i = 0; i < 2; i++){
@@ -91,7 +94,7 @@ io.on("connection", (socket) => {
                 const BA1 = allActions.find((action) => action.name == "Help");
                 const BA2 = allActions.find((action) => action.name == "Bless");
                 newPlayer.createStartingHand([BA1, BA2]);
-                players.push(newPlayer);
+                myLobby.getPlayers().push(newPlayer);
                 io.emit("modifyPlayerList", playerID, playerName, colorSpecs);
             }
             else{
@@ -103,45 +106,48 @@ io.on("connection", (socket) => {
     });
 
     socket.on("leftLobby", (playerID) => {
-        const indexToRemove = players.findIndex((player) => player.playerID == playerID);
-        players.splice(indexToRemove, 1);
+        const myLobby = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == playerID));
+        const indexToRemove = myLobby.getPlayers().findIndex((player) => player.playerID == playerID);
+        myLobby.getPlayers().splice(indexToRemove, 1);
         io.emit("playerKicked", playerID);
     })
 
-    socket.on("startGame", () => {
-        const alreadyStarted = players.find((player) => player.isInGame);
-        if (alreadyStarted == undefined){
-            for (let i = 0; i < players.length; i++){
-                players[i].isInGame = true;
-                players[i].waitingOn = "selectAction";
-            }
-            isGameInProgress = true;
-            io.emit("createGameSpace", players);
-            io.emit("selectAction", players);
+    socket.on("startGame", (roomCode) => {
+        const myLobby = ongoingGames.find((game) => game.getGameDetails().roomCode == roomCode);
+        if (!myLobby.getGameDetails().isGameInProgress){
+            myLobby.getPlayers().forEach((player) => {
+                player.isInGame = true;
+                player.waitingOn = "selectAction";
+            })
+
+            myLobby.getGameDetails().isGameInProgress = true;
+            io.emit("createGameSpace", myLobby.getPlayers());
+            io.emit("selectAction", myLobby.getPlayers());
         }
     })
 
-    socket.on("chosenAction", (playerNum, action, target) => {
-        players[playerNum].confirmAction(action, target);
-        players[playerNum].isReady = true;
+    socket.on("chosenAction", (playerNum, action, target, myID) => {
+        const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
+        myGame.getPlayers()[playerNum].confirmAction(action, target);
+        myGame.getPlayers()[playerNum].isReady = true;
 
-        socket.emit("updateCards", players, true, false);
+        socket.emit("updateCards", myGame.getPlayers(), true, false);
         socket.broadcast.emit("opponentActionChosen", playerNum);
 
-        const keepWaiting = players.find((player) => player.isReady == false)
+        const keepWaiting = myGame.getPlayers().find((player) => !player.isReady)
         if (keepWaiting == undefined){
             console.log("reveal");
-            io.emit("revealActions", players);
+            io.emit("revealActions", myGame.getPlayers());
             setTimeout(() => {
-                resolveOrderedActions(players);
+                resolveOrderedActions(myGame.getPlayers());
             }, 2000)
         }
     })
 
-    socket.on("returnCardsToHand", (playerNum, retrievedCards) => {
-        console.log(retrievedCards);
-        players[playerNum].retrieveSelectedCards(retrievedCards);
-        players[playerNum].isReady = true;
+    socket.on("returnCardsToHand", (playerNum, retrievedCards, myID) => {
+        const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
+        myGame.getPlayers()[playerNum].retrieveSelectedCards(retrievedCards);
+        myGame.getPlayers()[playerNum].isReady = true;
         checkEndOfRound();
     })
 
@@ -151,8 +157,9 @@ io.on("connection", (socket) => {
         io.emit("notification", receiver.playerNum, giver.playerName+" gave you "+coins+" coins!");
     })
 
-    socket.on("getUpdatedCards", (isHand, shouldDisplay) => {
-        socket.emit("updateCards", players, isHand, shouldDisplay);
+    socket.on("getUpdatedCards", (isHand, shouldDisplay, myID) => {
+        const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
+        socket.emit("updateCards", myGame.getPlayers(), isHand, shouldDisplay);
     })
 })
 
@@ -162,27 +169,79 @@ httpServer.listen(port, function () {
     console.log('App listening at https://%s:%s', host, port)
 });
 
-/*
-function makeForSale(presetCards){
+
+function createShop(type){
     const forSale = [];
 
-    if (presetCards != undefined){
-        for (let i = 0; i < presetCards.length; i++){
-            forSale.push([presetCards[i], 4]);
-        }
+    if (type == "basic"){
+        const revolt = allActions.find((action) => action.name == "Revolt");
+        const bewitch = allActions.find((action) => action.name == "Bewitch");
+        const communalize = allActions.find((action) => action.name == "Communalize");
+        const curse = allActions.find((action) => action.name == "Curse");
+        const hijack = allActions.find((action) => action.name == "Hijack");
+        const honor = allActions.find((action) => action.name == "Honor");
+        const impersonate = allActions.find((action) => action.name == "Impersonate");
+        const pillage = allActions.find((action) => action.name == "Pillage");
+        const recruit = allActions.find((action) => action.name == "Recruit");
+        const sabotage = allActions.find((action) => action.name == "Sabotage");
+        const unionize = allActions.find((action) => action.name == "Unionize");
+        const whistle = allActions.find((action) => action.name == "Whistle");
+
+        forSale.push([revolt, 4]);
+        forSale.push([bewitch, 4]);
+        forSale.push([communalize, 4]);
+        forSale.push([curse, 4]);
+        forSale.push([hijack, 4]);
+        forSale.push([honor, 4]);
+        forSale.push([impersonate, 4]);
+        forSale.push([pillage, 4]);
+        forSale.push([recruit, 4]);
+        forSale.push([sabotage, 4]);
+        forSale.push([unionize, 4]);
+        forSale.push([whistle, 4]);
     }
 
-    else{
-        const purchasableActions = allActions.filter(action => action.isBasicAction == "false");
-        for (let i = forSale.length; i < 12; i++){
-            const uniqueCard = purchasableActions.splice(Math.floor(Math.random()*purchasableActions.length), 1)[0];
+    else if (type == "random"){
+        const purchasablePermanentActions = allActions.filter(action => (!action.isBasicAction && !action.isOneShot));
+        const oneShots = allActions.filter(action => action.isOneShot)
+        for (let i = 0; i < 3; i++){
+            const uniqueCard = oneShots.splice(Math.floor(Math.random()*oneShots.length), 1)[0];
+            forSale.push([uniqueCard[i], 4]);
+        }
+        for (let i = 0; i < 9; i++){
+            const uniqueCard = purchasablePermanentActions.splice(Math.floor(Math.random()*purchasablePermanentActions.length), 1)[0];
             forSale.push([uniqueCard[i], 4]);
         }
     }
-
     return forSale;
 }
-*/
+
+
+function makeGame(code, actionShop){
+    const roomCode = code;
+    const shop = actionShop;
+    let gameHasStarted = false;
+    let players = [];
+
+    const getPlayers = () => {
+        return players;
+    }
+    const getGameDetails = () => {
+        return {
+            roomCode,
+            gameHasStarted,
+            shop
+        }
+    };
+    const addPlayer = (player) => {
+        players.push(player);
+    }
+    const startGame = () => {
+        gameHasStarted = true;
+    }
+
+    return {getPlayers, getGameDetails, addPlayer, startGame}
+}
 
 function establishWorkValue(players){
     // workers earn 5 coins -1 per other worker
@@ -226,13 +285,13 @@ function resolveUnorderedActions(players, workValue){
             eval(player.playedCard.effect);
         }
     })
-    checkEndOfRound()
+    checkEndOfRound(players)
 }
 
-function checkEndOfRound(){
-    const waitingOn = players.find((player) => player.isReady === false);
+function checkEndOfRound(players){
+    const waitingOn = players.find((player) => !player.isReady);
     if (!waitingOn){
-        roundEndCleanup();
+        roundEndCleanup(players);
         io.emit("updateStats", players);
         io.emit("updateCards", players, true, false);
         io.emit("updateCards", players, false, false);
@@ -263,17 +322,17 @@ function work(worker, workValue, modification){
 
 function steal(stealer, stealFrom, modification, players){
     const stealValue = establishStealValue(stealFrom, players);
-    const coinsToSteal = Math.min(stealValue + modification, stealFrom.items.numCoins); // !!! should vary based on number of steals
+    const coinsToSteal = Math.min(stealValue + modification, stealFrom.numCoins); // !!! should vary based on number of steals
     stealer.setCoins(coinsToSteal, false);
     stealFrom.setCoins(coinsToSteal * -1, false);
 }
 
 function donate(giver, receiver, maxCoins, context){
-    const realMaxCoins = Math.min(maxCoins, giver.items.numCoins);
+    const realMaxCoins = Math.min(maxCoins, giver.numCoins);
     io.emit("donate", giver, receiver, realMaxCoins, context)
 }
 
-function roundEndCleanup(){
+function roundEndCleanup(players){
     players.forEach(player => {
         player.discardPlayedCard();
     })

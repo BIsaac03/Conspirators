@@ -52,7 +52,7 @@ function createLobby(bodyElement, socket, roomCode){
         if (name != ""){
             localStorage.setItem('chosenName', name);
             localStorage.setItem('preferredColor', color);
-            socket.emit("playerJoinedLobby", document.cookie, name, color);
+            socket.emit("playerJoinedLobby", document.cookie.slice(7), name, color, roomCode);
             joinedLobbyUpdate(document);
         }
     })
@@ -62,7 +62,7 @@ function createLobby(bodyElement, socket, roomCode){
     startGameButton.textContent = "Start Game"
     startGameButton.addEventListener("click", () => {
         if (confirm("Are you sure you want to start the game? New players will not be able to join an in-progress game.")){
-            socket.emit("startGame");
+            socket.emit("startGame", roomCode);
         }
     })
     startGameButton.style.display = "none";  
