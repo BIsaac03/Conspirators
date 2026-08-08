@@ -51,8 +51,9 @@ socket.on("reconnection", (reconnectedPlayer, players, isGameInProgress, roomCod
         createNotificationContainer();
         createStats(players);
         updateStats(players);
-        createCardDisplay(reconnectedPlayer);
-        openCloseDisplay();
+        createCardDisplay("player");
+        createCardDisplay("shop");
+        openClosePlayerDisplay();
         displayCards(reconnectedPlayer.playerNum, reconnectedPlayer.hand);
 
         if (!reconnectedPlayer.isReady){
@@ -120,8 +121,9 @@ socket.on("createGameSpace", (players) => {
     createNotificationContainer();
     createStats(players);
     updateStats(players);
-    createCardDisplay(players[myPlayerNum]);
-    openCloseDisplay();
+    createCardDisplay("player");
+    createCardDisplay("shop");
+    openClosePlayerDisplay();
     displayCards(players[myPlayerNum], players[myPlayerNum].hand);
 })
 socket.on("selectAction", (players) => {
@@ -410,69 +412,92 @@ function createNotificationContainer(){
     bodyElement.appendChild(notificationContainer);
 }
 
-function createCardDisplay(player){
+function createCardDisplay(type){
     const actionDisplayDiv = document.createElement("div");
-    actionDisplayDiv.id = "actionDisplayDiv";
 
-    const discardToggleDiv = document.createElement("div");
-    discardToggleDiv.id = "discardToggleDiv";
-    discardToggleDiv.classList.add("cardLocationToggle");
-    discardToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
-    const discardToggle = document.createElement("button");
-    discardToggle.textContent = "Discard"
-    discardToggleDiv.addEventListener("click", () => {
-        socket.emit("getUpdatedCards", false, true);
-    })
-    discardToggleDiv.appendChild(discardToggle);
-
-    const handToggleDiv = document.createElement("div");
-    handToggleDiv.id = "handToggleDiv";
-    handToggleDiv.classList.add("cardLocationToggle");
-    handToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
-    const handToggle = document.createElement("button");
-    handToggle.textContent = "Hand";
-    handToggleDiv.addEventListener("click", () => {
-        socket.emit("getUpdatedCards", true, true);
-    })
-    handToggleDiv.appendChild(handToggle);
-
-    const cardLocationToggle = document.createElement("div");
-    cardLocationToggle.id = "cardLocationToggle";
-    cardLocationToggle.appendChild(discardToggleDiv);
-    cardLocationToggle.appendChild(handToggleDiv);
-
-    const displayVisibilitySlider = document.createElement("div");
-    displayVisibilitySlider.id = "displayVisibilitySlider";
+    const displayVisibilityToggle = document.createElement("div");
     const sliderIcon = document.createElement("img");
-    sliderIcon.id = "sliderIcon";
-    sliderIcon.src = "/static/Images/Icons/collapse.svg";
-    displayVisibilitySlider.appendChild(sliderIcon);
-    displayVisibilitySlider.addEventListener("click", openCloseDisplay);
-    
-    actionDisplayDiv.appendChild(cardLocationToggle);
-    actionDisplayDiv.appendChild(displayVisibilitySlider);
+    sliderIcon.classList.add("sliderIcon");
+    displayVisibilityToggle.appendChild(sliderIcon);
+    actionDisplayDiv.appendChild(displayVisibilityToggle);
 
-    const actionSelection = document.createElement("div");
-    actionSelection.id = "actionSelection";
+    if (type == "player"){
+        actionDisplayDiv.id = "playerDisplayDiv";
+        displayVisibilityToggle.id = "playerDisplayVisibilityToggle";
+        sliderIcon.src = "/static/Images/Icons/playerCollapse.svg";
+        displayVisibilityToggle.addEventListener("click", openClosePlayerDisplay);
 
-    actionDisplayDiv.appendChild(actionSelection);
+        const discardToggleDiv = document.createElement("div");
+        discardToggleDiv.id = "discardToggleDiv";
+        discardToggleDiv.classList.add("cardLocationToggle");
+        discardToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
+        const discardToggle = document.createElement("button");
+        discardToggle.textContent = "Discard"
+        discardToggleDiv.addEventListener("click", () => {
+            socket.emit("getUpdatedCards", false, true);
+        })
+        discardToggleDiv.appendChild(discardToggle);
+
+        const handToggleDiv = document.createElement("div");
+        handToggleDiv.id = "handToggleDiv";
+        handToggleDiv.classList.add("cardLocationToggle");
+        handToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
+        const handToggle = document.createElement("button");
+        handToggle.textContent = "Hand";
+        handToggleDiv.addEventListener("click", () => {
+            socket.emit("getUpdatedCards", true, true);
+        })
+        handToggleDiv.appendChild(handToggle);
+
+        const cardLocationToggle = document.createElement("div");
+        cardLocationToggle.id = "cardLocationToggle";
+        cardLocationToggle.appendChild(discardToggleDiv);
+        cardLocationToggle.appendChild(handToggleDiv);
+        actionDisplayDiv.appendChild(cardLocationToggle);
+
+        const actionSelection = document.createElement("div");
+        actionSelection.id = "actionSelection";
+        actionDisplayDiv.appendChild(actionSelection);
+    }
+
+    else if (type == "shop"){
+        actionDisplayDiv.id = "shopDisplayDiv";
+        displayVisibilityToggle.id = "shopDisplayVisibilityToggle";
+        sliderIcon.src = "/static/Images/Icons/shopCollapse.svg";
+        displayVisibilityToggle.addEventListener("click", openCloseShopDisplay);
+    }
 
     bodyElement.appendChild(actionDisplayDiv);
 }
 
-function openCloseDisplay(){
-    const actionDisplayDiv = document.getElementById("actionDisplayDiv");
-    const sliderIcon = document.getElementById("sliderIcon");
-    if (sliderIcon.src.includes("/static/Images/Icons/expand.svg")){
+function openCloseShopDisplay(){
+    console.log("shop")
+    const actionDisplayDiv = document.getElementById("shopDisplayDiv");
+    const sliderIcon = document.querySelector(`#shopDisplayVisibilityToggle img`);
+    if (sliderIcon.src.includes("/static/Images/Icons/shopExpand.svg")){
+        actionDisplayDiv.style.top = "0vh";
+        actionDisplayDiv.style.bottom = "";
+        sliderIcon.src = "/static/Images/Icons/shopCollapse.svg";
+    }
+    else if (sliderIcon.src.includes("/static/Images/Icons/shopCollapse.svg")){
+        actionDisplayDiv.style.bottom = "calc(100vh - 5vh)";
+        actionDisplayDiv.style.top = "";
+        sliderIcon.src = "/static/Images/Icons/shopExpand.svg";
+    }
+}
+
+function openClosePlayerDisplay(){
+    const actionDisplayDiv = document.getElementById("playerDisplayDiv");
+    const sliderIcon = document.querySelector(`#playerDisplayVisibilityToggle img`);
+    if (sliderIcon.src.includes("/static/Images/Icons/playerExpand.svg")){
         actionDisplayDiv.style.left = "0vw";
         actionDisplayDiv.style.right = "";
-        sliderIcon.src = "/static/Images/Icons/collapse.svg";
+        sliderIcon.src = "/static/Images/Icons/playerCollapse.svg";
     }
-    else {
+    else if (sliderIcon.src.includes("/static/Images/Icons/playerCollapse.svg")){
         actionDisplayDiv.style.right = "calc(100vw - 4vh)";
         actionDisplayDiv.style.left = "";
-        const sliderIcon = document.querySelector(`#displayVisibilitySlider img`);
-        sliderIcon.src = "/static/Images/Icons/expand.svg";
+        sliderIcon.src = "/static/Images/Icons/playerExpand.svg";
     }
 }
 
@@ -490,10 +515,10 @@ function openRelevantDisplay(player, isHand){
         discardToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
         displayCards(player, player.discard);
     }
-    if (sliderIcon.src.includes("/static/Images/Icons/expand.svg")){
+    if (sliderIcon.src.includes("/static/Images/Icons/playerExpand.svg")){
         actionDisplayDiv.style.left = "0vw";
         actionDisplayDiv.style.right = "";
-        sliderIcon.src = "/static/Images/Icons/collapse.svg";
+        sliderIcon.src = "/static/Images/Icons/playerCollapse.svg";
     }
 }
 
@@ -516,7 +541,7 @@ function displayCards(player, cardsToDisplay){
 
                 const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
                 myPlayedCard.src = cardsToDisplay[i][0].image;
-                openCloseDisplay();
+                openClosePlayerDisplay();
             }
             if (cardsToDisplay == player.discard && player.isReady == false && player.waitingOn == "retrieveCards"){
                 const remainingRetrievals = document.getElementById("remainingRetrievals");

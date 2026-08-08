@@ -15,6 +15,7 @@ body{
     grid-template-rows: 9vh auto 2fr;
     width: 100vw;
     height: 100vh;
+    overflow: hidden;
 }
 
 button{
@@ -201,7 +202,7 @@ div[id^="player"] #handIcon{
     width: 7.5vh;
 }
 
-#actionDisplayDiv{
+#playerDisplayDiv{
     position: absolute;
     align-self: center;
     width: 120vh;
@@ -216,9 +217,38 @@ div[id^="player"] #handIcon{
     overflow: auto;
     background-color: #000000d5;
 }
-#displayVisibilitySlider{
+
+#shopDisplayDiv{
+    position: absolute;
+    left: 5vh;
+    height: 25vh;
+    width: 60vw;
+    display: grid;
+    align-items: end;
+    background-color: pink;
+}
+#shopDisplayVisibilityToggle:hover{
+    background-color: rgb(219, 183, 92);
+}
+#shopDisplayVisibilityToggle{
+    position: absolute;
+    justify-self: center;
+    height: 5vh;
+    width: 60vw;
+    display: grid;
+    justify-items: center;
+    background-color: goldenrod;
+}
+#shopDisplayVisibilityToggle img{
+    height: 5vh;
+}
+
+#playerDisplayVisibilityToggle:hover{
+    background-color: #acacacd5;
+}
+#playerDisplayVisibilityToggle{
     grid-area: 1 / 2 / 3 / 3;
-    width: 7vh;
+    width: 5vh;
     height: 100%;
     display: grid;
     align-items: center;

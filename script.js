@@ -122,7 +122,7 @@ io.on("connection", (socket) => {
     })
 
     socket.on("chosenAction", (playerNum, action, target) => {
-        players[playerNum].confirmAction();
+        players[playerNum].confirmAction(action, target);
         players[playerNum].isReady = true;
 
         socket.emit("updateCards", players, true, false);
