@@ -261,14 +261,14 @@ function displayMainMenu(){
         testCard.id = "testCard";
 
         const name = document.createElement("p");
-        name.textContent = "Work";
+        name.textContent = "Whistle";
         name.id = "name"
         const text = document.createElement("p");
         text.id = "text";
-        text.textContent = "Work."
+        text.textContent = "Take a coins and a Card Swap token. You may redirect any cards targeting you to a neighbor, and vice versa."
         const cost = document.createElement("p");
         cost.id = "cost";
-        cost.textContent = "0";
+        cost.textContent = "4";
 
         const vpDiv = document.createElement("div");
         vpDiv.id = "vp";
@@ -289,7 +289,7 @@ function displayMainMenu(){
         testCard.appendChild(name);
         testCard.appendChild(text);
         testCard.appendChild(cost);
-        testCard.appendChild(vpDiv);
+        //testCard.appendChild(vpDiv);
         testCard.appendChild(priority);
         testCard.appendChild(image);
         bodyElement.appendChild(testCard);
