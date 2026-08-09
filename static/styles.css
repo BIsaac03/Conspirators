@@ -211,30 +211,22 @@ div[id^="player"] #handIcon{
     grid-template: 7vh auto / auto 4vh;
     z-index: 6;
 }
-#actionSelection{
-    display: grid;
-    grid-template: repeat(auto-fit, 50%) / repeat(4, 25%);
-    overflow: auto;
-    background-color: #000000d5;
-}
 
 #shopDisplayDiv{
     position: absolute;
     left: 5vh;
-    height: 25vh;
-    width: 60vw;
+    height: 95vh;
+    width: 70vw;
     display: grid;
-    align-items: end;
-    background-color: pink;
+    z-index: 5;
 }
 #shopDisplayVisibilityToggle:hover{
     background-color: rgb(219, 183, 92);
 }
 #shopDisplayVisibilityToggle{
-    position: absolute;
     justify-self: center;
     height: 5vh;
-    width: 60vw;
+    width: 100%;
     display: grid;
     justify-items: center;
     background-color: goldenrod;
@@ -273,19 +265,31 @@ div[id^="player"] #handIcon{
     width: 50%;
     font-size: 3.6vh;
 }
-#actionSelection div{
+.actionSelection.play{
+    grid-row: 2 / 3;
+}
+.actionSelection.buy{
+    grid-row: 1 / 2;
+}
+.actionSelection{
+    display: grid;
+    grid-template: repeat(auto-fit, 50%) / repeat(4, 25%);
+    overflow: auto;
+    background-color: #000000d5;
+}
+.actionSelection div{
     display: grid;
     grid-template-rows: auto auto;
     justify-items: center;
     align-items: start;
     padding: 5%;
 }
-#actionSelection div p{
+.actionSelection div p{
     font-size: 5vh;
     font-weight: bold;
     color: white;
 }
-#actionSelection img{
+.actionSelection img{
     width: 100%;
     border-radius: 11%;
 }

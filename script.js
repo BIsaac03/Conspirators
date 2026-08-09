@@ -47,7 +47,7 @@ io.on("connection", (socket) => {
     const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == currentID));
     if (myGame) {
         const existingPlayer = myGame.getPlayers().find((player) => player.playerID == currentID);
-        socket.emit("reconnection", existingPlayer, myGame.getPlayers(), myGame.getGameDetails().isGameInProgress, myGame.getGameDetails().currentRoomCode);
+        socket.emit("reconnection", existingPlayer, myGame.getPlayers(), myGame.getGameDetails().shop, myGame.getGameDetails().isGameInProgress, myGame.getGameDetails().currentRoomCode);
         socket.emit("displayExistingPlayers", myGame.getPlayers());
     }
     else{
@@ -121,7 +121,7 @@ io.on("connection", (socket) => {
             })
 
             myLobby.getGameDetails().isGameInProgress = true;
-            io.emit("createGameSpace", myLobby.getPlayers());
+            io.emit("createGameSpace", myLobby.getPlayers(), myLobby.getGameDetails().shop);
             io.emit("selectAction", myLobby.getPlayers());
         }
     })
@@ -174,6 +174,7 @@ function createShop(type){
     const forSale = [];
 
     if (type == "basic"){
+        // recommended set for first play-through
         const revolt = allActions.find((action) => action.name == "Revolt");
         const bewitch = allActions.find((action) => action.name == "Bewitch");
         const communalize = allActions.find((action) => action.name == "Communalize");
@@ -188,17 +189,17 @@ function createShop(type){
         const whistle = allActions.find((action) => action.name == "Whistle");
 
         forSale.push([revolt, 4]);
-        forSale.push([bewitch, 4]);
-        forSale.push([communalize, 4]);
-        forSale.push([curse, 4]);
-        forSale.push([hijack, 4]);
         forSale.push([honor, 4]);
-        forSale.push([impersonate, 4]);
-        forSale.push([pillage, 4]);
+        forSale.push([hijack, 4]);
         forSale.push([recruit, 4]);
-        forSale.push([sabotage, 4]);
+        forSale.push([impersonate, 4]);
         forSale.push([unionize, 4]);
         forSale.push([whistle, 4]);
+        forSale.push([communalize, 4]);
+        forSale.push([curse, 4]);
+        forSale.push([bewitch, 4]);
+        forSale.push([sabotage, 4]);
+        forSale.push([pillage, 4]);
     }
 
     else if (type == "random"){
@@ -215,7 +216,6 @@ function createShop(type){
     }
     return forSale;
 }
-
 
 function makeGame(code, actionShop){
     const roomCode = code;
@@ -317,7 +317,7 @@ function checkGameEnd(){
 }
 
 function work(worker, workValue, modification){
-    worker.setCoins(workValue + modification);
+    worker.numCoins += Math.max(0, (workValue + modification));
 }
 
 function steal(stealer, stealFrom, modification, players){

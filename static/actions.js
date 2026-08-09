@@ -141,7 +141,7 @@ export const allActions = [
     },
     {
         "name": "Bewitch",
-        "image": "static/Images/Actions/Betwitch.png",
+        "image": "static/Images/Actions/Bewitch.png",
         "isWork": "true",
         "isSteal": "false",
         "isTargetting": "false",

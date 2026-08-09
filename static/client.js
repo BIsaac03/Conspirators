@@ -29,7 +29,7 @@ socket.on("newPlayer", (isGameInProgress, roomCode) => {
     }
 })
 
-socket.on("reconnection", (reconnectedPlayer, players, isGameInProgress, roomCode) => {
+socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, roomCode) => {
     bodyElement.innerHTML = "";
     if (!reconnectedPlayer.isInGame){
         if (isGameInProgress){
@@ -54,7 +54,9 @@ socket.on("reconnection", (reconnectedPlayer, players, isGameInProgress, roomCod
         createCardDisplay("player");
         createCardDisplay("shop");
         openClosePlayerDisplay();
-        displayCards(reconnectedPlayer.playerNum, reconnectedPlayer.hand);
+        openCloseShopDisplay();
+        displayCards(reconnectedPlayer.playerNum, reconnectedPlayer.hand, "play");
+        displayCards(reconnectedPlayer.playerNum, shop, "buy");
 
         if (!reconnectedPlayer.isReady){
             if (reconnectedPlayer.waitingOn == "selectAction"){
@@ -116,7 +118,7 @@ socket.on("playerKicked", (playerID) => {
     }
 })
 
-socket.on("createGameSpace", (players) => {
+socket.on("createGameSpace", (players, shop) => {
     createGameSpace(players);
     createNotificationContainer();
     createStats(players);
@@ -124,7 +126,9 @@ socket.on("createGameSpace", (players) => {
     createCardDisplay("player");
     createCardDisplay("shop");
     openClosePlayerDisplay();
-    displayCards(players[myPlayerNum], players[myPlayerNum].hand);
+    openCloseShopDisplay();
+    displayCards(players[myPlayerNum], players[myPlayerNum].hand, "play");
+    displayCards(players[myPlayerNum], shop, "buy");
 })
 socket.on("selectAction", (players) => {
     actionSelection(players, myPlayerNum);
@@ -186,7 +190,7 @@ socket.on("updateCards", (players, isHand, shouldDisplay) => {
         openRelevantDisplay(players[myPlayerNum], isHand);
     }
     else{
-        displayCards(players[myPlayerNum], players[myPlayerNum].hand)
+        displayCards(players[myPlayerNum], players[myPlayerNum].hand, "play")
     }
 })
 
@@ -335,8 +339,7 @@ function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
 }
 
 function createGameSpace(players){
-    const userID = document.cookie;
-    const thisPlayer = players.find((player) => player.playerID == userID);
+    const thisPlayer = players.find((player) => player.playerID == myID);
     myPlayerNum = thisPlayer.playerNum;
     
     bodyElement.innerHTML = "";
@@ -421,6 +424,11 @@ function createCardDisplay(type){
     displayVisibilityToggle.appendChild(sliderIcon);
     actionDisplayDiv.appendChild(displayVisibilityToggle);
 
+
+    const actionSelection = document.createElement("div");
+    actionSelection.classList.add("actionSelection");
+    actionDisplayDiv.appendChild(actionSelection);
+
     if (type == "player"){
         actionDisplayDiv.id = "playerDisplayDiv";
         displayVisibilityToggle.id = "playerDisplayVisibilityToggle";
@@ -455,9 +463,7 @@ function createCardDisplay(type){
         cardLocationToggle.appendChild(handToggleDiv);
         actionDisplayDiv.appendChild(cardLocationToggle);
 
-        const actionSelection = document.createElement("div");
-        actionSelection.id = "actionSelection";
-        actionDisplayDiv.appendChild(actionSelection);
+        actionSelection.classList.add("play");
     }
 
     else if (type == "shop"){
@@ -465,14 +471,13 @@ function createCardDisplay(type){
         displayVisibilityToggle.id = "shopDisplayVisibilityToggle";
         sliderIcon.src = "/static/Images/Icons/shopCollapse.svg";
         displayVisibilityToggle.addEventListener("click", openCloseShopDisplay);
-
+        actionSelection.classList.add("buy");
     }
 
     bodyElement.appendChild(actionDisplayDiv);
 }
 
 function openCloseShopDisplay(){
-    console.log("shop")
     const actionDisplayDiv = document.getElementById("shopDisplayDiv");
     const sliderIcon = document.querySelector(`#shopDisplayVisibilityToggle img`);
     if (sliderIcon.src.includes("/static/Images/Icons/shopExpand.svg")){
@@ -505,26 +510,25 @@ function openClosePlayerDisplay(){
 function openRelevantDisplay(player, isHand){
     const discardToggleDiv = document.getElementById("discardToggleDiv");
     const handToggleDiv = document.getElementById("handToggleDiv");
-    const sliderIcon = document.getElementById("sliderIcon");
+    const sliderIcon = document.querySelector(`#playerDisplayDiv .sliderIcon`);
     if (isHand){
         handToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
         discardToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";     
-        displayCards(player, player.hand);
+        displayCards(player, player.hand, "play");
     }
     else{
         handToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
         discardToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
-        displayCards(player, player.discard);
+        displayCards(player, player.discard, "play");
     }
     if (sliderIcon.src.includes("/static/Images/Icons/playerExpand.svg")){
-        actionDisplayDiv.style.left = "0vw";
-        actionDisplayDiv.style.right = "";
-        sliderIcon.src = "/static/Images/Icons/playerCollapse.svg";
+        openClosePlayerDisplay();
     }
 }
 
-function displayCards(player, cardsToDisplay){
-    const actionSelection = document.getElementById("actionSelection");
+function displayCards(player, cardsToDisplay, why){
+    console.log(cardsToDisplay)
+    const actionSelection = document.querySelector(`.actionSelection.${why}`);
     actionSelection.innerHTML = "";
 
     for (let i = 0; i < cardsToDisplay.length; i++){
