@@ -1,3 +1,4 @@
+import { allActions } from "./actions.js";
 import * as lobby from "./lobby.js";
 import { Player } from "./player.js";
 
@@ -257,42 +258,11 @@ function displayMainMenu(){
     const tutorial = document.createElement("button");
     tutorial.textContent = "Tutorial";
     tutorial.addEventListener("click", () => {
-        const testCard = document.createElement("div");
-        testCard.id = "testCard";
-
-        const name = document.createElement("p");
-        name.textContent = "Whistle";
-        name.id = "name"
-        const text = document.createElement("p");
-        text.id = "text";
-        text.textContent = "Take a coins and a Card Swap token. You may redirect any cards targeting you to a neighbor, and vice versa."
-        const cost = document.createElement("p");
-        cost.id = "cost";
-        cost.textContent = "4";
-
-        const vpDiv = document.createElement("div");
-        vpDiv.id = "vp";
-        const vp = document.createElement("p");
-        vp.textContent = "0";
-        const vpIcon = document.createElement("img");
-        vpIcon.src = "./static/Images/Icons/vp.svg";
-        vpDiv.appendChild(vp);
-        vpDiv.appendChild(vpIcon);
-
-        const priority = document.createElement("p");
-        priority.id = "priority";
-        priority.textContent = "5";
-        const image = document.createElement("img");
-        image.id = "image";
-        image.src = "./static/Images/actions/red_arrow.png";
-
-        testCard.appendChild(name);
-        testCard.appendChild(text);
-        testCard.appendChild(cost);
-        //testCard.appendChild(vpDiv);
-        testCard.appendChild(priority);
-        testCard.appendChild(image);
-        bodyElement.appendChild(testCard);
+        const testDisplay = document.createElement("div");
+        testDisplay.id = "testCard";
+        bodyElement.appendChild(testDisplay);
+        const card = allActions.find((card) => card.name == "Steal")
+        generateCard(testDisplay, card)
         // !! add tutorial
         mainMenu.remove();
     })
@@ -355,9 +325,10 @@ function createGameSpace(players){
         const playerIcon = document.createElement("div");
         playerIcon.classList.add("playerIcon");
 
-        const playedCard = document.createElement("img");
+        const playedCard = document.createElement("div");
         playedCard.classList.add("playedCard");
-        playedCard.src = "static/Images/Actions/back.png";
+        const card = allActions.find((card) => card.name == "Bless")
+        generateCard(playedCard, card);
         playedCard.style.opacity = "0.5";
         playedCard.style.transform = 'rotate(-90deg)';
 
@@ -413,6 +384,42 @@ function createNotificationContainer(){
     const notificationContainer = document.createElement("div");
     notificationContainer.id = "notificationContainer";
     bodyElement.appendChild(notificationContainer);
+}
+
+function generateCard(div, card){
+        div.classList.add("card");
+
+        const name = document.createElement("p");
+        name.textContent = card.name;
+        name.classList.add("name")
+        const text = document.createElement("p");
+        text.classList.add("text");
+        //text.textContent = card.text;
+        text.textContent = "Take a coins and a Card Swap token. You may redirect any cards targeting you to a neighbor, and vice versa."
+        
+        const cost = document.createElement("p");
+        cost.classList.add("cost");
+        cost.textContent = card.cost;
+
+        const priority = document.createElement("p");
+        priority.classList.add("priority");
+        priority.textContent = card.priority;
+
+        const image = document.createElement("img");
+        image.classList.add("image");
+        //image.src = card.image;
+        image.src = "./static/Images/actions/red_arrow.png";
+
+        div.appendChild(name);
+        div.appendChild(text);
+        if (card.cost != 0){
+            div.appendChild(cost);
+        }
+        if (card.priority != 0){
+            div.appendChild(priority);
+        }
+        
+        div.appendChild(image);
 }
 
 function createCardDisplay(type){
@@ -534,8 +541,12 @@ function displayCards(player, cardsToDisplay, why){
     for (let i = 0; i < cardsToDisplay.length; i++){
         //console.log(cardsToDisplay)
         const actionDiv = document.createElement("div");
-        const possibleAction = document.createElement("img");
-        possibleAction.src = cardsToDisplay[i][0].image;
+        const possibleAction = document.createElement("div");
+        
+        const card = allActions.find((card) => card.name == cardsToDisplay[i][0].name)
+        generateCard(possibleAction, card)
+        //const possibleAction = document.createElement("img");
+        //possibleAction.src = cardsToDisplay[i][0].image;
         possibleAction.addEventListener("click", () => {
             if (cardsToDisplay == player.hand && player.isReady == false && player.waitingOn == "selectAction"){
                 const previousSelection = document.getElementById("selectedCard");

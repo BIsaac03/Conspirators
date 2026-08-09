@@ -54,18 +54,21 @@ button:hover{
     left: 30vw;
 }
 #testCard{
-    width: 183px;
     position: absolute;
-    justify-self: center;
     align-self: center;
+    justify-self: center;
+}
+.card{
     display: grid;
+    aspect-ratio: 5 / 7;
     grid-template: 2fr 4fr 1.5fr 6fr/ 2fr 3fr 2fr;
     justify-items: center;
     font-size: 20px;
+    background-color: floralwhite;
     border: 0.5px solid black;
-    border-radius: 30px;
+    border-radius: 10%;
 }
-#cost{
+.card .cost{
     margin-top: 1px;
     width: 20px;
     height: 20px;
@@ -78,36 +81,25 @@ button:hover{
     border-radius: 100%;
     border: 2px solid black;
 }
-#name{
+.card .name{
     grid-area: 1 / 1 / 2 / 4;
     align-self: end;
     font-size: 32px;
 }
-#text{
+.card .text{
     grid-area: 4 / 1 / 5 / 4;
     align-self: center;
     text-align: center;
     font-size: 16px;
 }
-#priority{
+.card .priority{
     grid-area: 3 / 3 / 4 / 4;
     display: flex;
     align-items: center;
     font-weight: bold;
     z-index: 1;
 }
-#vp{
-    grid-area: 5 / 3 / 6 / 4;
-    display: grid;
-}
-#vp img{
-    position: absolute;
-    width: 40px;
-    height: 40px;
-    margin-left: -14px;
-    margin-top: -4px
-}
-#image{
+.card .image{
     grid-area: 2 / 1 / 4 / 4;
     width: calc(100%);
     border: 0.5px solid black;
@@ -178,15 +170,15 @@ button:hover{
     position: absolute;
     justify-self: center;
     align-self: center;
-    width: 70vh;
-    height: 70vh;
+    width: 80vh;
+    height: 80vh;
     border-radius: 50%;
     background-color: blanchedalmond;
 }
 #gameSpace>div[id^="player"]{
     position: absolute;
     display: grid;
-    grid-template: 20vh auto / 20vh auto;
+    grid-template: 20vh auto / 30vh auto;
     left: calc(50% - 20vh);
     top: calc(50% - 10vh);
     width: 40vh;
@@ -201,7 +193,7 @@ div[id^="player"] .playerIcon{
 div[id^="player"] .playedCard{
     align-self: center;
     justify-self: center;
-    width: 12.5vh;
+    width: 20vh;
     border-radius: 13%;
     border: 3px dashed cyan;
 }
@@ -288,22 +280,20 @@ div[id^="player"] #handIcon{
     overflow: auto;
     background-color: #000000d5;
 }
-.actionSelection div{
+.actionSelection>div{
     display: grid;
     grid-template-rows: auto auto;
     justify-items: center;
     align-items: start;
-    padding: 5%;
+    padding: 1% 5%;
 }
-.actionSelection div p{
-    font-size: 5vh;
+.actionSelection div p.numberOfActions{
+    margin-top: -5px;
+    font-size: 3cqi;
     font-weight: bold;
     color: white;
 }
-.actionSelection img{
-    width: 100%;
-    border-radius: 11%;
-}
+
 
 #selectedPlayer{
     border: 5px solid purple;

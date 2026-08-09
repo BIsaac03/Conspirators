@@ -8,7 +8,7 @@ export const allActions = [
         "isTargetting": "true",
         "effect": `steal(player, players[player.currentTarget], 0, players)`,
         "priority": "0",
-        "cost": "undefined",
+        "cost": "0",
         "isBasicAction": "true",
         "isSecondaryBA": "false",
         "isOneShot": "false",
@@ -21,7 +21,7 @@ export const allActions = [
         "isTargetting": "false",
         "effect": `work(player, workValue, 0)`,
         "priority": "0",
-        "cost": "undefined",
+        "cost": "0",
         "isBasicAction": "true",
         "isSecondaryBA": "false",
         "isOneShot": "false",
@@ -35,7 +35,7 @@ export const allActions = [
         "effect":  `player.numCoins +=2; 
                     player.stealResistance = 10`, //!! accurately reflect steal resistance
         "priority": "1",
-        "cost": "undefined",
+        "cost": "0",
         "isBasicAction": "true",
         "isSecondaryBA": "false",
         "isOneShot": "false",
@@ -50,7 +50,7 @@ export const allActions = [
                         steal(player, players[player.currentTarget], 4)
                     }`,
         "priority": "0",
-        "cost": "undefined",
+        "cost": "0",
         "isBasicAction": "true",
         "isSecondaryBA": "false",
         "isOneShot": "false",
@@ -63,7 +63,7 @@ export const allActions = [
         "isTargetting": "false",
         "effect": `rest(player)`,
         "priority": "0",
-        "cost": "undefined",
+        "cost": "0",
         "isBasicAction": "true",
         "isSecondaryBA": "false",
         "isOneShot": "false",
@@ -78,7 +78,7 @@ export const allActions = [
         "effect":  `player.numCoins += workValue; 
                     player.rest(2);`, // !! selected player returns played card to hand
         "priority": "0",
-        "cost": "undefined",
+        "cost": "0",
         "isBasicAction": "true",
         "isSecondaryBA": "true",
         "isOneShot": "false",
@@ -93,7 +93,7 @@ export const allActions = [
                     players[player.currentTarget].numCoins += 5; 
                     donate(players[player.currentTarget], player, 4);`,
         "priority": "0",
-        "cost": "undefined",
+        "cost": "0",
         "isBasicAction": "true",
         "isSecondaryBA": "true",
         "isOneShot": "false",
@@ -107,7 +107,7 @@ export const allActions = [
         "effect":  `work(player, workValue, 1); 
                     players[player.currentTarget].numCoins += 1;`,
         "priority": "0",
-        "cost": "undefined",
+        "cost": "0",
         "isBasicAction": "true",
         "isSecondaryBA": "true",
         "isOneShot": "false",
@@ -121,7 +121,7 @@ export const allActions = [
         "effect":  `work(player, workValue, -1); 
                     player.setCardSwaps(1);`,
         "priority": "0",
-        "cost": "undefined",
+        "cost": "0",
         "isBasicAction": "true",
         "isSecondaryBA": "true",
         "isOneShot": "false",
