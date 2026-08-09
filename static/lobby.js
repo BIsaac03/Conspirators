@@ -3,10 +3,18 @@ function createLobby(bodyElement, socket, roomCode){
     header.classList.add("header");
     bodyElement.appendChild(header);
 
+    const codeDiv = document.createElement("div");
+    codeDiv.id = "roomCode"
     const code = document.createElement("p");
     code.textContent = roomCode;
-    code.id = "roomCode";
-    bodyElement.appendChild(code);
+    const copyCode = document.createElement("img");
+    copyCode.src = "./static/Images/Icons/copy.svg";
+    copyCode.addEventListener("click", () => {
+        navigator.clipboard.writeText(roomCode);
+    })
+    codeDiv.appendChild(copyCode);
+    codeDiv.appendChild(code);
+    bodyElement.appendChild(codeDiv);
     
     const title = document.createElement("p");
     title.classList.add("title");

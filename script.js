@@ -47,7 +47,7 @@ io.on("connection", (socket) => {
     const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == currentID));
     if (myGame) {
         const existingPlayer = myGame.getPlayers().find((player) => player.playerID == currentID);
-        socket.emit("reconnection", existingPlayer, myGame.getPlayers(), myGame.getGameDetails().shop, myGame.getGameDetails().isGameInProgress, myGame.getGameDetails().currentRoomCode);
+        socket.emit("reconnection", existingPlayer, myGame.getPlayers(), myGame.getGameDetails().shop, myGame.getGameDetails().isGameInProgress, myGame.getGameDetails().roomCode);
         socket.emit("displayExistingPlayers", myGame.getPlayers());
     }
     else{
@@ -188,6 +188,7 @@ function createShop(type){
         const unionize = allActions.find((action) => action.name == "Unionize");
         const whistle = allActions.find((action) => action.name == "Whistle");
 
+        // !! eventually, sort shop by cost and action type programatically rather than manually
         forSale.push([revolt, 4]);
         forSale.push([honor, 4]);
         forSale.push([hijack, 4]);

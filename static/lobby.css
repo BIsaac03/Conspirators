@@ -12,10 +12,20 @@
 }
 #roomCode{
     position: absolute;
-    left: 90vw;
-    top: 13vh;
+    left: 85vw;
+    top: 15vh;
+    display: flex;
+    gap: 10px;
+}
+#roomCode p{
     font-size: 32px;
     color: goldenrod;
+}
+#roomCode img{
+    fill: #ff5733;
+}
+#roomCode img:hover{
+    cursor: pointer;
 }
 
 form.playerCustomization{
@@ -58,6 +68,9 @@ form.playerCustomization input.joinGame{
     color: white;
     grid-area: 2 / 1 / 3 / 3;
     margin-top: 20px;
+}
+input.joinGame:hover{
+    cursor: pointer;
 }
 
 ul#playerList{
