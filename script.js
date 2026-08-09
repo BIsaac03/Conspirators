@@ -64,6 +64,7 @@ io.on("connection", (socket) => {
         const gameToFind = ongoingGames.find((game) => game.getGameDetails().roomCode == roomCode);
         if (gameToFind){
             socket.emit("newPlayer", gameToFind.getGameDetails().isGameInProgress, roomCode);
+            socket.emit("displayExistingPlayers", gameToFind.getPlayers());
         }
         else{
             // !! add client listener
