@@ -439,7 +439,7 @@ function createCardDisplay(type){
     if (type == "player"){
         actionDisplayDiv.id = "playerDisplayDiv";
         displayVisibilityToggle.id = "playerDisplayVisibilityToggle";
-        sliderIcon.src = "/static/Images/Icons/playerCollapse.svg";
+        sliderIcon.src = "/static/Images/Icons/leftArrows.svg";
         displayVisibilityToggle.addEventListener("click", openClosePlayerDisplay);
 
         const discardToggleDiv = document.createElement("div");
@@ -476,7 +476,7 @@ function createCardDisplay(type){
     else if (type == "shop"){
         actionDisplayDiv.id = "shopDisplayDiv";
         displayVisibilityToggle.id = "shopDisplayVisibilityToggle";
-        sliderIcon.src = "/static/Images/Icons/shopCollapse.svg";
+        sliderIcon.src = "/static/Images/Icons/rightArrows.svg";
         displayVisibilityToggle.addEventListener("click", openCloseShopDisplay);
         actionSelection.classList.add("buy");
     }
@@ -487,30 +487,30 @@ function createCardDisplay(type){
 function openCloseShopDisplay(){
     const actionDisplayDiv = document.getElementById("shopDisplayDiv");
     const sliderIcon = document.querySelector(`#shopDisplayVisibilityToggle img`);
-    if (sliderIcon.src.includes("/static/Images/Icons/shopExpand.svg")){
-        actionDisplayDiv.style.top = "0vh";
-        actionDisplayDiv.style.bottom = "";
-        sliderIcon.src = "/static/Images/Icons/shopCollapse.svg";
+    if (sliderIcon.src.includes("/static/Images/Icons/leftArrows.svg")){
+        actionDisplayDiv.style.right = "0vh";
+        actionDisplayDiv.style.left = "";
+        sliderIcon.src = "/static/Images/Icons/rightArrows.svg";
     }
-    else if (sliderIcon.src.includes("/static/Images/Icons/shopCollapse.svg")){
-        actionDisplayDiv.style.bottom = "calc(100vh - 5vh)";
-        actionDisplayDiv.style.top = "";
-        sliderIcon.src = "/static/Images/Icons/shopExpand.svg";
+    else if (sliderIcon.src.includes("/static/Images/Icons/rightArrows.svg")){
+        actionDisplayDiv.style.left = "calc(100vw - 5vh)";
+        actionDisplayDiv.style.right = "";
+        sliderIcon.src = "/static/Images/Icons/leftArrows.svg";
     }
 }
 
 function openClosePlayerDisplay(){
     const actionDisplayDiv = document.getElementById("playerDisplayDiv");
     const sliderIcon = document.querySelector(`#playerDisplayVisibilityToggle img`);
-    if (sliderIcon.src.includes("/static/Images/Icons/playerExpand.svg")){
+    if (sliderIcon.src.includes("/static/Images/Icons/rightArrows.svg")){
         actionDisplayDiv.style.left = "0vw";
         actionDisplayDiv.style.right = "";
-        sliderIcon.src = "/static/Images/Icons/playerCollapse.svg";
+        sliderIcon.src = "/static/Images/Icons/leftArrows.svg";
     }
-    else if (sliderIcon.src.includes("/static/Images/Icons/playerCollapse.svg")){
+    else if (sliderIcon.src.includes("/static/Images/Icons/leftArrows.svg")){
         actionDisplayDiv.style.right = "calc(100vw - 4vh)";
         actionDisplayDiv.style.left = "";
-        sliderIcon.src = "/static/Images/Icons/playerExpand.svg";
+        sliderIcon.src = "/static/Images/Icons/rightArrows.svg";
     }
 }
 
@@ -528,13 +528,13 @@ function openRelevantDisplay(player, isHand){
         discardToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
         displayCards(player, player.discard, "play");
     }
-    if (sliderIcon.src.includes("/static/Images/Icons/playerExpand.svg")){
+    if (sliderIcon.src.includes("/static/Images/Icons/rightArrows.svg")){
         openClosePlayerDisplay();
     }
 }
 
 function displayCards(player, cardsToDisplay, why){
-    console.log(cardsToDisplay)
+    //console.log(cardsToDisplay)
     const actionSelection = document.querySelector(`.actionSelection.${why}`);
     actionSelection.innerHTML = "";
 
@@ -700,12 +700,9 @@ function retrieveCards(player, numCardsToRetrieve){
 }
 
 function createStats(players){
-    const statsSidebar = document.createElement("div");
-    statsSidebar.id = "statsSidebar";
-
     for (let i = 0; i < players.length; i++){
-        const playerDisplay = document.createElement("div");
-        playerDisplay.id = "playerDisplay"+((myPlayerNum + i)%players.length);
+        const statsDisplay = document.createElement("div");
+        statsDisplay.classList.add("statsDisplay");
 
         const playerName = document.createElement("p");
         playerName.textContent = players[(myPlayerNum + i)%players.length].playerName;
@@ -744,38 +741,44 @@ function createStats(players){
         const numCoinsInVault = document.createElement("p");
         numCoinsInVault.classList.add("numCoinsInVault");
 
-        playerDisplay.appendChild(playerName);
-        playerDisplay.appendChild(coinsIcon);
-        playerDisplay.appendChild(numCoins);
-        playerDisplay.appendChild(cardSwapIcon);
-        playerDisplay.appendChild(numCardSwaps);
-        playerDisplay.appendChild(redirectIcon);
-        playerDisplay.appendChild(numRedirects);
-        playerDisplay.appendChild(handIcon);
-        playerDisplay.appendChild(numCardsInHand);
-        playerDisplay.appendChild(discardIcon);
-        playerDisplay.appendChild(numCardsInDiscard);
-        playerDisplay.appendChild(vaultIcon);
-        playerDisplay.appendChild(numCoinsInVault);
+        statsDisplay.appendChild(playerName);
+        statsDisplay.appendChild(coinsIcon);
+        statsDisplay.appendChild(numCoins);
+        statsDisplay.appendChild(cardSwapIcon);
+        statsDisplay.appendChild(numCardSwaps);
+        statsDisplay.appendChild(redirectIcon);
+        statsDisplay.appendChild(numRedirects);
+        statsDisplay.appendChild(handIcon);
+        statsDisplay.appendChild(numCardsInHand);
+        statsDisplay.appendChild(discardIcon);
+        statsDisplay.appendChild(numCardsInDiscard);
+        statsDisplay.appendChild(vaultIcon);
+        statsDisplay.appendChild(numCoinsInVault)
         
-        statsSidebar.appendChild(playerDisplay);
+        const playerDiv = document.getElementById(`player${i}`);
+        playerDiv.appendChild(statsDisplay);
+
+        const playerRotation = playerDiv.style.transform.trim().split(/[()]\s*/)[1].slice(0, -3);
+        const counterRotation = eval(playerRotation) * -1;
+
+        console.log(playerRotation)
+        statsDisplay.style.transform = `rotate(${counterRotation}rad)`;
     }
-    bodyElement.appendChild(statsSidebar);
 }
 
 function updateStats(players){
     for (let i = 0; i < players.length; i++){
-        const numCardsInHand = document.querySelector(`#playerDisplay${i} .handNum`);
+        const numCardsInHand = document.querySelector(`#player${i} .statsDisplay .handNum`);
         numCardsInHand.textContent = calculateNumCards(players[i].hand);
-        const numCardsInDiscard = document.querySelector(`#playerDisplay${i} .discardNum`);
+        const numCardsInDiscard = document.querySelector(`#player${i} .statsDisplay .discardNum`);
         numCardsInDiscard.textContent = calculateNumCards(players[i].discard);
-        const numCoins = document.querySelector(`#playerDisplay${i} .numCoins`);
+        const numCoins = document.querySelector(`#player${i} .statsDisplay .numCoins`);
         numCoins.textContent = players[i].numCoins;
-        const numCardSwaps = document.querySelector(`#playerDisplay${i} .numCardSwaps`)
+        const numCardSwaps = document.querySelector(`#player${i} .statsDisplay .numCardSwaps`)
         numCardSwaps.textContent = players[i].numCardSwaps;
-        const numRedirects = document.querySelector(`#playerDisplay${i} .numRedirects`)
+        const numRedirects = document.querySelector(`#player${i} .statsDisplay .numRedirects`)
         numRedirects.textContent = players[i].numRedirects;
-        const numCoinsInVault = document.querySelector(`#playerDisplay${i} .numCoinsInVault`);
+        const numCoinsInVault = document.querySelector(`#player${i} .statsDisplay .numCoinsInVault`);
         if (i == myPlayerNum){
             numCoinsInVault.textContent = players[i].numCoinsInVault;
         }
