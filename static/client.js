@@ -50,14 +50,14 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, r
 
         createGameSpace(players);
         createNotificationContainer();
-        createStats(players);
-        updateStats(players);
+        //createStats(players);
+        //updateStats(players);
         createCardDisplay("player");
         createCardDisplay("shop");
         openClosePlayerDisplay();
         openCloseShopDisplay();
-        displayCards(reconnectedPlayer.playerNum, reconnectedPlayer.hand, "play");
-        displayCards(reconnectedPlayer.playerNum, shop, "buy");
+        displayCards(players[reconnectedPlayer.playerNum], reconnectedPlayer.hand, "play");
+        displayCards(players[reconnectedPlayer.playerNum], shop, "buy");
 
         if (!reconnectedPlayer.isReady){
             if (reconnectedPlayer.waitingOn == "selectAction"){
@@ -78,11 +78,11 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, r
             }
         }
 
+        // PLAYER IS WAITING ON OTHERS
         else{
             if (reconnectedPlayer.waitingOn == "selectAction"){
                 const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
-                myPlayedCard.src = reconnectedPlayer.playedCard.image;
-                myPlayedCard.style.border = "3px solid black";
+                generateCard(myPlayedCard, reconnectedPlayer.playedCard);
                 orientCardToPlayer(myPlayerNum, reconnectedPlayer.currentTarget, players.length);
                 players.forEach(player => {if (player.isReady){
                     lockInCard(player.playerNum);
@@ -122,8 +122,8 @@ socket.on("playerKicked", (playerID) => {
 socket.on("createGameSpace", (players, shop) => {
     createGameSpace(players);
     createNotificationContainer();
-    createStats(players);
-    updateStats(players);
+    //createStats(players);
+    //updateStats(players);
     createCardDisplay("player");
     createCardDisplay("shop");
     openClosePlayerDisplay();
@@ -145,7 +145,7 @@ socket.on("resetGameDisplay", () => {
     selectedPlayerIcon.id = ""
     const playedCards = document.querySelectorAll(`.playedCard`);
     playedCards.forEach(card => {
-        card.src = "static/Images/Actions/back.png";
+        card.src = "static/Images/Misc/back.png";
         card.style.opacity = "0.5";
         card.style.transform = 'rotate(-90deg)';
         card.style.border = "3px dashed cyan";
@@ -183,7 +183,7 @@ socket.on("donate", (giver, receiver, maxCoins, context) => {
     bodyElement.appendChild(donationScreen);
 })
 socket.on("updateStats", (players) => {
-    updateStats(players);
+    //updateStats(players);
 })
 
 socket.on("updateCards", (players, isHand, shouldDisplay) => {
@@ -261,7 +261,7 @@ function displayMainMenu(){
         const testDisplay = document.createElement("div");
         testDisplay.id = "testCard";
         bodyElement.appendChild(testDisplay);
-        const card = allActions.find((card) => card.name == "Steal")
+        const card = allActions.find((card) => card.name == "Communalize")
         generateCard(testDisplay, card)
         // !! add tutorial
         mainMenu.remove();
@@ -305,7 +305,7 @@ function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
 function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
     const playedCard = document.querySelector(`#player${originPlayerNum} .playedCard`);
     const targetAngle = calculateTargetAngle(originPlayerNum, targetPlayerNum, numPlayers);
-    playedCard.style.transform = "translateY("+(-20*Math.sin(targetAngle))+"vh) translateX("+(20*(1-Math.cos(targetAngle)))+"vh)  rotate("+(targetAngle-Math.PI/2)+"rad)";       
+    playedCard.style.transform = "translateY("+(-30*Math.sin(targetAngle)+2*Math.sign(targetAngle))+"vh) translateX("+(20*(1-Math.cos(targetAngle))+2)+"vh)  rotate("+(targetAngle-Math.PI/2)+"rad)";       
 }
 
 function createGameSpace(players){
@@ -327,8 +327,9 @@ function createGameSpace(players){
 
         const playedCard = document.createElement("div");
         playedCard.classList.add("playedCard");
-        const card = allActions.find((card) => card.name == "Bless")
-        generateCard(playedCard, card);
+        const actionBack = document.createElement("img");
+        actionBack.src = "/static/Images/Misc/back.png";
+        playedCard.appendChild(actionBack);
         playedCard.style.opacity = "0.5";
         playedCard.style.transform = 'rotate(-90deg)';
 
@@ -342,10 +343,13 @@ function createGameSpace(players){
         }
 
         playedCard.addEventListener("mouseover", () => {
-            if (!playedCard.src.includes("static/Images/Actions/back.png")){
-                const blownUpAction = document.createElement("img");
-                blownUpAction.src = playedCard.src;
+            // blow up played cards on hover
+            if (!playedCard.querySelector(`img[src="/static/Images/Misc/back.png"`)){
+                const blownUpAction = document.createElement("div");
                 blownUpAction.id = "blownUp";
+                const action = allActions.find((card) => card.name == playedCard.getAttribute("action"))
+                generateCard(blownUpAction, action);
+
                 if (i == myPlayerNum){
                     blownUpAction.addEventListener("click", () => {
                         const waitingOnCard = document.getElementById("confirm");
@@ -359,14 +363,8 @@ function createGameSpace(players){
                 playedCard.style.opacity = 0.3;
                 playedCard.addEventListener("mouseout", () => {
                     const blownUpAction = document.getElementById("blownUp");
-                    if (blownUpAction != undefined && !blownUpAction.matches(':hover')){
-                        playedCard.style.opacity = 1.0;
-                        blownUpAction.remove();
-                    }
-                })
-                blownUpAction.addEventListener("mouseout", () => {
-                    if (!playedCard.matches(':hover')){
-                        playedCard.style.opacity = 1.0;
+                    playedCard.style.opacity = 1.0;
+                    if (blownUpAction){
                         blownUpAction.remove();
                     }
                 })
@@ -387,39 +385,39 @@ function createNotificationContainer(){
 }
 
 function generateCard(div, card){
-        div.classList.add("card");
+    div.innerHTML = "";
+    div.classList.add("card");
 
-        const name = document.createElement("p");
-        name.textContent = card.name;
-        name.classList.add("name")
-        const text = document.createElement("p");
-        text.classList.add("text");
-        //text.textContent = card.text;
-        text.textContent = "Take a coins and a Card Swap token. You may redirect any cards targeting you to a neighbor, and vice versa."
+    const name = document.createElement("p");
+    name.textContent = card.name;
+    name.classList.add("name")
+    const text = document.createElement("p");
+    text.classList.add("text");
+    text.innerHTML = card.text;
         
-        const cost = document.createElement("p");
-        cost.classList.add("cost");
-        cost.textContent = card.cost;
+    const cost = document.createElement("p");
+    cost.classList.add("cost");
+    cost.textContent = card.cost;
 
-        const priority = document.createElement("p");
-        priority.classList.add("priority");
-        priority.textContent = card.priority;
+    const priority = document.createElement("p");
+    priority.classList.add("priority");
+    priority.textContent = card.priority;
 
-        const image = document.createElement("img");
-        image.classList.add("image");
-        //image.src = card.image;
-        image.src = "./static/Images/actions/red_arrow.png";
+    const background = document.createElement("img");
+    background.classList.add("background");
+    background.src = card.background;
 
-        div.appendChild(name);
-        div.appendChild(text);
-        if (card.cost != 0){
-            div.appendChild(cost);
-        }
-        if (card.priority != 0){
-            div.appendChild(priority);
-        }
+    div.appendChild(name);
+    div.setAttribute('action', card.name);
+    div.appendChild(text);
+    if (card.cost != 0){
+        div.appendChild(cost);
+    }
+    if (card.priority != 0){
+        div.appendChild(priority);
+    }
         
-        div.appendChild(image);
+    div.appendChild(background);
 }
 
 function createCardDisplay(type){
@@ -534,21 +532,19 @@ function openRelevantDisplay(player, isHand){
 }
 
 function displayCards(player, cardsToDisplay, why){
-    //console.log(cardsToDisplay)
     const actionSelection = document.querySelector(`.actionSelection.${why}`);
     actionSelection.innerHTML = "";
+    console.log(cardsToDisplay);
+    console.log(why);
 
     for (let i = 0; i < cardsToDisplay.length; i++){
-        //console.log(cardsToDisplay)
         const actionDiv = document.createElement("div");
         const possibleAction = document.createElement("div");
         
         const card = allActions.find((card) => card.name == cardsToDisplay[i][0].name)
         generateCard(possibleAction, card)
-        //const possibleAction = document.createElement("img");
-        //possibleAction.src = cardsToDisplay[i][0].image;
         possibleAction.addEventListener("click", () => {
-            if (cardsToDisplay == player.hand && player.isReady == false && player.waitingOn == "selectAction"){
+            if (JSON.stringify(cardsToDisplay) == JSON.stringify(player.hand) && !player.isReady && player.waitingOn == "selectAction"){
                 const previousSelection = document.getElementById("selectedCard");
                 if (previousSelection != undefined){
                     previousSelection.id = "";
@@ -556,7 +552,7 @@ function displayCards(player, cardsToDisplay, why){
                 actionDiv.id = "selectedCard";
 
                 const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
-                myPlayedCard.src = cardsToDisplay[i][0].image;
+                generateCard(myPlayedCard, cardsToDisplay[i][0]);
                 openClosePlayerDisplay();
             }
             if (cardsToDisplay == player.discard && player.isReady == false && player.waitingOn == "retrieveCards"){
@@ -638,7 +634,7 @@ function actionSelection(players, playerNum){
     confirm.addEventListener("click", () => {
         const actionToPlayDOM = document.querySelector("#selectedCard img");
         if (actionToPlayDOM != undefined && targetPlayerNum != undefined){
-            const actionToPlay = players[myPlayerNum].hand.find((action) => actionToPlayDOM.src.includes(action[0].image));
+            const actionToPlay = players[myPlayerNum].hand.find((action) => actionToPlayDOM.src.includes(action[0].background));
             socket.emit("chosenAction", myPlayerNum, actionToPlay[0], targetPlayerNum, myID);
 
             // remove card-orienting event listeners
@@ -664,7 +660,7 @@ function lockInCard(playerNum){
 function revealActions(players){
     players.forEach((player) => {
         const playedCard = document.querySelector(`#player${player.playerNum} .playedCard`);
-        playedCard.src = player.playedCard.image;
+        generateCard(playedCard, player.playedCard);
         orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
     })
 }
@@ -686,7 +682,7 @@ function retrieveCards(player, numCardsToRetrieve){
         const totalRetrievedCards = [];
         retrievedActions.forEach(action => {
             for (let i = 0; i < action.textContent; i++){
-                const returnedAction = player.discard.find((card) => card[0].image.includes(`${action.parentElement.parentElement.src}`));
+                const returnedAction = player.discard.find((card) => card[0].background.includes(`${action.parentElement.parentElement.src}`));
                 totalRetrievedCards.push(returnedCard);
             }
         })
@@ -701,7 +697,7 @@ function retrieveCards(player, numCardsToRetrieve){
 
 function createStats(players){
     for (let i = 0; i < players.length; i++){
-        const statsDisplay = document.createElement("div");
+        const statsDisplay = document.querySelector(`#player${i} .playerIcon`);
         statsDisplay.classList.add("statsDisplay");
 
         const playerName = document.createElement("p");
@@ -740,7 +736,7 @@ function createStats(players){
         vaultIcon.src = "static/Images/Icons/safe.svg";
         const numCoinsInVault = document.createElement("p");
         numCoinsInVault.classList.add("numCoinsInVault");
-
+/*
         statsDisplay.appendChild(playerName);
         statsDisplay.appendChild(coinsIcon);
         statsDisplay.appendChild(numCoins);
@@ -754,15 +750,12 @@ function createStats(players){
         statsDisplay.appendChild(numCardsInDiscard);
         statsDisplay.appendChild(vaultIcon);
         statsDisplay.appendChild(numCoinsInVault)
-        
+        */
         const playerDiv = document.getElementById(`player${i}`);
-        playerDiv.appendChild(statsDisplay);
-
         const playerRotation = playerDiv.style.transform.trim().split(/[()]\s*/)[1].slice(0, -3);
         const counterRotation = eval(playerRotation) * -1;
 
-        console.log(playerRotation)
-        statsDisplay.style.transform = `rotate(${counterRotation}rad)`;
+        //statsDisplay.style.transform = `rotate(${counterRotation}rad)`;
     }
 }
 

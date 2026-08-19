@@ -2,7 +2,8 @@ export const allActions = [
 // BASIC ACTIONS    
     {
         "name": "Steal",
-        "image": "static/Images/Actions/Steal.png",
+        "background": "static/Images/Backgrounds/red_arrow.png",
+        "text": "<b>Steal</b>.",
         "isWork": "false",
         "isSteal": "true",
         "isTargetting": "true",
@@ -15,7 +16,8 @@ export const allActions = [
     },
     {
         "name": "Work",
-        "image": "static/Images/Actions/Work.png",
+        "background": "static/Images/Backgrounds/blue.png",
+        "text": "<b>Work</b>.",
         "isWork": "true",
         "isSteal": "false",
         "isTargetting": "false",
@@ -28,21 +30,23 @@ export const allActions = [
     },
     {
         "name": "Defend",
-        "image": "static/Images/Actions/Defend.png",
+        "background": "static/Images/Backgrounds/green.png",
+        "text": "Take 2 coins. You cannot be stolen from.",
         "isWork": "false",
         "isSteal": "false",
         "isTargetting": "false",
         "effect":  `player.numCoins +=2; 
                     player.stealResistance = 10`, //!! accurately reflect steal resistance
-        "priority": "1",
+        "priority": "4",
         "cost": "0",
         "isBasicAction": "true",
         "isSecondaryBA": "false",
         "isOneShot": "false",
     },
     {
-        "name": "Ambush",
-        "image": "static/Images/Actions/Ambush.png",
+        "name": "Retaliate",
+        "background": "static/Images/Backgrounds/(red)_arrow.png",
+        "text": "If selected player would <b>Steal</b> from you, <b>Steal +4</b> from then instead. If not, take 2 coins.",
         "isWork": "false",
         "isSteal": "if(players[player.currentTarget].playedCard.isSteal)",
         "isTargetting": "true",
@@ -57,7 +61,8 @@ export const allActions = [
     },
     {
         "name": "Rest",
-        "image": "static/Images/Actions/Rest.png",
+        "background": "static/Images/Backgrounds/purple.png",
+        "text": "Return half of your discarded cards to your hand (rounded down). This card is discarded to your hand.",
         "isWork": "false",
         "isSteal": "false",
         "isTargetting": "false",
@@ -71,7 +76,8 @@ export const allActions = [
 // VariableBasicActions
     {
         "name": "Bless",
-        "image": "static/Images/Actions/Bless.png",
+        "background": "static/Images/Backgrounds/yellow_arrow.png",
+        "text": "<b>Work Value</b>. Return 2 discarded cards to your hand. Selected player returns their played card to their hand instead of discarding.",
         "isWork": "false",
         "isSteal": "false",
         "isTargetting": "true",
@@ -85,7 +91,8 @@ export const allActions = [
     },
     {
         "name": "Cooperate",
-        "image": "static/Images/Actions/Cooperate.png",
+        "background": "static/Images/Backgrounds/blue_arrow.jpb",
+        "text": "<b>Work -2</b>. Selected player takes 5 coins. They may give you up to 4 of them.",
         "isWork": "true",
         "isSteal": "false",
         "isTargetting": "true",
@@ -100,7 +107,8 @@ export const allActions = [
     },
     {
         "name": "Help",
-        "image": "static/Images/Actions/Help.png",
+        "background": "static/Images/Backgrounds/blue_arrow.png",
+        "text": "<b>Work +1</b>. Selected player takes a coin.",
         "isWork": "true",
         "isSteal": "true",
         "isTargetting": "true",
@@ -114,7 +122,8 @@ export const allActions = [
     },
     {
         "name": "Prepare",
-        "image": "static/Images/Actions/Prepare.png",
+        "background": "static/Images/Backgrounds/yellow.png",
+        "text": "<b>Work -1</b>. Take a Card Swap token.",
         "isWork": "true",
         "isSteal": "false",
         "isTargetting": "false",
@@ -127,8 +136,9 @@ export const allActions = [
         "isOneShot": "false",
     },
     {
-        "name": "Revolt",
-        "image": "static/Images/Actions/Revolt.png",
+        "name": "Ransack",
+        "background": "static/Images/Backgrounds/red_arrow.png",
+        "text": "<b>Steal -1</b>. Neighbors of selected player each take 2 coins.",
         "isWork": "false",
         "isSteal": "true",
         "isTargetting": "true",
@@ -140,8 +150,9 @@ export const allActions = [
         "isOneShot": "false",
     },
     {
-        "name": "Bewitch",
-        "image": "static/Images/Actions/Bewitch.png",
+        "name": "Bewitch!",
+        "background": "static/Images/Backgrounds/purple_blue.png",
+        "text": "<b>Work +4</b>. All other players become bewitched (can only play Basic Actions next turn).",
         "isWork": "true",
         "isSteal": "false",
         "isTargetting": "false",
@@ -154,7 +165,8 @@ export const allActions = [
     },
     {
         "name": "Communalize",
-        "image": "static/Images/Actions/Communalize.png",
+        "background": "static/Images/Backgrounds/green_blue_arrow.png",
+        "text": "<b>Work +1</b> Selected player <b>Works -2</b>. Neither of you can be stolen from.",
         "isWork": "true",
         "isSteal": "false",
         "isTargetting": "true",
@@ -168,7 +180,8 @@ export const allActions = [
     },
     {
         "name": "Curse",
-        "image": "static/Images/Actions/Curse.png",
+        "background": "static/Images/Backgrounds/green.png",
+        "text": "Take 2 coins. Cards targeting you are discarded without effect and non-Basic Actions are returned to the Supply.",
         "isWork": "false",
         "isSteal": "false",
         "isTargetting": "false",
@@ -181,7 +194,8 @@ export const allActions = [
     },
     {
         "name": "Hijack",
-        "image": "static/Images/Actions/Hijack.png",
+        "background": "static/Images/Backgrounds/green_red_arrow.png",
+        "text": "Take 3 coins. Redirect any number of cards targeting selected player. <b>Steal -2</b>.",
         "isWork": "false",
         "isSteal": "true",
         "isTargetting": "true",
@@ -195,7 +209,8 @@ export const allActions = [
     },
     {
         "name": "Honor",
-        "image": "static/Images/Actions/Honor.png",
+        "background": "static/Images/Backgrounds/yellow_arrow.png",
+        "text": "Take up to 4 coins. For each coin you did not take, selected player takes 2.",
         "isWork": "fales",
         "isSteal": "false",
         "isTargetting": "true",
@@ -208,7 +223,8 @@ export const allActions = [
     },
     {
         "name": "Impersonate",
-        "image": "static/Images/Actions/Impersonate.png",
+        "background": "static/Images/Backgrounds/green_(red)_(blue)_(arrow).png",
+        "text": "Choose a neighbor's card. This becomes that card. (If this becomes a One-Shot, return it to the Supply afterwards.)",
         "isWork": "",
         "isSteal": "",
         "isTargetting": "",
@@ -220,8 +236,9 @@ export const allActions = [
         "isOneShot": "false",
     },
     {
-        "name": "Pillage",
-        "image": "static/Images/Actions/Pillage.png",
+        "name": "Pillage!",
+        "background": "static/Images/Backgrounds/red_arrow.png",
+        "text": "<b>Steal +5</b>. If you stole fewer than 9 coins, take the difference from the bank.",
         "isWork": "false",
         "isSteal": "true",
         "isTargetting": "true",
@@ -234,7 +251,8 @@ export const allActions = [
     },
     {
         "name": "Recruit",
-        "image": "static/Images/Actions/Recruit.png",
+        "background": "static/Images/Backgrounds/purple_blue.png",
+        "text": "<b>Work</b>. You may put the first card you buy this turn into your hand.",
         "isWork": "true",
         "isSteal": "false",
         "isTargetting": "false",
@@ -246,13 +264,14 @@ export const allActions = [
         "isOneShot": "false",
     },
     {
-        "name": "Sabotage",
-        "image": "static/Images/Actions/Sabotage.png",
+        "name": "Sabotage!",
+        "background": "static/Images/Backgrounds/green_red_arrow.png",
+        "text": "Workers receive no coins. <b>Steal +2</b>. If pointing at a Worker, redirect left until not.",
         "isWork": "false",
         "isSteal": "true",
         "isTargetting": "true",
         "effect": ``, //!! change art, add green priority, no coins for workers, redirect steal
-        "priority": "0",
+        "priority": "6",
         "cost": "3",
         "isBasicAction": "false",
         "isSecondaryBA": "false",
@@ -260,7 +279,8 @@ export const allActions = [
     },
     {
         "name": "Unionize",
-        "image": "static/Images/Actions/Unionize.png",
+        "background": "static/Images/Backgrounds/blue.png",
+        "text": "<b>Work +1</b>. All workers (including yourself) take 2 coins.",
         "isWork": "true",
         "isSteal": "false",
         "isTargetting": "false",
@@ -274,7 +294,8 @@ export const allActions = [
     },
     {
         "name": "Whistle",
-        "image": "static/Images/Actions/Whistle.png",
+        "background": "static/Images/Backgrounds/green.png",
+        "text": "Take a coin and a Card Swap token. Redirect any number of cards targeting you so that they target a neighbor, and vice versa.",
         "isWork": "false",
         "isSteal": "false",
         "isTargetting": "false",

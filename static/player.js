@@ -25,13 +25,13 @@ export class Player{
         const steal = allActions.find((action) => action.name == "Steal");
         const work = allActions.find((action) => action.name == "Work");
         const defend = allActions.find((action) => action.name == "Defend");
-        const ambush = allActions.find((action) => action.name == "Ambush");
+        const retaliate = allActions.find((action) => action.name == "Retaliate");
         const rest = allActions.find((action) => action.name == "Rest");
 
         this.hand.push([steal, 3]);
         this.hand.push([work, 3]);
         this.hand.push([defend, 2]);
-        this.hand.push([ambush, 1]);
+        this.hand.push([retaliate, 1]);
         this.hand.push([rest, 1]);
         this.hand.push([selectedBAs[0], 1]);
         this.hand.push([selectedBAs[1], 1])

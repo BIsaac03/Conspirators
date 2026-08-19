@@ -54,54 +54,59 @@ button:hover{
     left: 30vw;
 }
 #testCard{
+    width: 300px;
     position: absolute;
     align-self: center;
     justify-self: center;
 }
 .card{
     display: grid;
+    width: 100%;
     aspect-ratio: 5 / 7;
     grid-template: 2fr 4fr 1.5fr 6fr/ 2fr 3fr 2fr;
     justify-items: center;
-    font-size: 20px;
+    align-items: center;
     background-color: floralwhite;
     border: 0.5px solid black;
     border-radius: 10%;
+    cursor: default;
+    container-type: inline-size;
 }
 .card .cost{
-    margin-top: 1px;
-    width: 20px;
-    height: 20px;
+    height: 80%;
+    aspect-ratio: 1;
     grid-area: 3 / 1 / 4 / 2;
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1;
     background-color: rgb(255, 183, 0);
     border-radius: 100%;
+    font-size: 13cqi;
     border: 2px solid black;
+    z-index: 1;
 }
 .card .name{
     grid-area: 1 / 1 / 2 / 4;
-    align-self: end;
-    font-size: 32px;
+    font-size: 15cqi;
 }
 .card .text{
     grid-area: 4 / 1 / 5 / 4;
-    align-self: center;
+    width: 100%;
     text-align: center;
-    font-size: 16px;
+    font-size: 8cqi;
 }
 .card .priority{
     grid-area: 3 / 3 / 4 / 4;
     display: flex;
     align-items: center;
     font-weight: bold;
+    font-size: 13cqi;
     z-index: 1;
 }
-.card .image{
+.card .background{
     grid-area: 2 / 1 / 4 / 4;
-    width: calc(100%);
+    width: 100%;
+    height: 100%;
     border: 0.5px solid black;
 }
 
@@ -134,9 +139,7 @@ button:hover{
 }
 .statsDisplay{
     position: relative;
-    left: 16vh;
-    top: 4vh;
-    grid-area: 2 / 1 / 3 / 2;
+    grid-column: 2 / 3;
     display: grid;
     grid-template: 3vh 5vh 5vh / repeat(6, 5vh);
     gap: 0.5vh;
@@ -178,24 +181,29 @@ button:hover{
 #gameSpace>div[id^="player"]{
     position: absolute;
     display: grid;
-    grid-template: 20vh auto / 30vh auto;
+    grid-template-columns: 30vh 20vh;
+    align-items: center;
     left: calc(50% - 20vh);
     top: calc(50% - 10vh);
     width: 40vh;
     height: 20vh;
 }
 div[id^="player"] .playerIcon{
+    grid-column: 2 / 3;
     width: 20vh;
     height: 20vh;
     background-color: #3f353a;
     border-radius: 50%;
 }
 div[id^="player"] .playedCard{
-    align-self: center;
-    justify-self: center;
+    position: fixed;
+    margin-left: 5vh;
     width: 20vh;
     border-radius: 13%;
     border: 3px dashed cyan;
+}
+.playedCard img{
+    width: 100%;
 }
 
 div[id^="player"] #handIcon{

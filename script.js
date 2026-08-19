@@ -176,21 +176,21 @@ function createShop(type){
 
     if (type == "basic"){
         // recommended set for first play-through
-        const revolt = allActions.find((action) => action.name == "Revolt");
-        const bewitch = allActions.find((action) => action.name == "Bewitch");
+        const ransack = allActions.find((action) => action.name == "Ransack");
+        const bewitch = allActions.find((action) => action.name == "Bewitch!");
         const communalize = allActions.find((action) => action.name == "Communalize");
         const curse = allActions.find((action) => action.name == "Curse");
         const hijack = allActions.find((action) => action.name == "Hijack");
         const honor = allActions.find((action) => action.name == "Honor");
         const impersonate = allActions.find((action) => action.name == "Impersonate");
-        const pillage = allActions.find((action) => action.name == "Pillage");
+        const pillage = allActions.find((action) => action.name == "Pillage!");
         const recruit = allActions.find((action) => action.name == "Recruit");
-        const sabotage = allActions.find((action) => action.name == "Sabotage");
+        const sabotage = allActions.find((action) => action.name == "Sabotage!");
         const unionize = allActions.find((action) => action.name == "Unionize");
         const whistle = allActions.find((action) => action.name == "Whistle");
 
         // !! eventually, sort shop by cost and action type programatically rather than manually
-        forSale.push([revolt, 4]);
+        forSale.push([ransack, 4]);
         forSale.push([honor, 4]);
         forSale.push([hijack, 4]);
         forSale.push([recruit, 4]);
