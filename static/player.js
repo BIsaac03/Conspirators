@@ -68,7 +68,8 @@ export class Player{
     }
 
     prepareToRetrieveCards(numCardsToRetrieve){
-        unreadyPlayer("retrieveCards");
+        this.isReady = false;
+        this.waitingOn = "retrieveCards";
         io.emit("retrieveCards", this.playerID, numCardsToRetrieve);
     }
     retrieveSelectedCards(cards){

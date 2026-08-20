@@ -1,8 +1,8 @@
 @import "./lobby.css";
 
 @font-face {
-    font-family: "callistoMT";
-    src: url("/static/CallistoMT.ttf");
+    font-family: "calistoMT";
+    src: url("./calisto-mt.ttf");
 }
 
 *{
@@ -12,6 +12,7 @@
 
 body{
     display: grid;
+    font-family: 'calistoMT';
     grid-template-rows: 9vh auto 2fr;
     width: 100vw;
     height: 100vh;
@@ -136,37 +137,31 @@ button:hover{
     z-index: -1;
 }
 
-#statsSidebar{
-    position: absolute;
-    top: 0vh;
-    right: 0vw;
-    height: 100vh;
-    width: 34vh;
-    display: grid;
-    align-items: center;
-    background-color: beige;
-}
 .statsDisplay{
-    position: relative;
-    grid-column: 2 / 3;
     display: grid;
-    grid-template: 3vh 5vh 5vh / repeat(6, 5vh);
-    gap: 0.5vh;
+    grid-template: 4vh 5vh 5vh / 9.5vh 9.5vh;
+    row-gap: 1vh;
     align-items: center;
     font-weight: bold;
+    text-align: center;
     font-size: 3vh;
     height: fit-content;
 }
-.statsDisplay p{
-    justify-self: left;
-}
 .statsDisplay .playerName{
-    grid-area: 1 / 1 / 2 / 7;
-    font-size: 4vh;
+    margin-top: -10vh;
+    grid-area: 1 / 1 / 2 / 3;
+    width: 100%;
+    text-align: center;
+    font-size: 5vh;
     font-weight: bold;
 }
-#statsDisplay img{
-    width: 4vh;
+.statsDisplay div{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.statsDisplay img{
+    width: 5vh;
 }
 
 #blownUp{
@@ -180,7 +175,7 @@ button:hover{
 
 #gameSpace{
     position: absolute;
-    justify-self: center;
+    left: 20vw;
     align-self: center;
     width: 80vh;
     height: 80vh;
@@ -201,7 +196,7 @@ div[id^="player"] .playerIcon{
     grid-column: 2 / 3;
     width: 20vh;
     height: 20vh;
-    background-color: #3f353a;
+    background-color: gainsboro;
     border-radius: 50%;
 }
 div[id^="player"] .playedCard{
@@ -282,7 +277,6 @@ div[id^="player"] #handIcon{
     width: 100%;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    font-family: "callistoMT"
 }
 #cardLocationToggle>div{
     display: grid;
@@ -353,7 +347,7 @@ div[id^="player"] #handIcon{
 
 #notificationContainer{
     position: absolute;
-    right: 34vh;
+    right: 5vh;
     bottom: 0vh;
     display: flex;
     flex-direction: column-reverse;

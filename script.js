@@ -327,11 +327,12 @@ function work(worker, workValue, modification){
 function steal(stealer, stealFrom, modification, players){
     const stealValue = establishStealValue(stealFrom, players);
     const coinsToSteal = Math.min(stealValue + modification, stealFrom.numCoins); // !!! should vary based on number of steals
-    stealer.setCoins(coinsToSteal, false);
-    stealFrom.setCoins(coinsToSteal * -1, false);
+    stealer.numCoins += coinsToSteal;
+    stealFrom.numCoins -= coinsToSteal;
 }
 
 function donate(giver, receiver, maxCoins, context){
+    console.log("donation");
     const realMaxCoins = Math.min(maxCoins, giver.numCoins);
     io.emit("donate", giver, receiver, realMaxCoins, context)
 }

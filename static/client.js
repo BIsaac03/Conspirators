@@ -165,6 +165,7 @@ socket.on("retrieveCards", (player, numCardsToRetrieve) => {
     }
 })
 socket.on("donate", (giver, receiver, maxCoins, context) => {
+    console.log("checkdonation");
     const donationScreen = document.createElement("div");
     donationScreen.id = "donationScreen";
 
@@ -176,6 +177,7 @@ socket.on("donate", (giver, receiver, maxCoins, context) => {
         const donationEntry = document.createElement("input");
         donationEntry.type = "number";
         donationEntry.max = maxCoins;
+        donationScreen.appendChild(donationEntry);
 
         const submit = document.createElement("button");
         submit.id = "submit";
@@ -184,7 +186,7 @@ socket.on("donate", (giver, receiver, maxCoins, context) => {
                 socket.emit("gaveDonation", giver, receiver, donationEntry.value);
             }
         })
-        donationScreen.appendChild(donationEntry);
+        donationScreen.appendChild(submit);
     }
 
     donationScreen.appendChild(contextMessage);

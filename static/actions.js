@@ -66,7 +66,7 @@ export const allActions = [
         "isWork": false,
         "isSteal": false,
         "isTargetting": false,
-        "effect": `rest(player)`,
+        "effect": `player.prepareToRetrieveCards(2)`, //!! change to reflect half of discard
         "priority": 0,
         "cost": 0,
         "isBasicAction": true,
@@ -98,6 +98,8 @@ export const allActions = [
         "isTargetting": true,
         "effect":  `work(player, workValue, -2); 
                     players[player.currentTarget].numCoins += 5; 
+                    players[player.currentTarget].isReady = false;
+                    players[player.currentTarget].waitingOn = "donate";
                     donate(players[player.currentTarget], player, 4);`,
         "priority": 0,
         "cost": 0,
@@ -165,7 +167,7 @@ export const allActions = [
     {
         "name": "Communalize",
         "background": "static/Images/Backgrounds/green_blue_arrow.png",
-        "text": "<b>Work +2</b>.<br>Both you and selected player take a Card Swap token. Neither of you can be stolen from.",
+        "text": "<b>Work +2</b>.<br>Both you and selected player take a Card Swap token and cannot be stolen from.",
         "isWork": true,
         "isSteal": false,
         "isTargetting": true,
