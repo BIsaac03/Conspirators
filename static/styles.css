@@ -167,7 +167,7 @@ button:hover{
 #blownUp{
     position: absolute;
     align-self: center;
-    justify-self: center;
+    left: 50vh;
     width: 40vh;
     border-radius: 10%;
     z-index: 5;
@@ -175,7 +175,7 @@ button:hover{
 
 #gameSpace{
     position: absolute;
-    left: 20vw;
+    left: 30vh;
     align-self: center;
     width: 80vh;
     height: 80vh;
@@ -318,14 +318,16 @@ div[id^="player"] #handIcon{
 
 #selectedPlayer{
     border: 5px solid purple;
+    margin: -5px;
 }
 
-#confirm{
+#confirmAction{
     position: absolute;
     align-self: center;
-    justify-self: center;
-    height: 7.5vh;
-    width: 7.5vh;
+    left: 63vh;
+    height: 7vh;
+    width: 14vh;
+    font-size: 3vh;
 }
 
 #retrieveDiv{
@@ -343,7 +345,6 @@ div[id^="player"] #handIcon{
     border-radius: 50%;
     background-color: limegreen;
 }
-
 
 #notificationContainer{
     position: absolute;

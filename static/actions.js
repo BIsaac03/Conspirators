@@ -35,8 +35,8 @@ export const allActions = [
         "isWork": false,
         "isSteal": false,
         "isTargetting": false,
-        "effect":  `player.numCoins +=2; 
-                    player.stealResistance = 10`, //!! accurately reflect steal resistance
+        "effect":  `player.numCoins += 2; 
+                    player.isImmune = true`,
         "priority": 4,
         "cost": 0,
         "isBasicAction": true,
@@ -48,7 +48,7 @@ export const allActions = [
         "background": "static/Images/Backgrounds/green_(red)_arrow.png",
         "text": "Take 3 coins.<br> Selected player cannot steal from you. On try, <b>Steal</b>.",
         "isWork": false,
-        "isSteal": "if(players[player.currentTarget].playedCard.isSteal)",
+        "isSteal": `if(players[player.currentTarget].playedCard.name != "Retaliate && players[player.currentTarget].playedCard.isSteal)`,
         "isTargetting": true,
         "effect":  `if(players[player.currentTarget].playedCard.isSteal){
                         steal(player, players[player.currentTarget], 4)
@@ -66,7 +66,7 @@ export const allActions = [
         "isWork": false,
         "isSteal": false,
         "isTargetting": false,
-        "effect": `player.prepareToRetrieveCards(2)`, //!! change to reflect half of discard
+        "effect": `player.prepareToRetrieveCards(2, io)`, //!! change to reflect half of discard
         "priority": 0,
         "cost": 0,
         "isBasicAction": true,
@@ -171,8 +171,11 @@ export const allActions = [
         "isWork": true,
         "isSteal": false,
         "isTargetting": true,
-        "effect":  `work(player, workValue, 1); 
-                    work(players[player.currentTarget], workValue, -2)`, // !! update work value & both cannot be stolen from
+        "effect":  `work(player, workValue, 2); 
+                    player.numCardSwaps++;
+                    player.isImmune = true;
+                    players[player.currentTarget].numCardSwaps++;
+                    players[player.currentTarget].isImmune = true;`,
         "priority": 4,
         "cost": 7,
         "isBasicAction": false,

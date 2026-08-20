@@ -127,29 +127,37 @@ io.on("connection", (socket) => {
         }
     })
 
-    socket.on("chosenAction", (playerNum, action, target, myID) => {
+    socket.on("chosenAction", (playerNum, action, target, isFinal, myID) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
-        myGame.getPlayers()[playerNum].confirmAction(action, target);
-        myGame.getPlayers()[playerNum].isReady = true;
+        const players = myGame.getPlayers();
+        players[playerNum].confirmAction(action, target, isFinal);
+        players[playerNum].isReady = true;
 
-        socket.emit("updateCards", myGame.getPlayers(), true, false);
+        socket.emit("updateCards", players, "hand", false);
         socket.broadcast.emit("opponentActionChosen", playerNum);
 
-        const keepWaiting = myGame.getPlayers().find((player) => !player.isReady)
+        const keepWaiting = players.find((player) => !player.isReady)
         if (keepWaiting == undefined){
-            console.log("reveal");
-            io.emit("revealActions", myGame.getPlayers());
-            setTimeout(() => {
-                resolveOrderedActions(myGame.getPlayers());
-            }, 2000)
+            if (players[0].waitingOn == "selectAction"){
+                updatePlayerWaitingOn(players, "useCardSwap");
+                io.emit("cardSwapPhase", players);
+            }
+            else if (players[0].waitingOn == "useCardSwap"){
+                io.emit("revealActions", players);
+                setTimeout(() => {
+                    resolveOrderedActions(players);
+                }, 2000)
+            }
+            
         }
     })
 
     socket.on("returnCardsToHand", (playerNum, retrievedCards, myID) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
-        myGame.getPlayers()[playerNum].retrieveSelectedCards(retrievedCards);
-        myGame.getPlayers()[playerNum].isReady = true;
-        checkEndOfRound();
+        const players = myGame.getPlayers();
+        players[playerNum].retrieveSelectedCards(retrievedCards);
+        players[playerNum].isReady = true;
+        checkEndOfRound(players, myGame.shop);
     })
 
     socket.on("gaveDonation", (giver, receiver, coins) => {
@@ -158,9 +166,9 @@ io.on("connection", (socket) => {
         io.emit("notification", receiver.playerNum, giver.playerName+" gave you "+coins+" coins!");
     })
 
-    socket.on("getUpdatedCards", (isHand, shouldDisplay, myID) => {
+    socket.on("getUpdatedCards", (where, shouldDisplay, myID) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
-        socket.emit("updateCards", myGame.getPlayers(), isHand, shouldDisplay);
+        socket.emit("updateCards", myGame.getPlayers(), where, shouldDisplay);
     })
 })
 
@@ -273,7 +281,7 @@ function resolveOrderedActions(players){
     const workValue = establishWorkValue(players);
 
     // !! adjust iterations to equal number of IN-GAME ordered cards-1
-    for (let i = 1; i < 6; i++){
+    for (let i = 1; i < 8; i++){
         players.forEach((player) => {
             if (player.playedCard.priority == i) {
                 eval(player.playedCard.effect);
@@ -297,8 +305,9 @@ function checkEndOfRound(players){
     if (!waitingOn){
         roundEndCleanup(players);
         io.emit("updateStats", players);
-        io.emit("updateCards", players, true, false);
-        io.emit("updateCards", players, false, false);
+        io.emit("updateCards", players, "hand", false);
+        io.emit("updateCards", players, "discard", false);
+        io.emit("updateCards", shop, "shop", false);
 
         if (!checkGameEnd()){
             players.forEach((player) => {
@@ -335,6 +344,13 @@ function donate(giver, receiver, maxCoins, context){
     console.log("donation");
     const realMaxCoins = Math.min(maxCoins, giver.numCoins);
     io.emit("donate", giver, receiver, realMaxCoins, context)
+}
+
+function updatePlayerWaitingOn(players, newWaitingOn){
+    players.forEach((player) => {
+        player.waitingOn = newWaitingOn;
+        player.isReady = false;
+    })
 }
 
 function roundEndCleanup(players){

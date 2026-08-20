@@ -56,18 +56,29 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, r
         createCardDisplay("shop");
         openClosePlayerDisplay();
         openCloseShopDisplay();
-        displayCards(players[reconnectedPlayer.playerNum], reconnectedPlayer.hand, "play");
-        displayCards(players[reconnectedPlayer.playerNum], shop, "buy");
+        displayCards(players[myPlayerNum], reconnectedPlayer.hand, "play");
+        displayCards(players[myPlayerNum], shop, "buy");
 
         if (!reconnectedPlayer.isReady){
+            // FIRST PHASE OF ROUND
             if (reconnectedPlayer.waitingOn == "selectAction"){
                 actionSelection(players, myPlayerNum);
                 players.forEach(player => {if (player.isReady){
                     lockInCard(player.playerNum);
                 }})
             }
+
+            // SECOND PHASE OF ROUND
             else if (reconnectedPlayer.waitingOn == "useCardSwap"){
-    
+                allowCardSwaps(players);
+                players.forEach(player => {
+                    orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
+                })
+            }
+
+            // REVEALED ACTIONS
+            else if (reconnectedPlayer.waitingOn == "redirectCards"){
+
             }
             else if (reconnectedPlayer.waitingOn == "retrieveCards"){
                 // !!! should store number of retrieved cards
@@ -76,6 +87,8 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, r
             else if (reconnectedPlayer.waitingOn == "donate"){
     
             }
+
+            // ROUND END
             else if (reconnectedPlayer.waitingOn == "purchaseCards"){
     
             }
@@ -140,6 +153,9 @@ socket.on("selectAction", (players) => {
 socket.on("opponentActionChosen", (playerNum) => {
     lockInCard(playerNum);
 })
+socket.on("cardSwapPhase", (players) => {
+    allowCardSwaps(players);
+})
 socket.on("revealActions", (players) => {
     revealActions(players);
 })
@@ -172,6 +188,7 @@ socket.on("donate", (giver, receiver, maxCoins, context) => {
     const contextMessage = document.createElement("p");
     contextMessage.id = "donationContext";
     contextMessage.textContent = context;
+    donationScreen.appendChild(contextMessage);
 
     if (myPlayerNum == giver.playerNum){
         const donationEntry = document.createElement("input");
@@ -187,18 +204,16 @@ socket.on("donate", (giver, receiver, maxCoins, context) => {
             }
         })
         donationScreen.appendChild(submit);
-    }
-
-    donationScreen.appendChild(contextMessage);
+    }    
     bodyElement.appendChild(donationScreen);
 })
 socket.on("updateStats", (players) => {
     updateStats(players);
 })
 
-socket.on("updateCards", (players, isHand, shouldDisplay) => {
+socket.on("updateCards", (players, where, shouldDisplay) => {
     if (shouldDisplay){
-        openRelevantDisplay(players[myPlayerNum], isHand);
+        openRelevantPlayerDisplay(players[myPlayerNum], where);
     }
     else{
         displayCards(players[myPlayerNum], players[myPlayerNum].hand, "play")
@@ -345,15 +360,12 @@ function createGameSpace(players){
 
         if (i == myPlayerNum){
             playedCard.addEventListener("click", () => {
-                const waitingOnCard = document.getElementById("confirm");
-                if (waitingOnCard != undefined){
-                    openRelevantDisplay(players[i], true);
-                }
+                promptActionSelection(players[i]);
             })
         }
 
+        // blow up played cards on hover
         playedCard.addEventListener("mouseenter", () => {
-            // blow up played cards on hover
             if (!playedCard.querySelector(`img[src="/static/Images/Misc/back.png"`)){
                 setTimeout(() => {
                     if (playedCard.matches(":hover")){
@@ -364,10 +376,7 @@ function createGameSpace(players){
 
                         if (i == myPlayerNum){
                             blownUpAction.addEventListener("click", () => {
-                                const waitingOnCard = document.getElementById("confirm");
-                                if (waitingOnCard != undefined){
-                                    openRelevantDisplay(players[i], true);
-                                }
+                                promptActionSelection(players[i]);
                             })
                         }
                         bodyElement.appendChild(blownUpAction);
@@ -471,7 +480,7 @@ function createCardDisplay(type){
         const discardToggle = document.createElement("button");
         discardToggle.textContent = "Discard"
         discardToggleDiv.addEventListener("click", () => {
-            socket.emit("getUpdatedCards", false, true, myID);
+            socket.emit("getUpdatedCards", "discard", true, myID);
         })
         discardToggleDiv.appendChild(discardToggle);
 
@@ -482,7 +491,7 @@ function createCardDisplay(type){
         const handToggle = document.createElement("button");
         handToggle.textContent = "Hand";
         handToggleDiv.addEventListener("click", () => {
-            socket.emit("getUpdatedCards", true, true, myID);
+            socket.emit("getUpdatedCards", "hand", true, myID);
         })
         handToggleDiv.appendChild(handToggle);
 
@@ -543,16 +552,16 @@ function openClosePlayerDisplay(){
     }
 }
 
-function openRelevantDisplay(player, isHand){
+function openRelevantPlayerDisplay(player, where){
     const discardToggleDiv = document.getElementById("discardToggleDiv");
     const handToggleDiv = document.getElementById("handToggleDiv");
     const sliderIcon = document.querySelector(`#playerDisplayDiv .sliderIcon`);
-    if (isHand){
+    if (where == "hand"){
         handToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
         discardToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";     
         displayCards(player, player.hand, "play");
     }
-    else{
+    else if (where == "discard"){
         handToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
         discardToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
         displayCards(player, player.discard, "play");
@@ -565,8 +574,8 @@ function openRelevantDisplay(player, isHand){
 function displayCards(player, cardsToDisplay, why){
     const actionSelection = document.querySelector(`.actionSelection.${why}`);
     actionSelection.innerHTML = "";
-    console.log(cardsToDisplay);
-    console.log(why);
+    //console.log(cardsToDisplay);
+    //console.log(why);
 
     for (let i = 0; i < cardsToDisplay.length; i++){
         const actionDiv = document.createElement("div");
@@ -575,7 +584,7 @@ function displayCards(player, cardsToDisplay, why){
         const card = allActions.find((card) => card.name == cardsToDisplay[i][0].name)
         generateCard(possibleAction, card)
         possibleAction.addEventListener("click", () => {
-            if (JSON.stringify(cardsToDisplay) == JSON.stringify(player.hand) && !player.isReady && player.waitingOn == "selectAction"){
+            if (JSON.stringify(cardsToDisplay) == JSON.stringify(player.hand) && !player.isReady && (player.waitingOn == "selectAction" || player.waitingOn == "useCardSwap")){
                 const previousSelection = document.getElementById("selectedCard");
                 if (previousSelection != undefined){
                     previousSelection.id = "";
@@ -586,7 +595,7 @@ function displayCards(player, cardsToDisplay, why){
                 generateCard(myPlayedCard, cardsToDisplay[i][0]);
                 openClosePlayerDisplay();
             }
-            if (cardsToDisplay == player.discard && player.isReady == false && player.waitingOn == "retrieveCards"){
+            else if (JSON.stringify(cardsToDisplay) == JSON.stringify(player.discard) && !player.isReady && player.waitingOn == "retrieveCards"){
                 const remainingRetrievals = document.getElementById("remainingRetrievals");
                 const numDuplicateRetrievals = document.querySelector(`.retrieveIcon p.num${i}`);
 
@@ -611,6 +620,10 @@ function displayCards(player, cardsToDisplay, why){
                     } 
                 }
             }
+            else if (!player.isReady && player.waitingOn == "purchaseCards"){
+                // !! allow players to buy new cards
+                console.log("buy cards");
+            }
         })
 
         const numberOfAction = document.createElement("p");
@@ -622,12 +635,20 @@ function displayCards(player, cardsToDisplay, why){
     }
 }
 
-function actionSelection(players, playerNum){
-    openRelevantDisplay(players[playerNum], true);
-    let targetPlayerNum = undefined;
+function promptActionSelection(player){
+    const waitingOnCard = document.getElementById("confirmAction");
+    if (waitingOnCard != undefined){
+        openRelevantPlayerDisplay(player, "hand");
+    }
+}
+
+function actionSelection(players, originalCard, originalTarget){
     const myCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
     myCard.style.opacity = "1";
+    promptActionSelection(players[myPlayerNum]);
 
+    // orients card to targeted player 
+    let targetPlayerNum = originalTarget;
     for (let i = 0; i < players.length; i++){
         if (i != myPlayerNum){
             const playerIcon = document.querySelector(`#player${i} .playerIcon`);
@@ -655,18 +676,19 @@ function actionSelection(players, playerNum){
                     orientCardToPlayer(myPlayerNum, i, players.length);
                     targetPlayerNum = i;
                 }
+
             })
         }
     }
 
     const confirm = document.createElement("button");
-    confirm.id = "confirm";
+    confirm.id = "confirmAction";
     confirm.textContent = "Confirm";
     confirm.addEventListener("click", () => {
-        const actionToPlayDOM = document.querySelector("#selectedCard img");
-        if (actionToPlayDOM != undefined && targetPlayerNum != undefined){
-            const actionToPlay = players[myPlayerNum].hand.find((action) => actionToPlayDOM.src.includes(action[0].background));
-            socket.emit("chosenAction", myPlayerNum, actionToPlay[0], targetPlayerNum, myID);
+        const actionToPlayName = document.querySelector(`#player${myPlayerNum} .playedCard .name`).textContent;
+        if (actionToPlayName != undefined && targetPlayerNum != undefined){
+            const actionToPlay = players[myPlayerNum].hand.find((action) => action[0].name == actionToPlayName);
+            socket.emit("chosenAction", myPlayerNum, actionToPlay[0], targetPlayerNum, Boolean(originalCard), myID);
 
             // remove card-orienting event listeners
             for (let i = 0; i < players.length; i++){
@@ -688,6 +710,21 @@ function lockInCard(playerNum){
     playerCard.style.border = "3px solid black";
 }
 
+function allowCardSwaps(players){
+    const originalCard = players[myPlayerNum].playedCard;
+    const originalTarget = players[myPlayerNum].currentTarget;
+
+    const myCard = document.querySelector(`#player${myPlayerNum} .playedCard`)
+    myCard.style.border = "3px dashed cyan";
+    generateCard(myCard, originalCard);
+    const selectedPlayerIcon = document.querySelector(`#player${originalTarget} .playerIcon`);
+    selectedPlayerIcon.id = "selectedPlayer";
+
+    const cardSwapPopUp = document.createElement
+    actionSelection(players, originalCard, originalTarget);
+    //socket.emit("finalizedAction");
+}
+
 function revealActions(players){
     players.forEach((player) => {
         const playedCard = document.querySelector(`#player${player.playerNum} .playedCard`);
@@ -697,7 +734,7 @@ function revealActions(players){
 }
 
 function retrieveCards(player, numCardsToRetrieve){
-    openRelevantDisplay(player, false);
+    openRelevantPlayerDisplay(player, "discard");
 
     const retrieveDiv = document.createElement("div");
     retrieveDiv.id = "retrieveDiv";
@@ -707,7 +744,7 @@ function retrieveCards(player, numCardsToRetrieve){
     remainingRetrievals.textContent = numCardsToRetrieve;
 
     const confirm = document.createElement("button");
-    confirm.id = confirm;
+    confirm.id = "confirmRetrieve";
     confirm.addEventListener("click", () => {
         const retrievedActions = document.querySelectorAll(".retrieveIcon p");
         const totalRetrievedCards = [];

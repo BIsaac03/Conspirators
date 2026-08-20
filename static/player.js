@@ -16,7 +16,7 @@ export class Player{
     numRedirects = 0;
     numCoins = 0;
     numCoinsInVault = 0;
-    stealResistance = 0;
+    isImmune = false;
     isInGame = false;
     isReady = false;
     waitingOn = undefined;
@@ -38,16 +38,18 @@ export class Player{
 
     }
 
-    confirmAction(card, target){
+    confirmAction(card, target, isFinal){
         this.playedCard = card;
         this.currentTarget = target;
 
-        const indexOfSelectedAction = this.hand.findIndex((entry) => entry[0].name == card.name);
-        if (this.hand[indexOfSelectedAction][1] === 1){
-            this.hand.splice(indexOfSelectedAction, 1);
-        }
-        else{
-            this.hand[indexOfSelectedAction][1]--;
+        if (isFinal){
+            const indexOfSelectedAction = this.hand.findIndex((entry) => entry[0].name == card.name);
+            if (this.hand[indexOfSelectedAction][1] === 1){
+                this.hand.splice(indexOfSelectedAction, 1);
+            }
+            else{
+                this.hand[indexOfSelectedAction][1]--;
+            }
         }
     }
     discardPlayedCard(){
@@ -67,7 +69,7 @@ export class Player{
         }
     }
 
-    prepareToRetrieveCards(numCardsToRetrieve){
+    prepareToRetrieveCards(numCardsToRetrieve, io){
         this.isReady = false;
         this.waitingOn = "retrieveCards";
         io.emit("retrieveCards", this.playerID, numCardsToRetrieve);
