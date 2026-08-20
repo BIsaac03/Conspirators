@@ -387,13 +387,16 @@ function createNotificationContainer(){
 function generateCard(div, card){
     div.innerHTML = "";
     div.classList.add("card");
+    if (card.isOneShot){
+        div.classList.add("oneShot");
+    }
 
     const name = document.createElement("p");
-    name.textContent = card.name;
+    name.innerHTML = card.name;
     name.classList.add("name")
     const text = document.createElement("p");
-    text.classList.add("text");
     text.innerHTML = card.text;
+    text.classList.add("text");
         
     const cost = document.createElement("p");
     cost.classList.add("cost");
@@ -477,6 +480,13 @@ function createCardDisplay(type){
         sliderIcon.src = "/static/Images/Icons/rightArrows.svg";
         displayVisibilityToggle.addEventListener("click", openCloseShopDisplay);
         actionSelection.classList.add("buy");
+
+        const displayLabel = document.createElement("div");
+        displayLabel.classList.add("shopLabel");
+        const labelText = document.createElement("p");
+        labelText.textContent = "Shop";
+        displayLabel.appendChild(labelText);
+        actionDisplayDiv.appendChild(displayLabel);
     }
 
     bodyElement.appendChild(actionDisplayDiv);

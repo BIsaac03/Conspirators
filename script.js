@@ -92,8 +92,8 @@ io.on("connection", (socket) => {
                     const addedBA = variableBAs.splice(Math.floor(Math.random()*variableBAs.length), 1)[0];
                     this.hand.push([addedBA, 1]);
                 }*/
-                const BA1 = allActions.find((action) => action.name == "Help");
-                const BA2 = allActions.find((action) => action.name == "Bless");
+                const BA1 = allActions.find((action) => action.name == "Cooperate");
+                const BA2 = allActions.find((action) => action.name == "Prepare");
                 newPlayer.createStartingHand([BA1, BA2]);
                 myLobby.getPlayers().push(newPlayer);
                 io.emit("modifyPlayerList", playerID, playerName, colorSpecs);
@@ -189,7 +189,6 @@ function createShop(type){
         const unionize = allActions.find((action) => action.name == "Unionize");
         const whistle = allActions.find((action) => action.name == "Whistle");
 
-        // !! eventually, sort shop by cost and action type programatically rather than manually
         forSale.push([ransack, 4]);
         forSale.push([honor, 4]);
         forSale.push([hijack, 4]);
@@ -216,7 +215,10 @@ function createShop(type){
             forSale.push([uniqueCard[i], 4]);
         }
     }
-    return forSale;
+    const costOrderedSale = forSale.sort((a, b) => a[0].cost - b[0].cost);
+    const finalOrderedSale = costOrderedSale.sort((a, b) => b[0].isOneShot - a[0].isOneShot)
+
+    return finalOrderedSale;
 }
 
 function makeGame(code, actionShop){
