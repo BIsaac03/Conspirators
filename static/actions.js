@@ -185,7 +185,7 @@ export const allActions = [
     {
         "name": "Curse",
         "background": "static/Images/Backgrounds/green.png",
-        "text": "Take 3 coins.<br>Discard cards targeting you without effect, returning non-Basic Actions to the Supply.",
+        "text": "Take 3 coins.<br>Discard cards targeting you without effect, returning non-Basic Actions to the Shop.",
         "isWork": false,
         "isSteal": false,
         "isTargetting": false,
@@ -228,7 +228,7 @@ export const allActions = [
     {
         "name": "Impersonate",
         "background": "static/Images/Backgrounds/green_(red)_(blue)_(arrow).png",
-        "text": "Choose a neighbor's card. This is that card. (If this becomes a One-Shot, return it to the Supply afterwards.)",
+        "text": "Choose a neighbor's card. This is that card. (If this becomes a One-Shot, return it to the Shop afterwards.)",
         "isWork": "",
         "isSteal": "",
         "isTargetting": "",
