@@ -54,7 +54,30 @@ io.on("connection", (socket) => {
         socket.emit("sendToMainMenu");
     }
 
+    socket.on("setUpTutorial", (myID) => {
+        const shop = createShop("basic");
+        const tutorialGame = makeGame("tutorial", shop)
+        ongoingGames.push(tutorialGame);
 
+        const BA1 = allActions.find((action) => action.name == "Cooperate");
+        const BA2 = allActions.find((action) => action.name == "Prepare");
+        
+        const me = new Player(myID, "Me", ['#00eeff', false], 0);
+        me.createStartingHand([BA1, BA2]);
+        tutorialGame.addPlayer(me);
+        const opp1 = new Player("testID2", "Opp1", ['#ff0000', false], 1);
+        opp1.createStartingHand([BA1, BA2]);
+        tutorialGame.addPlayer(opp1)
+        const opp2 = new Player("testID3", "Opp2", ['#ff0000', false], 2);
+        opp2.createStartingHand([BA1, BA2]);
+        tutorialGame.addPlayer(opp2);
+        tutorialGame.startGame();
+        socket.emit("startTutorial", tutorialGame.getPlayers());
+    })
+    socket.on("leaveTutorial", (ID) => {
+        const indexToRemove = ongoingGames.findIndex((game) => game.getPlayers().find((player) => player.playerID == ID));
+        ongoingGames.splice(indexToRemove, 1);
+    })
     socket.on("createNewLobby", (roomCode) => {
         const shop = createShop("basic");
         const newGame = makeGame(roomCode, shop)
@@ -95,7 +118,7 @@ io.on("connection", (socket) => {
                 const BA1 = allActions.find((action) => action.name == "Cooperate");
                 const BA2 = allActions.find((action) => action.name == "Prepare");
                 newPlayer.createStartingHand([BA1, BA2]);
-                myLobby.getPlayers().push(newPlayer);
+                myLobby.addPlayer(newPlayer);
                 io.emit("modifyPlayerList", playerID, playerName, colorSpecs);
             }
             else{

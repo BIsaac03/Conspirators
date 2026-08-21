@@ -20,6 +20,10 @@ socket.on("sendToMainMenu", () => {
     displayMainMenu();
 })
 
+socket.on("startTutorial", (players) => {
+    startTutorial(players);
+})
+
 socket.on("newPlayer", (isGameInProgress, roomCode) => {
     bodyElement.innerHTML = "";
     if (isGameInProgress){
@@ -32,7 +36,10 @@ socket.on("newPlayer", (isGameInProgress, roomCode) => {
 
 socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, roomCode) => {
     bodyElement.innerHTML = "";
-    if (!reconnectedPlayer.isInGame){
+    if (roomCode == "tutorial"){
+        startTutorial(players)
+    }
+    else if (!reconnectedPlayer.isInGame){
         if (isGameInProgress){
             lobby.gameInProgressError(bodyElement);
         }
@@ -283,17 +290,84 @@ function displayMainMenu(){
     const tutorial = document.createElement("button");
     tutorial.textContent = "Tutorial";
     tutorial.addEventListener("click", () => {
-        const testDisplay = document.createElement("div");
-        testDisplay.id = "testCard";
-        bodyElement.appendChild(testDisplay);
-        const card = allActions.find((card) => card.name == "Communalize")
-        generateCard(testDisplay, card)
-        // !! add tutorial
         mainMenu.remove();
+        socket.emit("setUpTutorial", myID);
     })
     options.appendChild(tutorial);
 
     bodyElement.appendChild(mainMenu);
+}
+
+function startTutorial(players){
+    const TUTORIAL_STEPS = 10;
+
+    createGameSpace(players);
+    createNotificationContainer();
+    createStats(players);
+    updateStats(players);
+    createCardDisplay("player");
+    //createCardDisplay("shop");
+    openClosePlayerDisplay();
+    //openCloseShopDisplay();
+    displayCards(players[0], players[0].hand, "play");
+    displayNotification("Welcome!");
+    displayNotification("Click the arrows to navigate through the tutorial.");
+    //displayCards(players[0], shop, "buy");
+
+    const leaveTutorial = document.createElement("button");
+    leaveTutorial.textContent = "Leave tutorial";
+    leaveTutorial.id = "leaveTutorial";
+    leaveTutorial.addEventListener("click", () => {
+        socket.emit("leaveTutorial", myID);
+        displayMainMenu();
+    })
+    bodyElement.appendChild(leaveTutorial);
+
+    const tutorialProgress = document.createElement("div");
+    tutorialProgress.classList = "tutorialProgress"
+
+    const completed = document.createElement("p");
+    completed.classList.add("completed");
+    completed.textContent = "1";
+    const total = document.createElement("p");
+    total.textContent = ` / ${TUTORIAL_STEPS}`;
+
+    const previous = document.createElement("img");
+    previous.src = "./static/Images/Icons/previous.svg";
+    previous.addEventListener("click", () => {
+        if (Number(completed.textContent) > 1){
+            completed.textContent = Number(completed.textContent)-1;
+            //!! return to previous tutorial step
+        }
+    })
+    const next = document.createElement("img");
+    next.src = "./static/Images/Icons/next.svg";
+    next.addEventListener("click", () => {
+        if (Number(completed.textContent) == TUTORIAL_STEPS){
+            //!! completed tutorial message
+        }
+        else{
+            completed.textContent = Number(completed.textContent)+1;
+            //!! go to next tutorial step
+        }
+    })
+
+    tutorialProgress.appendChild(previous);
+    tutorialProgress.appendChild(completed);
+    tutorialProgress.appendChild(total);
+    tutorialProgress.appendChild(next);
+
+    bodyElement.appendChild(tutorialProgress);
+
+    actionSelection(players, 0);
+    
+    /* anatomy of a card
+    const testDisplay = document.createElement("div");
+    testDisplay.id = "testCard";
+    bodyElement.appendChild(testDisplay);
+    const card = allActions.find((card) => card.name == "Communalize")
+    generateCard(testDisplay, card)
+    */
 }
 
 function calculateNumCards(where){

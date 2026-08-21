@@ -54,12 +54,36 @@ button:hover{
     top: -22vh;
     left: 30vw;
 }
+.tutorialProgress{
+    position: absolute;
+    right: 8vw;
+    align-self: center;
+    display: flex;
+    font-size: 32px;
+    white-space: pre-wrap;
+}
+.tutorialProgress img{
+    width: 5vh;
+}
+#leaveTutorial{
+    position: absolute;
+    right: 3vw;
+    top: 3vw;
+    height: fit-content;
+    width: fit-content;
+    font-size: 32px;
+    font-weight: bold;
+    padding: 5px 10px;
+    background-color: pink;
+}
 #testCard{
     width: 300px;
     position: absolute;
     align-self: center;
     justify-self: center;
 }
+
+
 .card{
     display: grid;
     width: 100%;
