@@ -24,6 +24,7 @@ button{
     height: 5vh;
     border-radius: 10px;
     font-size: 16px;
+    font-family: 'calistoMT';
 }
 button:hover{
     cursor: pointer;
@@ -33,26 +34,41 @@ button:hover{
     display: grid;
     justify-items: center;
     padding: 5vh;
-    gap: 30vh;
+    gap: 20vh;
 }
 #mainMenu p{
-    font-size: 88px;
+    font-size: 15vh;
 }
 #mainMenu #options{
     display: grid;
     gap: 5vh;
 }
-#mainMenu #options button{
-    width: max(25vw, 200px);
+#options button{
+    width: max(15vw, 200px);
+    font-size: 4vh;
+    height: fit-content;
+    padding: 5px;
 }
-#mainMenu #roomCodePopUp{
+#roomCodePopUp{
     position: relative;
     display: grid;
+    gap: 1vh;
     align-items: center;
     justify-items: center;
     height: 10vh;
-    top: -22vh;
-    left: 30vw;
+    top: -28vh;
+    left: calc(max(15vw, 200px) + 5vw);
+}
+#roomCodePopUp input{
+    height: 3vh;
+    width: 15vh;
+    font-size: 3vh;
+    font-family: 'calistoMT';
+    text-align: center;
+    text-transform: uppercase;
+}
+#roomCodePopUp button{
+    width: 20vh;
 }
 .tutorialProgress{
     position: absolute;
@@ -77,10 +93,11 @@ button:hover{
     background-color: pink;
 }
 #testCard{
-    width: 300px;
+    height: 80vh;
     position: absolute;
     align-self: center;
     justify-self: center;
+    z-index: 5;
 }
 
 
