@@ -265,6 +265,19 @@ div[id^="player"] .playedCard{
     width: 100%;
 }
 
+#cardSwapPopUp{
+    position: absolute;
+    align-self: center;
+    left: 50vh;
+    display: flex;
+    gap: 10vh;
+}
+#cardSwapPopUp button{
+    width: 15vh;
+    height: 10vh;
+    font-size: 3vh;
+}
+
 div[id^="player"] #handIcon{
     grid-area: 2 / 2 / 3 / 3;
     justify-self: center;

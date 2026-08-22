@@ -398,8 +398,11 @@ function tutorialPhase(phase){
                 openClosePlayerDisplay();
 
                 const discardToggle = document.getElementById("discardToggleDiv");
-                const handToggle = document.getElementById("discardToggleDiv");
-                // !! remove above event listeners
+                const discardClone = discardToggle.cloneNode(true);
+                discardToggle.replaceWith(discardClone);
+                const handToggle = document.getElementById("handToggleDiv");
+                const handClone = handToggle.cloneNode(true);
+                handToggle.replaceWith(handClone);
 
                 var displayBar = document.getElementById("playerDisplayVisibilityToggle");
                 displayBar.addEventListener("click", tutorialOpenedCards);
@@ -438,9 +441,9 @@ function tutorialPhase(phase){
                 confirm.addEventListener("click", () => {
                     const actionToPlayName = document.querySelector(`#player0 .playedCard .name`).textContent;
                     let targetPlayerNum = undefined;
-                    const previousSelection = document.getElementById("selectedPlayer");
-                    if (previousSelection){
-                        targetPlayerNum = previousSelection.parentElement.id.slice(6);
+                    const selectedPlayer = document.getElementById("selectedPlayer");
+                    if (selectedPlayer){
+                        targetPlayerNum = selectedPlayer.parentElement.id.slice(6);
                     }
 
                     if (actionToPlayName != undefined && targetPlayerNum != undefined){
@@ -453,19 +456,62 @@ function tutorialPhase(phase){
                         }
 
                         confirm.remove();
-                        orientCardToPlayer(1, 2, 3);
+                        orientCardToPlayer(1, 0, 3);
                         orientCardToPlayer(2, 1, 3);
                         tutorialPhase(6);
                     }  
                 })
                 bodyElement.appendChild(confirm);
             }
-            
             break;
 
         case 6:
             tutorialProgress.remove();
-            tutorialMessage("After each player has confirmed their action, players can use a Card Swap token to change their card.");
+            addTutorialProgressArrows([ "After each player has confirmed their action, they may spend a Card Swap token to change it.",
+                                        "Each player starts the game with 1, and will earn more through card effects.",
+                                        "Let's save ours for later. Click 'Carry On'."
+                                        ], 7, tutorialDiv);
+            break;
+        
+        case 7:
+            var clickedBefore = document.getElementById("cardSwapPopUp");
+            if (!clickedBefore){
+                const cardSwapPopUp = document.createElement("div");
+                cardSwapPopUp.id = "cardSwapPopUp";
+
+                const useCardSwap = document.createElement("button");
+                useCardSwap.textContent = "Use Card Swap";
+
+                const keepActionAsIs = document.createElement("button");
+                keepActionAsIs.textContent = "Carry On";
+                keepActionAsIs.addEventListener("click", () => {
+                    cardSwapPopUp.remove();
+                    tutorialPhase(8);
+                })
+
+                cardSwapPopUp.appendChild(useCardSwap);
+                cardSwapPopUp.appendChild(keepActionAsIs);   
+                bodyElement.appendChild(cardSwapPopUp);
+            }
+            break;
+
+        case 8:
+            tutorialProgress.remove();
+            const work = allActions.find((action) => action.name == "Work");
+            const cooperate = allActions.find((action) => action.name == "Cooperate");
+
+            const opp1Card = document.querySelector(`#player1 .playedCard`);
+            generateCard(opp1Card, cooperate);
+            const opp2Card = document.querySelector(`#player2 .playedCard`);
+            generateCard(opp2Card, work);
+            addTutorialProgressArrows([ "Played actions are resolved clockwise, starting with the underlined player.",
+                                        "At the end of each round, the underline rotates clockwise, so your turn order will change over time.",
+                                        "One of the main ways your will earn coins is by working.",
+                                        "The value of each work changes each round based on the total number of workers.",
+                                        "Fewer workers will make each work action yield fewer coins.",
+                                        "Hover over the blue scorecard in the bottom-right corner to see exactly how these values correlate with this many players."
+                                        ], 9, tutorialDiv);
+            break;
     }
 
 
@@ -938,9 +984,30 @@ function allowCardSwaps(players){
     const selectedPlayerIcon = document.querySelector(`#player${originalTarget} .playerIcon`);
     selectedPlayerIcon.id = "selectedPlayer";
 
-    const cardSwapPopUp = document.createElement
-    actionSelection(players, originalCard, originalTarget);
-    //socket.emit("finalizedAction");
+    const cardSwapPopUp = document.createElement("div");
+    cardSwapPopUp.id = "cardSwapPopUp";
+
+    const useCardSwap = document.createElement("button");
+    useCardSwap.textContent = "Use Card Swap";
+    useCardSwap.addEventListener("click", () => {
+        cardSwapPopUp.remove();
+        actionSelection(players, originalCard, originalTarget);
+    })
+    if (players[myPlayerNum].numCardSwaps < 1){
+        useCardSwap.disabled = true;
+        useCardSwap.title = "You are out of Card Swap tokens!"
+    }
+
+    const keepActionAsIs = document.createElement("button");
+    keepActionAsIs.textContent = "Carry On";
+    keepActionAsIs.addEventListener("click", () => {
+        cardSwapPopUp.remove();
+        socket.emit("chosenAction", myPlayerNum, originalCard, originalTarget, true, myID);
+    })
+
+    cardSwapPopUp.appendChild(useCardSwap);
+    cardSwapPopUp.appendChild(keepActionAsIs);   
+    bodyElement.appendChild(cardSwapPopUp); 
 }
 
 function revealActions(players){
