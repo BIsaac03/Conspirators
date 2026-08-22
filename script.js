@@ -72,6 +72,7 @@ io.on("connection", (socket) => {
         opp2.createStartingHand([BA1, BA2]);
         tutorialGame.addPlayer(opp2);
         tutorialGame.startGame();
+        roundStart(tutorialGame.getPlayers());
         socket.emit("startTutorial", tutorialGame.getPlayers());
     })
     socket.on("leaveTutorial", (ID) => {
@@ -145,6 +146,7 @@ io.on("connection", (socket) => {
             })
 
             myLobby.getGameDetails().isGameInProgress = true;
+            roundStart(myLobby.getPlayers());
             io.emit("createGameSpace", myLobby.getPlayers(), myLobby.getGameDetails().shop);
             io.emit("selectAction", myLobby.getPlayers());
         }
@@ -191,7 +193,11 @@ io.on("connection", (socket) => {
 
     socket.on("getUpdatedCards", (where, shouldDisplay, myID) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
-        socket.emit("updateCards", myGame.getPlayers(), where, shouldDisplay);
+        let isTutorial = true;
+        if (myGame.roomCode == "tutorial"){
+            isTutorial = true;
+        };
+        socket.emit("updateCards", myGame.getPlayers(), where, shouldDisplay, isTutorial);
     })
 })
 
@@ -323,6 +329,12 @@ function resolveUnorderedActions(players, workValue){
     checkEndOfRound(players)
 }
 
+function roundStart(players){
+    players.forEach((player) => {
+        player.numCoins += 2;
+    })
+}
+
 function checkEndOfRound(players){
     const waitingOn = players.find((player) => !player.isReady);
     if (!waitingOn){
@@ -337,7 +349,7 @@ function checkEndOfRound(players){
                 player.isReady = false;
                 player.waitingOn = "selectAction";
             })
-            console.log("nextRound")
+            roundStart(players);
             io.emit("resetGameDisplay");
             io.emit("selectAction", players);
         }

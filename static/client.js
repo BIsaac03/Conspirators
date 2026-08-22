@@ -218,12 +218,16 @@ socket.on("updateStats", (players) => {
     updateStats(players);
 })
 
-socket.on("updateCards", (players, where, shouldDisplay) => {
+socket.on("updateCards", (players, where, shouldDisplay, isTutorial) => {
+    if (where == "hand"){
+        console.log(isTutorial);
+        displayCards(players[myPlayerNum], players[myPlayerNum].hand, "play", isTutorial)
+    }
+    else if (where == "discard"){
+        displayCards(players[myPlayerNum], players[myPlayerNum].discard, "play", isTutorial)
+    }
     if (shouldDisplay){
         openRelevantPlayerDisplay(players[myPlayerNum], where);
-    }
-    else{
-        displayCards(players[myPlayerNum], players[myPlayerNum].hand, "play", false)
     }
 })
 
@@ -300,21 +304,20 @@ function displayMainMenu(){
 
 function startTutorial(players){
     myPlayerNum = 0;
-    const TUTORIAL_STEPS = 10;
-
     createGameSpace(players);
     createNotificationContainer();
     createStats(players);
     updateStats(players);
-    createCardDisplay("player");
-    openClosePlayerDisplay();
-    displayCards(players[0], players[0].hand, "play", true);
 
     const tutorialDiv = document.createElement("div")
     tutorialDiv.id = "tutorial"
+    const tutorialMessage = document.createElement("p");
+    tutorialMessage.id = "tutorialMessage";
+    tutorialMessage.textContent = "Welcome"
+    tutorialDiv.appendChild(tutorialMessage);
     bodyElement.appendChild(tutorialDiv);
-    displayMessage("Welcome!", tutorialDiv);
-    setTimeout(()=> {
+
+    setTimeout(() => {
         tutorialPhase(1);
     }, 2000)
 
@@ -326,44 +329,6 @@ function startTutorial(players){
         displayMainMenu();
     })
     bodyElement.appendChild(leaveTutorial);
-
-    /*
-    const tutorialProgress = document.createElement("div");
-    tutorialProgress.classList = "tutorialProgress"
-
-    const completed = document.createElement("p");
-    completed.classList.add("completed");
-    completed.textContent = "1";
-    const total = document.createElement("p");
-    total.textContent = ` / ${TUTORIAL_STEPS}`;
-
-    const previous = document.createElement("img");
-    previous.src = "./static/Images/Icons/previous.svg";
-    previous.addEventListener("click", () => {
-        if (Number(completed.textContent) > 1){
-            completed.textContent = Number(completed.textContent)-1;
-            //!! return to previous tutorial step
-        }
-    })
-    const next = document.createElement("img");
-    next.src = "./static/Images/Icons/next.svg";
-    next.addEventListener("click", () => {
-        if (Number(completed.textContent) == TUTORIAL_STEPS){
-            //!! completed tutorial message
-        }
-        else{
-            completed.textContent = Number(completed.textContent)+1;
-            //!! go to next tutorial step
-        }
-    })
-
-    tutorialProgress.appendChild(previous);
-    tutorialProgress.appendChild(completed);
-    tutorialProgress.appendChild(total);
-    tutorialProgress.appendChild(next);
-
-    bodyElement.appendChild(tutorialProgress);
-    */
     
     /* anatomy of a card
     const testDisplay = document.createElement("div");
@@ -373,67 +338,134 @@ function startTutorial(players){
     generateCard(testDisplay, card)
     */
 }
+function addTutorialProgressArrows(messages, nextPhaseNum, tutorialDiv){
+    const tutorialProgress = document.createElement("div");
+    tutorialProgress.classList = "tutorialProgress"
 
+    const completed = document.createElement("p");
+    completed.classList.add("completed");
+    completed.textContent = "1";
+    const total = document.createElement("p");
+    total.textContent = ` / ${messages.length}`;
+
+    const previous = document.createElement("img");
+    previous.src = "./static/Images/Icons/previous.svg";
+    previous.addEventListener("click", () => {
+        if (Number(completed.textContent) > 1){
+            completed.textContent = Number(completed.textContent)-1;
+            tutorialMessage(messages[completed.textContent-1]);
+        }
+    })
+    const next = document.createElement("img");
+    next.src = "./static/Images/Icons/next.svg";
+    next.addEventListener("click", () => {
+        if (Number(completed.textContent) < messages.length){
+            completed.textContent = Number(completed.textContent)+1;
+            tutorialMessage(messages[completed.textContent-1]);
+        }
+        if (Number(completed.textContent) == messages.length){
+            tutorialPhase(nextPhaseNum);
+        }
+    })
+
+    tutorialMessage(messages[0]);
+    tutorialProgress.appendChild(previous);
+    tutorialProgress.appendChild(completed);
+    tutorialProgress.appendChild(total);
+    tutorialProgress.appendChild(next);
+
+    tutorialDiv.appendChild(tutorialProgress);
+}
 function tutorialPhase(phase){
     myPlayerNum = 0;
 
     const tutorialDiv = document.getElementById("tutorial");
-    const displayBar = document.getElementById("playerDisplayVisibilityToggle");
-    tutorialDiv.innerHTML = "";
-    
+    const tutorialProgress = tutorialDiv.querySelector(`.tutorialProgress`);
+
     switch (phase){
         case 1:
-            displayMessage("Click the bar on the left to look at your cards.", tutorialDiv);
-            displayBar.addEventListener("click", tutorialOpenedCards);
+            addTutorialProgressArrows([ "Click the arrows to navigate through parts of the tutorial.",
+                                        "The game will be played over a series of rounds, where you will play cards, get coins, and buy new cards.",
+                                        "Each player starts with the same hand of cards.",
+                                        "Click the bar on the left to look at your cards."
+                                        ], 2, tutorialDiv)
+            break;
+
+        case 2:
+            var clickedBefore = document.getElementById("playerDisplayDiv");
+            if (!clickedBefore){
+                createCardDisplay("player");
+                openClosePlayerDisplay();
+
+                const discardToggle = document.getElementById("discardToggleDiv");
+                const handToggle = document.getElementById("discardToggleDiv");
+                // !! remove above event listeners
+
+                var displayBar = document.getElementById("playerDisplayVisibilityToggle");
+                displayBar.addEventListener("click", tutorialOpenedCards);
+            }
             break;
         
-        case 2:
+        case 3:
+            if (tutorialProgress){
+                tutorialProgress.remove();
+            }
+            
+            var displayBar = document.getElementById("playerDisplayVisibilityToggle");
             displayBar.removeEventListener("click", tutorialOpenedCards);
-            displayMessage("Choose to 'Work'.", tutorialDiv);
+            tutorialMessage("Choose to 'Work'.");
             break;
 
-        case 3:
-            displayMessage("Whenever you play an action, you must choose another player to target.", tutorialDiv);
-            setTimeout(() => {
-                displayMessage("For some cards, this will matter, but the choice here is arbitrary.", tutorialDiv);
-            }, 2000)
-            setTimeout(() => {
-                displayMessage("Click on a player to target them, then confirm your play.", tutorialDiv);
-            }, 5000)
-            const myCard = document.querySelector(`#player0 .playedCard`);
-            addPlayerTargeting(myCard, 3);
+        case 4:
+            if (tutorialProgress){
+                tutorialProgress.remove();
+            }
+            addTutorialProgressArrows([ "Whenever you play an action, you must choose another player to target.",
+                                        "For some cards, this will matter, but the choice here is arbitrary.",
+                                        "Click on a player to target them, then confirm your play."
+                                        ], 5, tutorialDiv);
+            break;
 
-            const confirm = document.createElement("button");
-            confirm.id = "confirmAction";
-            confirm.textContent = "Confirm";
-            confirm.addEventListener("click", () => {
-                const actionToPlayName = document.querySelector(`#player0 .playedCard .name`).textContent;
-                let targetPlayerNum = undefined;
-                const previousSelection = document.getElementById("selectedPlayer");
-                if (previousSelection){
-                    targetPlayerNum = previousSelection.parentElement.id.slice(6);
-                }
+        case 5:
+            var clickedBefore = document.getElementById("confirmAction");
+            if (!clickedBefore){
+                const myCard = document.querySelector(`#player0 .playedCard`);
+                addPlayerTargeting(myCard, 3);
 
-                if (actionToPlayName != undefined && targetPlayerNum != undefined){
-                    for (let i = 0; i < 3; i++){
-                        if (i != myPlayerNum){
-                            const oldPlayerIcon = document.querySelector(`#player${i} .playerIcon`);
-                            var newPlayerIcon = oldPlayerIcon.cloneNode(true);
-                            oldPlayerIcon.parentNode.replaceChild(newPlayerIcon, oldPlayerIcon);
-                        }
+                const confirm = document.createElement("button");
+                confirm.id = "confirmAction";
+                confirm.textContent = "Confirm";
+                confirm.addEventListener("click", () => {
+                    const actionToPlayName = document.querySelector(`#player0 .playedCard .name`).textContent;
+                    let targetPlayerNum = undefined;
+                    const previousSelection = document.getElementById("selectedPlayer");
+                    if (previousSelection){
+                        targetPlayerNum = previousSelection.parentElement.id.slice(6);
                     }
 
-                    confirm.remove();
-                    tutorialPhase(4);
-                }  
-            })
-            setTimeout(() => {
+                    if (actionToPlayName != undefined && targetPlayerNum != undefined){
+                        for (let i = 0; i < 3; i++){
+                            if (i != myPlayerNum){
+                                const oldPlayerIcon = document.querySelector(`#player${i} .playerIcon`);
+                                var newPlayerIcon = oldPlayerIcon.cloneNode(true);
+                                oldPlayerIcon.parentNode.replaceChild(newPlayerIcon, oldPlayerIcon);
+                            }
+                        }
+
+                        confirm.remove();
+                        orientCardToPlayer(1, 2, 3);
+                        orientCardToPlayer(2, 1, 3);
+                        tutorialPhase(6);
+                    }  
+                })
                 bodyElement.appendChild(confirm);
-            }, 7000)
+            }
+            
             break;
-        
-        case 4:
-            displayMessage("After each player has confirmed their action, players can use a Card Swap token to change their card.", tutorialDiv);
+
+        case 6:
+            tutorialProgress.remove();
+            tutorialMessage("After each player has confirmed their action, players can use a Card Swap token to change their card.");
     }
 
 
@@ -444,7 +476,8 @@ function tutorialPhase(phase){
 
 }
 function tutorialOpenedCards(){
-    tutorialPhase(2)
+    socket.emit("getUpdatedCards", "hand", false, myID);
+    tutorialPhase(3)
 }
 
 function calculateNumCards(where){
@@ -726,7 +759,7 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
     const actionSelection = document.querySelector(`.actionSelection.${why}`);
     actionSelection.innerHTML = "";
     //console.log(cardsToDisplay);
-    //console.log(why);
+    console.log(why);
 
     for (let i = 0; i < cardsToDisplay.length; i++){
         const actionDiv = document.createElement("div");
@@ -736,13 +769,15 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
         generateCard(possibleAction, card)
         possibleAction.addEventListener("click", () => {
             if (isTutorial){
+
                 // first tutorial round
                 if (player.numCoins == 2){
                     if (card.name == "Work"){
                         const myPlayedCard = document.querySelector(`#player0 .playedCard`);
+                        myPlayedCard.style.opacity = 1;
                         generateCard(myPlayedCard, card);
                         openClosePlayerDisplay();
-                        tutorialPhase(3);
+                        tutorialPhase(4);
                     }
                 }
                 // !! find X for 2nd round
@@ -1075,8 +1110,7 @@ function displayNotification(notification){
     setTimeout(() => {notificationDiv.remove()}, 60000);
 }
 
-function displayMessage(message, appendTo){
-    const messageDOM = document.createElement("p");
-    messageDOM.textContent = message;
-    appendTo.appendChild(messageDOM);
+function tutorialMessage(message){
+    const previousMessage = document.getElementById("tutorialMessage");
+    previousMessage.textContent = message;
 }
