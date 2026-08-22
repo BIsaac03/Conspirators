@@ -414,6 +414,29 @@ div[id^="player"] #handIcon{
     background-color: limegreen;
 }
 
+#workValueScorecard{
+    position: absolute;
+    top: 89vh;
+    left: 7vh;
+    width: 6vh;
+    height: 9vh;
+    background-color: #41A7BF;
+    border-radius: 1vh;
+}
+#blownUpScorecard{
+    position: absolute;
+    align-self: center;
+    left: 57vh;
+    width: 26vh;
+    height: 39vh;
+    display: grid;
+    color: white;
+    font-weight: bold;
+    font-size: 3vh;
+    background-color: #41A7BF;
+    border-radius: 4vh;
+}
+
 #notificationContainer{
     position: absolute;
     right: 5vh;

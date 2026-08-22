@@ -57,6 +57,7 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, r
 
         createGameSpace(players);
         createNotificationContainer();
+        createWorkValueScorecard(players.length, false, false);
         createStats(players);
         updateStats(players);
         createCardDisplay("player");
@@ -145,6 +146,7 @@ socket.on("playerKicked", (playerID) => {
 socket.on("createGameSpace", (players, shop) => {
     createGameSpace(players);
     createNotificationContainer();
+    createWorkValueScorecard(players.length, false, false);
     createStats(players);
     updateStats(players);
     createCardDisplay("player");
@@ -188,31 +190,7 @@ socket.on("retrieveCards", (player, numCardsToRetrieve) => {
     }
 })
 socket.on("donate", (giver, receiver, maxCoins, context) => {
-    console.log("checkdonation");
-    const donationScreen = document.createElement("div");
-    donationScreen.id = "donationScreen";
-
-    const contextMessage = document.createElement("p");
-    contextMessage.id = "donationContext";
-    contextMessage.textContent = context;
-    donationScreen.appendChild(contextMessage);
-
-    if (myPlayerNum == giver.playerNum){
-        const donationEntry = document.createElement("input");
-        donationEntry.type = "number";
-        donationEntry.max = maxCoins;
-        donationScreen.appendChild(donationEntry);
-
-        const submit = document.createElement("button");
-        submit.id = "submit";
-        submit.addEventListener("click", () => {
-            if (donationEntry.value >= 0 && donationEntry.value <= maxCoins){
-                socket.emit("gaveDonation", giver, receiver, donationEntry.value);
-            }
-        })
-        donationScreen.appendChild(submit);
-    }    
-    bodyElement.appendChild(donationScreen);
+    promptDonation(giver, receiver, maxCoins, context)
 })
 socket.on("updateStats", (players) => {
     updateStats(players);
@@ -423,9 +401,9 @@ function tutorialPhase(phase){
             if (tutorialProgress){
                 tutorialProgress.remove();
             }
-            addTutorialProgressArrows([ "Whenever you play an action, you must choose another player to target.",
+            addTutorialProgressArrows([ "Whenever you play an action, you must choose ANOTHER player to target.",
                                         "For some cards, this will matter, but the choice here is arbitrary.",
-                                        "Click on a player to target them, then confirm your play."
+                                        "Click on a player (the gray circles) to target them, then confirm your play."
                                         ], 5, tutorialDiv);
             break;
 
@@ -509,9 +487,57 @@ function tutorialPhase(phase){
                                         "One of the main ways your will earn coins is by working.",
                                         "The value of each work changes each round based on the total number of workers.",
                                         "Fewer workers will make each work action yield fewer coins.",
-                                        "Hover over the blue scorecard in the bottom-right corner to see exactly how these values correlate with this many players."
+                                        "Hover over the blue scorecard in the bottom-left corner to see exactly how these values correlate with this many players."
                                         ], 9, tutorialDiv);
             break;
+        
+        case 9:
+            var alreadyClicked = document.getElementById("workValueScorecard");
+            if (!alreadyClicked){
+                createWorkValueScorecard(3, false, true);
+            }
+            break;
+
+        case 10:
+            tutorialProgress.remove();
+            addTutorialProgressArrows([ "Since all 3 players are workers this round, each work will give 3 coins.",
+                                        "Opp1's card modifies their work value by -2, so they only receive a single coin.",
+                                        "That's not the only thing their card does, however.",
+                                        "If the size/angle of a played card makes it difficult to read, you can enlarge it. Hover over Opp1's card."
+                                        ], 11, tutorialDiv);
+            break;
+
+        case 11:
+            const cardToHover = document.querySelector(`#player1 .playedCard`);
+            cardToHover.addEventListener("mouseenter", tutorialHoveredCard); 
+            break;
+
+        case 12:
+            tutorialProgress.remove();
+            addTutorialProgressArrows([ "Opp1's Cooperate gave us 5 coins. They are likely expecting at least a few back.",
+                                        "Since this is a tutorial, and we have no long-term consequences to fear, let's keep all of them.",
+                                        "Enter a '0' and click 'Confirm'.",
+                                        ], 13, tutorialDiv);
+            break;
+        
+        case 13:
+            // !! add donation prompt
+
+        // !! cleanup, discarded actions unavailable
+
+        // !! card anatomy
+
+        // !! open shop (One-Shots, sales, to discard)
+
+        // !! buy Bewitch
+
+        // !! new round (2 coins, play Bewitch)
+
+        // !! use Card Swap to Retaliate against Opp1
+
+        // !! green card ordering
+
+        // !! game end condition, scoring
     }
 
 
@@ -524,6 +550,17 @@ function tutorialPhase(phase){
 function tutorialOpenedCards(){
     socket.emit("getUpdatedCards", "hand", false, myID);
     tutorialPhase(3)
+}
+function tutorialHoveredCard(){
+    const cardToHover = document.querySelector(`#player1 .playedCard`);
+    setTimeout(() => {
+        if (cardToHover.matches(":hover")){
+            cardToHover.removeEventListener("mouseenter", tutorialHoveredCard);
+            setTimeout(() => {
+                tutorialPhase(12);
+            }, 750)
+        }
+    }, 250)
 }
 
 function calculateNumCards(where){
@@ -636,6 +673,43 @@ function createGameSpace(players){
         gameSpace.appendChild(playerSpace);
     }
     bodyElement.appendChild(gameSpace);
+}
+
+function createWorkValueScorecard(numPlayers, isBlownUp, isTutorial){
+    const workValueScorecard = document.createElement("div");
+
+    if (isBlownUp){
+        workValueScorecard.id = "blownUpScorecard"
+        const workersTitle = document.createElement("p");
+        workersTitle.textContent = "Workers";
+        const coinsTitle = document.createElement("p");
+        coinsTitle.textContent = "Coins";
+        workValueScorecard.appendChild(workersTitle);
+        workValueScorecard.appendChild(coinsTitle);
+    }
+    else{
+        workValueScorecard.id = "workValueScorecard";
+        workValueScorecard.addEventListener("mouseenter", () => {
+            const alreadyBlownUp = document.getElementById("blownUpScorecard");
+            if (!alreadyBlownUp){
+                createWorkValueScorecard(numPlayers, true, isTutorial);
+                if (isTutorial){
+                    tutorialPhase(10);
+                }
+            }
+        })
+        workValueScorecard.addEventListener("mouseleave", () => {
+            const alreadyBlownUp = document.getElementById("blownUpScorecard");
+            if (alreadyBlownUp){
+                alreadyBlownUp.remove();
+                if (isTutorial){
+                    workValueScorecard.remove();
+                    createWorkValueScorecard(numPlayers, false, false);
+                }
+            }
+        })
+    }
+    bodyElement.appendChild(workValueScorecard);
 }
 
 function createNotificationContainer(){
@@ -1046,6 +1120,33 @@ function retrieveCards(player, numCardsToRetrieve){
     retrieveDiv.appendChild(remainingRetrievals);
     retrieveDiv.appendChild(confirm);
     bodyElement.appendChild(retrieveDiv);
+}
+
+function promptDonation(giver, receiver, maxCoins, context){
+    const donationScreen = document.createElement("div");
+    donationScreen.id = "donationScreen";
+
+    const contextMessage = document.createElement("p");
+    contextMessage.id = "donationContext";
+    contextMessage.textContent = context;
+    donationScreen.appendChild(contextMessage);
+
+    if (myPlayerNum == giver.playerNum){
+        const donationEntry = document.createElement("input");
+        donationEntry.type = "number";
+        donationEntry.max = maxCoins;
+        donationScreen.appendChild(donationEntry);
+
+        const submit = document.createElement("button");
+        submit.id = "submit";
+        submit.addEventListener("click", () => {
+            if (donationEntry.value >= 0 && donationEntry.value <= maxCoins){
+                socket.emit("gaveDonation", giver, receiver, donationEntry.value);
+            }
+        })
+        donationScreen.appendChild(submit);
+    }    
+    bodyElement.appendChild(donationScreen);
 }
 
 function createStats(players){
