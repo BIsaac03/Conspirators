@@ -46,7 +46,7 @@ export const allActions = [
     {
         "name": "Retaliate",
         "background": "static/Images/Backgrounds/green_(red)_arrow.png",
-        "text": "Take 3 coins.<br> Selected player cannot steal from you. On try, <b>Steal</b>.",
+        "text": "Take 3 coins.<br> Targeted player cannot steal from you. On try, <b>Steal</b>.",
         "isWork": false,
         "isSteal": `if(players[player.currentTarget].playedCard.name != "Retaliate && players[player.currentTarget].playedCard.isSteal)`,
         "isTargetting": true,
@@ -77,12 +77,12 @@ export const allActions = [
     {
         "name": "Bless",
         "background": "static/Images/Backgrounds/yellow_arrow.png",
-        "text": "<b>Work Value</b>.<br>Return 2 discarded cards to your hand. Selected player returns their played card to their hand instead of discarding.",
+        "text": "<b>Work Value</b>.<br>Return 2 discarded cards to your hand. Targeted player returns their played card to their hand instead of discarding.",
         "isWork": false,
         "isSteal": false,
         "isTargetting": true,
         "effect":  `player.numCoins += workValue; 
-                    player.rest(2);`, // !! selected player returns played card to hand
+                    player.rest(2);`, // !! targeted player returns played card to hand
         "priority": 0,
         "cost": 0,
         "isBasicAction": true,
@@ -92,7 +92,7 @@ export const allActions = [
     {
         "name": "Cooperate",
         "background": "static/Images/Backgrounds/blue_arrow.png",
-        "text": "<b>Work -2</b>.<br>Selected player takes 5 coins. They may give you up to 4 of them.",
+        "text": "<b>Work -2</b>.<br>Targeted player takes 5 coins. They may give you up to 4 of them.",
         "isWork": true,
         "isSteal": false,
         "isTargetting": true,
@@ -110,7 +110,7 @@ export const allActions = [
     {
         "name": "Help",
         "background": "static/Images/Backgrounds/blue_arrow.png",
-        "text": "<b>Work +1</b>.<br>Selected player takes a coin.",
+        "text": "<b>Work +1</b>.<br>Targeted player takes a coin.",
         "isWork": true,
         "isSteal": true,
         "isTargetting": true,
@@ -139,7 +139,7 @@ export const allActions = [
     {
         "name": "Ransack",
         "background": "static/Images/Backgrounds/red_arrow.png",
-        "text": "<b>Steal -1</b>.<br>Neighbors of selected player each take 2 coins.",
+        "text": "<b>Steal -1</b>.<br>Neighbors of targeted player each take 2 coins.",
         "isWork": false,
         "isSteal": true,
         "isTargetting": true,
@@ -167,7 +167,7 @@ export const allActions = [
     {
         "name": "Communalize",
         "background": "static/Images/Backgrounds/green_blue_arrow.png",
-        "text": "<b>Work +2</b>.<br>Both you and selected player take a Card Swap token and cannot be stolen from.",
+        "text": "<b>Work +2</b>.<br>Both you and targeted player take a Card Swap token and cannot be stolen from.",
         "isWork": true,
         "isSteal": false,
         "isTargetting": true,
@@ -199,7 +199,7 @@ export const allActions = [
     {
         "name": "Hijack",
         "background": "static/Images/Backgrounds/green_red_arrow.png",
-        "text": "Take 3 coins. Redirect any number of cards targeting selected player.<br><b>Steal -2</b>.",
+        "text": "Take 3 coins. Redirect any number of cards targeting targeted player.<br><b>Steal -2</b>.",
         "isWork": false,
         "isSteal": true,
         "isTargetting": true,
@@ -214,11 +214,11 @@ export const allActions = [
     {
         "name": "Honor",
         "background": "static/Images/Backgrounds/yellow_arrow.png",
-        "text": "Take up to 4 coins.<br>For each coin you did not take, selected player takes 2.",
+        "text": "Take up to 4 coins.<br>For each coin you did not take, targeted player takes 2.",
         "isWork": "fales",
         "isSteal": false,
         "isTargetting": true,
-        "effect": ``, //!! take up to 4, give selected player 2* difference
+        "effect": ``, //!! take up to 4, give targeted player 2* difference
         "priority": 0,
         "cost": 4,
         "isBasicAction": false,
@@ -270,7 +270,7 @@ export const allActions = [
     {
         "name": "Sabotage!",
         "background": "static/Images/Backgrounds/green_red_arrow.png",
-        "text": "Workers receive no coins. If pointing at a Worker, redirect clockwise until not.<br><b>Steal +2</b>.",
+        "text": "Workers receive no coins. If targeting a Worker, redirect clockwise until not.<br><b>Steal +2</b>.",
         "isWork": false,
         "isSteal": true,
         "isTargetting": true,
