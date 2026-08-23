@@ -196,7 +196,7 @@ socket.on("updateStats", (players) => {
     updateStats(players);
 })
 
-socket.on("updateCards", (players, where, shouldDisplay, isTutorial) => {
+socket.on("updateCards", (players, shop, where, shouldDisplay, isTutorial) => {
     if (where == "hand"){
         displayCards(players[myPlayerNum], players[myPlayerNum].hand, "play", isTutorial)
     }
@@ -359,7 +359,7 @@ function tutorialPhase(phase){
             addTutorialProgressArrows([ "Click the arrows to navigate through parts of the tutorial.",
                                         "The game will be played over a series of rounds, where you will play cards, get coins, and buy new cards.",
                                         "Each player starts with the same hand of cards.",
-                                        "Click the gray bar on the left to look at your cards."
+                                        "Click the gray bar on the left to open the player display."
                                         ], 2, tutorialDiv)
             break;
 
@@ -377,7 +377,7 @@ function tutorialPhase(phase){
                 handToggle.replaceWith(handClone);
 
                 var displayBar = document.getElementById("playerDisplayVisibilityToggle");
-                displayBar.addEventListener("click", tutorialOpenedCards);
+                displayBar.addEventListener("click", tutorialOpenedHand);
             }
             break;
         
@@ -385,9 +385,6 @@ function tutorialPhase(phase){
             if (tutorialProgress){
                 tutorialProgress.remove();
             }
-            
-            var displayBar = document.getElementById("playerDisplayVisibilityToggle");
-            displayBar.removeEventListener("click", tutorialOpenedCards);
             tutorialMessage("Choose to 'Work'.");
             break;
 
@@ -429,7 +426,9 @@ function tutorialPhase(phase){
 
                         confirm.remove();
                         orientCardToPlayer(1, 0, 3);
+                        lockInCard(1)
                         orientCardToPlayer(2, 1, 3);
+                        lockInCard(2);
                         tutorialPhase(6);
                     }  
                 })
@@ -457,6 +456,7 @@ function tutorialPhase(phase){
                 const keepActionAsIs = document.createElement("button");
                 keepActionAsIs.textContent = "Carry On";
                 keepActionAsIs.addEventListener("click", () => {
+                    socket.emit("tutorialRequest", "confirmCard");
                     cardSwapPopUp.remove();
                     tutorialPhase(8);
                 })
@@ -523,6 +523,8 @@ function tutorialPhase(phase){
         
         case 14:
             tutorialProgress.remove();
+            socket.emit("tutorialRequest", "discardCard");
+            endRoundCleanUp(3);
             addTutorialProgressArrows([ "Actions you play are sent to your personal discard at the end of the round.",
                                         "Then, players can spend their coins to buy new cards from the Shop.",
                                         "We will get to that shortly.",
@@ -532,9 +534,12 @@ function tutorialPhase(phase){
             break;
 
         case 15:
+            const background = document.createElement("div");
+            background.classList = "background";
             const testDisplay = document.createElement("div");
             testDisplay.id = "testCard";
-            bodyElement.appendChild(testDisplay);
+            background.appendChild(testDisplay);
+            bodyElement.appendChild(background);
             const card = allActions.find((card) => card.name == "Bewitch!");
             generateCard(testDisplay, card)
             tutorialProgress.remove();
@@ -556,10 +561,10 @@ function tutorialPhase(phase){
             break
         
         case 16:
-            const displayedCard = document.getElementById("testCard");
-            const bewitchCost = displayedCard.querySelector(`.cost`);
+            const popUp = document.querySelector(`.background:has(#testCard)`);
+            const bewitchCost = popUp.querySelector(`.cost`);
             bewitchCost.addEventListener("click", () => {
-                displayedCard.remove();
+                popUp.remove();
                 tutorialPhase(17);
             })
             break;
@@ -586,8 +591,8 @@ function tutorialPhase(phase){
             tutorialProgress.remove();
             addTutorialProgressArrows([ "You can buy up to 3 cards each round.",
                                         "Whenever you buy a card, all other cards you buy that round will have their price reduced by 1.",
-                                        "Let's buy a Recruit and a Whistle."
-                                        ], 13, tutorialDiv);
+                                        "Let's buy a Recruit and a Whistle. (Scroll through the shop if you cannot find them.)"
+                                        ], 21, tutorialDiv);
             break;
     
         case 20:
@@ -598,8 +603,26 @@ function tutorialPhase(phase){
         case 21:
             tutorialProgress.remove();
             addTutorialProgressArrows([ "Newly bought cards will go in your discard, so you won't be able to play them next round.",
-                                        ""
-                                        ], 13, tutorialDiv);
+                                        "Open the player display again, and navigate to your Discard."
+                                        ], 22, tutorialDiv);
+            break;
+
+        case 22:
+            const restrictedDisplay = document.getElementById("playerDisplayDiv");
+            restrictedDisplay.remove();
+            createCardDisplay("player");
+            openClosePlayerDisplay();
+
+            const displayToggle = document.getElementById("discardToggleDiv");
+            displayToggle.addEventListener("click", tutorialOpenedDiscard);
+            break;
+        
+        case 23:
+            tutorialProgress.remove();
+            addTutorialProgressArrows([ "In order to play cards in your discard pile, you must first add them to your hand.",
+                                        "You will get to do this when you 'Rest'.",
+                                        "Go back to your hand, read 'Rest', and click on it when you are ready to progress to the next round."
+                                        ], 24, tutorialDiv);
             break;
         // !! new round (2 coins, play Bewitch)
 
@@ -610,13 +633,11 @@ function tutorialPhase(phase){
         // !! game end condition, scoring
     }
 }
-function tutorialOpenedCards(){
+function tutorialOpenedHand(){
     socket.emit("getUpdatedCards", "hand", false, myID);
+    const displayBar = document.getElementById("playerDisplayVisibilityToggle");
+    displayBar.removeEventListener("click", tutorialOpenedHand);
     tutorialPhase(3);
-}
-function tutorialOpenedShop(){
-    socket.emit("getUpdatedCards", "shop", false, myID);
-    tutorialPhase(19);
 }
 function tutorialHoveredCard(){
     const cardToHover = document.querySelector(`#player1 .playedCard`);
@@ -628,6 +649,17 @@ function tutorialHoveredCard(){
             }, 750)
         }
     }, 250)
+}
+function tutorialOpenedShop(){
+    socket.emit("getUpdatedCards", "shop", false, myID);
+    const displayBar = document.getElementById("shopDisplayVisibilityToggle");
+    displayBar.removeEventListener("click", tutorialOpenedShop);
+    tutorialPhase(19);
+}
+function tutorialOpenedDiscard(){
+    const displayToggle = document.getElementById("discardToggleDiv");
+    displayToggle.removeEventListener("click", tutorialOpenedDiscard);
+    tutorialPhase(23);
 }
 
 function calculateNumCards(where){
@@ -700,12 +732,12 @@ function createGameSpace(players){
 
         // blow up played cards on hover
         playedCard.addEventListener("mouseenter", () => {
-            if (!playedCard.querySelector(`img[src="/static/Images/Misc/back.png"`)){
+            if (playedCard.hasAttribute("action")){
                 setTimeout(() => {
                     if (playedCard.matches(":hover")){
                         const blownUpAction = document.createElement("div");
                         blownUpAction.id = "blownUp";
-                        const action = allActions.find((card) => card.name == playedCard.getAttribute("action"))
+                        const action = allActions.find((card) => card.name == playedCard.getAttribute("action"));
                         generateCard(blownUpAction, action);
 
                         if (i == myPlayerNum){
@@ -987,9 +1019,9 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
                         tutorialPhase(4);
                     }
                 }
-                // !! find X for 2nd round
-                if (player.numCoins == X){
-
+                // shop purchase
+                if (player.numCoins == 9){
+                    // !! add listeners for Recruit and Whistle
                 }
             }
             else if (JSON.stringify(cardsToDisplay) == JSON.stringify(player.hand) && !player.isReady && (player.waitingOn == "selectAction" || player.waitingOn == "useCardSwap")){
@@ -1372,6 +1404,17 @@ function displayNotification(notification){
     }
 
     setTimeout(() => {notificationDiv.remove()}, 60000);
+}
+
+// !! add function to regular game
+function endRoundCleanUp(numPlayers){
+    for (let i = 0; i < 3; i++){
+        const playedCard = document.querySelector(`#player${i} .playedCard`);
+            playedCard.innerHTML = "";
+            playedCard.removeAttribute("action");
+            playedCard.style.border = "3px dashed cyan";
+            playedCard.style.transform = "translateX(2vh) rotate(-90deg)";
+        }
 }
 
 function tutorialMessage(message){

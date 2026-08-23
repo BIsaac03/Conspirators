@@ -113,10 +113,15 @@ button:hover{
 #testCard{
     height: 80vh;
     width: auto;
-    position: absolute;
     align-self: center;
     justify-self: center;
     z-index: 5;
+}
+.background:has(#testCard){
+    position: relative;
+    height: 100vh;
+    display: grid;
+    background-color: #3f353a8f;
 }
 
 .card{
@@ -441,6 +446,7 @@ div[id^="player"] #handIcon{
     font-weight: bold;
     font-size: 3vh;
     background-color: #41A7BF;
+    border: 2px solid black;
     border-radius: 4vh;
 }
 #donationScreen{
