@@ -85,6 +85,7 @@ button:hover{
     font-size: 20px;
     background-color: antiquewhite;
     border: 3px solid yellow;
+    z-index: 10;
 }
 .tutorialProgress{
     align-self: center;
@@ -94,6 +95,9 @@ button:hover{
 }
 .tutorialProgress img{
     width: 5vh;
+}
+.tutorialProgress img:hover{
+    cursor: pointer;
 }
 #leaveTutorial{
     position: absolute;
@@ -108,12 +112,12 @@ button:hover{
 }
 #testCard{
     height: 80vh;
+    width: auto;
     position: absolute;
     align-self: center;
     justify-self: center;
     z-index: 5;
 }
-
 
 .card{
     display: grid;
@@ -430,11 +434,33 @@ div[id^="player"] #handIcon{
     width: 26vh;
     height: 39vh;
     display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    justify-items: center;
     color: white;
     font-weight: bold;
     font-size: 3vh;
     background-color: #41A7BF;
     border-radius: 4vh;
+}
+#donationScreen{
+    position: absolute;
+    align-self: center;
+    left: 55vh;
+    width: 30vh;
+    padding: 10px;
+    display: grid;
+    gap: 3vh;
+    justify-items: center;
+    font-size: 3vh;
+    text-align: center;
+    background-color: rgba(221, 219, 219, 0.418);
+}
+#donationScreen input{
+    width: 4vh;
+    height: 4vh;
+    font-size: 4vh;
+    text-align: center;
 }
 
 #notificationContainer{

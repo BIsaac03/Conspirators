@@ -198,11 +198,14 @@ socket.on("updateStats", (players) => {
 
 socket.on("updateCards", (players, where, shouldDisplay, isTutorial) => {
     if (where == "hand"){
-        console.log(isTutorial);
         displayCards(players[myPlayerNum], players[myPlayerNum].hand, "play", isTutorial)
     }
     else if (where == "discard"){
         displayCards(players[myPlayerNum], players[myPlayerNum].discard, "play", isTutorial)
+    }
+    else if (where == "shop"){
+        // !!!! allow events to request updated shop cards
+        displayCards(players[myPlayerNum], shop, "buy", isTutorial);
     }
     if (shouldDisplay){
         openRelevantPlayerDisplay(players[myPlayerNum], where);
@@ -295,9 +298,8 @@ function startTutorial(players){
     tutorialDiv.appendChild(tutorialMessage);
     bodyElement.appendChild(tutorialDiv);
 
-    setTimeout(() => {
-        tutorialPhase(1);
-    }, 2000)
+    tutorialPhase(1);
+
 
     const leaveTutorial = document.createElement("button");
     leaveTutorial.textContent = "Leave tutorial";
@@ -307,14 +309,6 @@ function startTutorial(players){
         displayMainMenu();
     })
     bodyElement.appendChild(leaveTutorial);
-    
-    /* anatomy of a card
-    const testDisplay = document.createElement("div");
-    testDisplay.id = "testCard";
-    bodyElement.appendChild(testDisplay);
-    const card = allActions.find((card) => card.name == "Communalize")
-    generateCard(testDisplay, card)
-    */
 }
 function addTutorialProgressArrows(messages, nextPhaseNum, tutorialDiv){
     const tutorialProgress = document.createElement("div");
@@ -365,7 +359,7 @@ function tutorialPhase(phase){
             addTutorialProgressArrows([ "Click the arrows to navigate through parts of the tutorial.",
                                         "The game will be played over a series of rounds, where you will play cards, get coins, and buy new cards.",
                                         "Each player starts with the same hand of cards.",
-                                        "Click the bar on the left to look at your cards."
+                                        "Click the gray bar on the left to look at your cards."
                                         ], 2, tutorialDiv)
             break;
 
@@ -500,8 +494,8 @@ function tutorialPhase(phase){
 
         case 10:
             tutorialProgress.remove();
-            addTutorialProgressArrows([ "Since all 3 players are workers this round, each work will give 3 coins.",
-                                        "Opp1's card modifies their work value by -2, so they only receive a single coin.",
+            addTutorialProgressArrows([ "Since all 3 players are workers this round, each work will only give 2 coins.",
+                                        "Opp1's card modifies their work value by -2, so they won't receive any coins!",
                                         "That's not the only thing their card does, however.",
                                         "If the size/angle of a played card makes it difficult to read, you can enlarge it. Hover over Opp1's card."
                                         ], 11, tutorialDiv);
@@ -516,21 +510,97 @@ function tutorialPhase(phase){
             tutorialProgress.remove();
             addTutorialProgressArrows([ "Opp1's Cooperate gave us 5 coins. They are likely expecting at least a few back.",
                                         "Since this is a tutorial, and we have no long-term consequences to fear, let's keep all of them.",
-                                        "Enter a '0' and click 'Confirm'.",
+                                        "Enter a '0' and click 'Confirm'."
                                         ], 13, tutorialDiv);
             break;
         
         case 13:
-            // !! add donation prompt
+            var clickedBefore = document.getElementById("donationScreen");
+            if (!clickedBefore){
+                promptDonation("", "", 4, "How many coins will you return to Opp1?", true)
+            }
+            break;
+        
+        case 14:
+            tutorialProgress.remove();
+            addTutorialProgressArrows([ "Actions you play are sent to your personal discard at the end of the round.",
+                                        "Then, players can spend their coins to buy new cards from the Shop.",
+                                        "We will get to that shortly.",
+                                        "First, let's look at a card in some more detail to better understand what we'll be buying.",
+                                        ""
+                                        ], 15, tutorialDiv);
+            break;
 
-        // !! cleanup, discarded actions unavailable
+        case 15:
+            const testDisplay = document.createElement("div");
+            testDisplay.id = "testCard";
+            bodyElement.appendChild(testDisplay);
+            const card = allActions.find((card) => card.name == "Bewitch!");
+            generateCard(testDisplay, card)
+            tutorialProgress.remove();
+            addTutorialProgressArrows([ "Bewitch is a special type of action called a One-Shot.",
+                                        "One-Shots have powerful abilities, but can only be played once, returning to the Shop rather than your discard.",
+                                        "They can be distinguished by their unique name formatting and slightly darker background.",
+                                        "Next, the number in a gold circle on the left of a card denotes its cost in coins.",
+                                        "This can differentiate Basic Actions (the ones in your starting hand) from non-Basic Actions.",
+                                        "The color of a card has no MECHANICAL impact, but can help identify a card's ability at a glance.",
+                                        "Cards with an arrow affect the player it targets.",
+                                        "Blue cards Work, making players who played one 'Workers'.",
+                                        "Red cards Steal.",
+                                        "Purple cards (like Bewitch) have a special effect that lasts beyond the normal action phase.",
+                                        "Yellow cards have none of these defining features.",
+                                        "Some cards are also green, but that will be explained in a later section.",
+                                        "Finally, the text at the bottom of the card explains the effect it will have when played.",
+                                        "Click on the COST of Bewitch to continue."
+                                        ], 16, tutorialDiv);
+            break
+        
+        case 16:
+            const displayedCard = document.getElementById("testCard");
+            const bewitchCost = displayedCard.querySelector(`.cost`);
+            bewitchCost.addEventListener("click", () => {
+                displayedCard.remove();
+                tutorialPhase(17);
+            })
+            break;
 
-        // !! card anatomy
+        case 17: 
+            tutorialProgress.remove();
+            addTutorialProgressArrows([ "Let's buy a new card!",
+                                        "Click the gold bar on the right to look at the Shop."
+                                        ], 18, tutorialDiv);
+            break;
 
-        // !! open shop (One-Shots, sales, to discard)
+        case 18:
+            var clickedBefore = document.getElementById("shopDisplayDiv");
+            if (!clickedBefore){
+                createCardDisplay("shop");
+                openCloseShopDisplay();
 
-        // !! buy Bewitch
+                var displayBar = document.getElementById("shopDisplayVisibilityToggle");
+                displayBar.addEventListener("click", tutorialOpenedShop);
+            }
+            break;
 
+        case 19:
+            tutorialProgress.remove();
+            addTutorialProgressArrows([ "You can buy up to 3 cards each round.",
+                                        "Whenever you buy a card, all other cards you buy that round will have their price reduced by 1.",
+                                        "Let's buy a Recruit and a Whistle."
+                                        ], 13, tutorialDiv);
+            break;
+    
+        case 20:
+            // !! add card purchase functionality for Recruit and Whistle
+            // !! move to case21 after user confirms
+            break;
+
+        case 21:
+            tutorialProgress.remove();
+            addTutorialProgressArrows([ "Newly bought cards will go in your discard, so you won't be able to play them next round.",
+                                        ""
+                                        ], 13, tutorialDiv);
+            break;
         // !! new round (2 coins, play Bewitch)
 
         // !! use Card Swap to Retaliate against Opp1
@@ -539,17 +609,14 @@ function tutorialPhase(phase){
 
         // !! game end condition, scoring
     }
-
-
-    // !! add shop instructions
-    //createCardDisplay("shop");
-    //openCloseShopDisplay();
-    //displayCards(players[0], shop, "buy");
-
 }
 function tutorialOpenedCards(){
     socket.emit("getUpdatedCards", "hand", false, myID);
-    tutorialPhase(3)
+    tutorialPhase(3);
+}
+function tutorialOpenedShop(){
+    socket.emit("getUpdatedCards", "shop", false, myID);
+    tutorialPhase(19);
 }
 function tutorialHoveredCard(){
     const cardToHover = document.querySelector(`#player1 .playedCard`);
@@ -686,6 +753,24 @@ function createWorkValueScorecard(numPlayers, isBlownUp, isTutorial){
         coinsTitle.textContent = "Coins";
         workValueScorecard.appendChild(workersTitle);
         workValueScorecard.appendChild(coinsTitle);
+        for (let i = 1; i < numPlayers+1; i++){
+            const numWorkers = document.createElement("p");
+            numWorkers.textContent = i
+            workValueScorecard.appendChild(numWorkers);
+            const numCoins = document.createElement("p");
+            // fewer workers = more coins per worker
+            switch (i){
+                case 1: 
+                    numCoins.textContent = Math.min(7, numPlayers + 3);
+                    break;
+                case 2:
+                    numCoins.textContent = Math.min(7, numPlayers + 1);
+                    break;
+                default:
+                    numCoins.textContent = numPlayers + 2 - i;
+            }
+            workValueScorecard.appendChild(numCoins);
+        }
     }
     else{
         workValueScorecard.id = "workValueScorecard";
@@ -694,7 +779,9 @@ function createWorkValueScorecard(numPlayers, isBlownUp, isTutorial){
             if (!alreadyBlownUp){
                 createWorkValueScorecard(numPlayers, true, isTutorial);
                 if (isTutorial){
-                    tutorialPhase(10);
+                    setTimeout(() => {
+                        tutorialPhase(10);
+                    }, 500);
                 }
             }
         })
@@ -1122,7 +1209,7 @@ function retrieveCards(player, numCardsToRetrieve){
     bodyElement.appendChild(retrieveDiv);
 }
 
-function promptDonation(giver, receiver, maxCoins, context){
+function promptDonation(giver, receiver, maxCoins, context, isTutorial){
     const donationScreen = document.createElement("div");
     donationScreen.id = "donationScreen";
 
@@ -1131,17 +1218,26 @@ function promptDonation(giver, receiver, maxCoins, context){
     contextMessage.textContent = context;
     donationScreen.appendChild(contextMessage);
 
-    if (myPlayerNum == giver.playerNum){
+    if (isTutorial || myPlayerNum == giver.playerNum){
         const donationEntry = document.createElement("input");
-        donationEntry.type = "number";
-        donationEntry.max = maxCoins;
+        donationEntry.type = "text";
+        donationEntry.maxLength = 1;
         donationScreen.appendChild(donationEntry);
 
         const submit = document.createElement("button");
         submit.id = "submit";
+        submit.textContent = "Confirm";
         submit.addEventListener("click", () => {
             if (donationEntry.value >= 0 && donationEntry.value <= maxCoins){
-                socket.emit("gaveDonation", giver, receiver, donationEntry.value);
+                if (isTutorial){
+                    if (donationEntry.value == 0){
+                        donationScreen.remove();
+                        tutorialPhase(14);
+                    }
+                }
+                else{
+                    socket.emit("gaveDonation", giver, receiver, donationEntry.value);
+                } 
             }
         })
         donationScreen.appendChild(submit);
