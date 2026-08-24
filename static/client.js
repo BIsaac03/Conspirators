@@ -97,8 +97,7 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, r
             }
 
             // ROUND END
-            else if (reconnectedPlayer.waitingOn == "purchaseCards"){
-    
+            else if (reconnectedPlayer.waitingOn == "buyCards"){
             }
         }
 
@@ -204,7 +203,6 @@ socket.on("updateCards", (players, shop, where, shouldDisplay, isTutorial) => {
         displayCards(players[myPlayerNum], players[myPlayerNum].discard, "play", isTutorial)
     }
     else if (where == "shop"){
-        // !!!! allow events to request updated shop cards
         displayCards(players[myPlayerNum], shop, "buy", isTutorial);
     }
     if (shouldDisplay){
@@ -368,6 +366,7 @@ function tutorialPhase(phase){
             if (!clickedBefore){
                 createCardDisplay("player");
                 openClosePlayerDisplay();
+                socket.emit("tutorialRequest", "setWaitingOn", "clickWork");
 
                 const discardToggle = document.getElementById("discardToggleDiv");
                 const discardClone = discardToggle.cloneNode(true);
@@ -378,6 +377,9 @@ function tutorialPhase(phase){
 
                 var displayBar = document.getElementById("playerDisplayVisibilityToggle");
                 displayBar.addEventListener("click", tutorialOpenedHand);
+                displayBar.addEventListener("click", () => {
+                    socket.emit("getUpdatedCards", "hand", false, myID);
+                })
             }
             break;
         
@@ -584,6 +586,9 @@ function tutorialPhase(phase){
 
                 var displayBar = document.getElementById("shopDisplayVisibilityToggle");
                 displayBar.addEventListener("click", tutorialOpenedShop);
+                displayBar.addEventListener("click", () => {
+                    socket.emit("getUpdatedCards", "shop", false, myID)
+                });
             }
             break;
 
@@ -592,16 +597,19 @@ function tutorialPhase(phase){
             addTutorialProgressArrows([ "You can buy up to 3 cards each round.",
                                         "Whenever you buy a card, all other cards you buy that round will have their price reduced by 1.",
                                         "Let's buy a Recruit and a Whistle. (Scroll through the shop if you cannot find them.)"
-                                        ], 21, tutorialDiv);
+                                        ], 20, tutorialDiv);
             break;
     
         case 20:
+            socket.emit("tutorialRequest", "setWaitingOn", "buyCards");
+            socket.emit("getUpdatedCards", "shop", false, myID);
             // !! add card purchase functionality for Recruit and Whistle
             // !! move to case21 after user confirms
             break;
 
         case 21:
             tutorialProgress.remove();
+            socket.emit("tutorialRequest", "setWaitingOn", "");
             addTutorialProgressArrows([ "Newly bought cards will go in your discard, so you won't be able to play them next round.",
                                         "Open the player display again, and navigate to your Discard."
                                         ], 22, tutorialDiv);
@@ -612,6 +620,7 @@ function tutorialPhase(phase){
             restrictedDisplay.remove();
             createCardDisplay("player");
             openClosePlayerDisplay();
+            socket.emit("getUpdatedCards", "hand", false, myID);
 
             const displayToggle = document.getElementById("discardToggleDiv");
             displayToggle.addEventListener("click", tutorialOpenedDiscard);
@@ -624,6 +633,14 @@ function tutorialPhase(phase){
                                         "Go back to your hand, read 'Rest', and click on it when you are ready to progress to the next round."
                                         ], 24, tutorialDiv);
             break;
+
+        case 24:
+            socket.emit("tutorialRequest", "setWaitingOn", "clickRest");
+            break;
+
+        case 25:
+            tutorialProgress.remove();
+            socket.emit("tutorialRequest", "setWaitingOn", "");
         // !! new round (2 coins, play Bewitch)
 
         // !! use Card Swap to Retaliate against Opp1
@@ -634,7 +651,6 @@ function tutorialPhase(phase){
     }
 }
 function tutorialOpenedHand(){
-    socket.emit("getUpdatedCards", "hand", false, myID);
     const displayBar = document.getElementById("playerDisplayVisibilityToggle");
     displayBar.removeEventListener("click", tutorialOpenedHand);
     tutorialPhase(3);
@@ -651,7 +667,6 @@ function tutorialHoveredCard(){
     }, 250)
 }
 function tutorialOpenedShop(){
-    socket.emit("getUpdatedCards", "shop", false, myID);
     const displayBar = document.getElementById("shopDisplayVisibilityToggle");
     displayBar.removeEventListener("click", tutorialOpenedShop);
     tutorialPhase(19);
@@ -998,7 +1013,7 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
     const actionSelection = document.querySelector(`.actionSelection.${why}`);
     actionSelection.innerHTML = "";
     //console.log(cardsToDisplay);
-    console.log(why);
+    //console.log(why);
 
     for (let i = 0; i < cardsToDisplay.length; i++){
         const actionDiv = document.createElement("div");
@@ -1008,21 +1023,31 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
         generateCard(possibleAction, card)
         possibleAction.addEventListener("click", () => {
             if (isTutorial){
-
-                // first tutorial round
-                if (player.numCoins == 2){
+                if (player.waitingOn == "clickWork"){
                     if (card.name == "Work"){
                         const myPlayedCard = document.querySelector(`#player0 .playedCard`);
                         myPlayedCard.style.opacity = 1;
                         generateCard(myPlayedCard, card);
                         openClosePlayerDisplay();
+                        socket.emit("tutorialRequest", "setWaitingOn", "test");
                         tutorialPhase(4);
                     }
                 }
-                // shop purchase
-                if (player.numCoins == 9){
+                if (player.waitingOn == "buyCards"){
                     // !! add listeners for Recruit and Whistle
+                    if (card.name == "Recruit" || card.name == "Whistle"){
+                        modifyCheckOutList(player.numCoins, cardsToDisplay[i][0].name, cardsToDisplay[i][0].cost)
+                    }   
+
                 }
+                if (player.waitingOn == "clickRest"){
+                    if (card.name == "Rest"){
+                        openClosePlayerDisplay();
+                        socket.emit("tutorialRequest", "setWaitingOn", "");
+                        tutorialPhase(25);
+                    }
+                }
+                
             }
             else if (JSON.stringify(cardsToDisplay) == JSON.stringify(player.hand) && !player.isReady && (player.waitingOn == "selectAction" || player.waitingOn == "useCardSwap")){
                 const previousSelection = document.getElementById("selectedCard");
@@ -1060,8 +1085,10 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
                     } 
                 }
             }
-            else if (!player.isReady && player.waitingOn == "purchaseCards"){
-                // !! allow players to buy new cards
+            else if (!player.isReady && player.waitingOn == "buyCards"){
+                // !! visually indicate selected cards
+                modifyCheckOutList(cardsToDisplay[i][0].name, cardsToDisplay[i][0].cost);
+
                 console.log("buy cards");
             }
         })
@@ -1209,6 +1236,48 @@ function revealActions(players){
         generateCard(playedCard, player.playedCard);
         orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
     })
+}
+
+function modifyCheckOutList(coinsToSpend, actionName, actionCost){
+    let checkOutList = document.getElementById("checkOutList");
+    if (!checkOutList){
+        checkOutList = document.createElement("div");
+        checkOutList.id  = "checkOutList";
+        bodyElement.appendChild(checkOutList);
+
+        // !! add purchase button
+    }
+            
+    const existingEnty = checkOutList.querySelector(`[action = "${actionName}"]`)
+    if (existingEnty){
+        existingEnty.remove();
+        if (checkOutList.childElementCount == 0){
+            checkOutList.remove();
+        }
+        else{
+            checkOutList.firstChild.classList.remove("discounted");
+        }
+    }
+
+    // !! only add if user has enough coins to buy
+   else{
+        const newEntry = document.createElement("div");
+        newEntry.setAttribute("action", actionName);
+        const name = document.createElement("p")
+        name.classList.add("name");
+        name.textContent = actionName;
+        const cost = document.createElement("p");
+        cost.classList.add("cost");
+        //cost.textContent = actionCost - checkOutList.childElementCount;
+        cost.textContent = actionCost;
+        if (checkOutList.childElementCount > 0){
+            cost.classList.add("discounted")
+        }
+
+        newEntry.appendChild(name);
+        newEntry.appendChild(cost);
+        checkOutList.appendChild(newEntry);
+    }
 }
 
 function retrieveCards(player, numCardsToRetrieve){
