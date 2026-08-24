@@ -596,14 +596,13 @@ function tutorialPhase(phase){
             tutorialProgress.remove();
             addTutorialProgressArrows([ "You can buy up to 3 cards each round.",
                                         "Whenever you buy a card, all other cards you buy that round will have their price reduced by 1.",
-                                        "Let's buy a Recruit and a Whistle. (Scroll through the shop if you cannot find them.)"
+                                        "Let's buy a Recruit and a Whistle. (You may need to scroll through the shop if you cannot find them.)"
                                         ], 20, tutorialDiv);
             break;
     
         case 20:
             socket.emit("tutorialRequest", "setWaitingOn", "buyCards");
             socket.emit("getUpdatedCards", "shop", false, myID);
-            // !! add card purchase functionality for Recruit and Whistle
             // !! move to case21 after user confirms
             break;
 
@@ -641,6 +640,7 @@ function tutorialPhase(phase){
         case 25:
             tutorialProgress.remove();
             socket.emit("tutorialRequest", "setWaitingOn", "");
+            
         // !! new round (2 coins, play Bewitch)
 
         // !! use Card Swap to Retaliate against Opp1
