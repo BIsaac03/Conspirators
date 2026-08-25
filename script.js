@@ -137,8 +137,8 @@ io.on("connection", (socket) => {
         io.emit("playerKicked", playerID);
     })
 
-    socket.on("tutorialRequest", (what, data) => {
-        const myLobby = ongoingGames.find((game) => game.getGameDetails().roomCode == "tutorial");
+    socket.on("tutorialRequest", (what, data, ID) => {
+        const myLobby = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == ID));
         if (what == "setWaitingOn"){
             myLobby.getPlayers()[0].waitingOn = data;
         }
