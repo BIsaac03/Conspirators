@@ -398,6 +398,14 @@ function tutorialPhase(phase){
                                         "For some cards, this will matter, but the choice here is arbitrary.",
                                         "Click on a player (the gray circles) to target them, then confirm your play."
                                         ], 5, tutorialDiv);
+
+            for (let i = 1; i < 3; i++){
+                const playedCard = document.querySelector(`#player${i} .playedCard`);
+                const actionBack = document.createElement("img");
+                actionBack.src = "/static/Images/Misc/back.png";
+                playedCard.appendChild(actionBack);
+                playedCard.style.opacity = "0.5";
+            }
             break;
 
         case 5:
@@ -603,7 +611,6 @@ function tutorialPhase(phase){
         case 20:
             socket.emit("tutorialRequest", "setWaitingOn", "buyCards");
             socket.emit("getUpdatedCards", "shop", false, myID);
-            // !! move to case21 after user confirms
             break;
 
         case 21:
@@ -640,10 +647,12 @@ function tutorialPhase(phase){
         case 25:
             tutorialProgress.remove();
             socket.emit("tutorialRequest", "setWaitingOn", "");
-            
+
         // !! new round (2 coins, play Bewitch)
 
         // !! use Card Swap to Retaliate against Opp1
+
+        // !! steal scorecard
 
         // !! green card ordering
 
@@ -732,11 +741,8 @@ function createGameSpace(players){
         playerIcon.classList.add("playerIcon");
 
         const playedCard = document.createElement("div");
+        playedCard.classList.add("card");
         playedCard.classList.add("playedCard");
-        const actionBack = document.createElement("img");
-        actionBack.src = "/static/Images/Misc/back.png";
-        playedCard.appendChild(actionBack);
-        playedCard.style.opacity = "0.5";
         playedCard.style.transform = 'translateX(2vh) rotate(-90deg)';
 
         if (i == myPlayerNum){
@@ -1036,7 +1042,13 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
                 if (player.waitingOn == "buyCards"){
                     // !! add listeners for Recruit and Whistle
                     if (card.name == "Recruit" || card.name == "Whistle"){
-                        modifyCheckOutList(player.numCoins, cardsToDisplay[i][0].name, cardsToDisplay[i][0].cost)
+                        if (possibleAction.classList.contains("selected")){
+                            possibleAction.classList.remove("selected");
+                        }
+                        else {
+                            possibleAction.classList.add("selected");
+                        }
+                        modifyCheckOutList(9, cardsToDisplay[i][0].name, cardsToDisplay[i][0].cost, true)
                     }   
 
                 }
@@ -1087,9 +1099,7 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
             }
             else if (!player.isReady && player.waitingOn == "buyCards"){
                 // !! visually indicate selected cards
-                modifyCheckOutList(cardsToDisplay[i][0].name, cardsToDisplay[i][0].cost);
-
-                console.log("buy cards");
+                modifyCheckOutList(cardsToDisplay[i][0].name, cardsToDisplay[i][0].cost, false);
             }
         })
 
@@ -1238,45 +1248,96 @@ function revealActions(players){
     })
 }
 
-function modifyCheckOutList(coinsToSpend, actionName, actionCost){
+function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
     let checkOutList = document.getElementById("checkOutList");
     if (!checkOutList){
         checkOutList = document.createElement("div");
         checkOutList.id  = "checkOutList";
         bodyElement.appendChild(checkOutList);
+        const bottomRow = document.createElement("div");
 
-        // !! add purchase button
+        const finalizePurchase = document.createElement("button");
+        finalizePurchase.textContent = "BUY";
+        finalizePurchase.addEventListener("click", () => {
+            const actionsToBuy = [];
+            const namesOfActions = checkOutList.querySelectorAll(`.name`);
+            namesOfActions.forEach((entry) => {
+                const action = allActions.find((action) => action.name == namesOfActions.textContent);
+                actionsToBuy.push(action);
+            })
+
+            if (isTutorial){
+                const whistle = allActions.find((action) => action.name == "Whistle");
+                const recruit = allActions.find((action) => action.name == "Recruit");
+                if ((actionsToBuy[0] == whistle || actionsToBuy[0] == recruit)&&(actionsToBuy[1] == whistle || actionsToBuy[1] == recruit)){
+                    tutorialPhase(21);
+                }
+            }
+            else{ 
+                socket.emit("attemptedPurchase", actionsToBuy, myID);
+            }
+        })
+
+        const totalCost = document.createElement("p");
+        totalCost.classList.add("sum");
+        bottomRow.appendChild(totalCost);
+
+        bottomRow.appendChild(finalizePurchase);
+        checkOutList.appendChild(bottomRow);
     }
-            
-    const existingEnty = checkOutList.querySelector(`[action = "${actionName}"]`)
-    if (existingEnty){
-        existingEnty.remove();
-        if (checkOutList.childElementCount == 0){
+              
+    const existingEntry = checkOutList.querySelector(`[action = "${actionName}"]`)
+    if (existingEntry){
+        if (checkOutList.childElementCount == 2){
             checkOutList.remove();
         }
         else{
-            checkOutList.firstChild.classList.remove("discounted");
+            const existingCost = existingEntry.querySelector(`.cost`).textContent;
+            const totalCost = checkOutList.querySelector(`.sum`);
+            totalCost.textContent = Number(totalCost.textContent) - existingCost;
+            existingEntry.remove();
+
+            const otherEntryCosts = checkOutList.querySelectorAll(`.cost`);
+            otherEntryCosts.forEach((cost) => {
+            cost.textContent = Number(cost.textContent) + 1;
+        })
         }
+
+        const shopDisplay = document.getElementById("shopDisplayDiv");
+        const shopCosts = shopDisplay.querySelectorAll(`.cost`);
+        shopCosts.forEach((entry) => {
+            entry.textContent = Number(entry.textContent) + 1;
+        })
     }
 
-    // !! only add if user has enough coins to buy
    else{
-        const newEntry = document.createElement("div");
-        newEntry.setAttribute("action", actionName);
-        const name = document.createElement("p")
-        name.classList.add("name");
-        name.textContent = actionName;
-        const cost = document.createElement("p");
-        cost.classList.add("cost");
-        //cost.textContent = actionCost - checkOutList.childElementCount;
-        cost.textContent = actionCost;
-        if (checkOutList.childElementCount > 0){
-            cost.classList.add("discounted")
-        }
+        const shopDisplay = document.getElementById("shopDisplayDiv");
+        const shopCosts = shopDisplay.querySelectorAll(`.cost`);
+        shopCosts.forEach((entry) => {
+            entry.textContent = Number(entry.textContent) - 1;
+        })
 
-        newEntry.appendChild(name);
-        newEntry.appendChild(cost);
-        checkOutList.appendChild(newEntry);
+        const totalCost = checkOutList.querySelector(`.sum`);
+        const newActionCost = actionCost - checkOutList.childElementCount + 1;
+        if (Number(totalCost.textContent) + newActionCost <= coinsToSpend){
+            totalCost.textContent = Number(totalCost.textContent) + newActionCost;
+
+            const newEntry = document.createElement("div");
+            newEntry.setAttribute("action", actionName);
+            const name = document.createElement("p")
+            name.classList.add("name");
+            name.textContent = actionName;
+            const cost = document.createElement("p");
+            cost.classList.add("cost");
+            cost.textContent = newActionCost;
+            if (newActionCost < actionCost){
+                cost.classList.add("discounted")
+            }
+
+            newEntry.appendChild(name);
+            newEntry.appendChild(cost);
+            checkOutList.appendChild(newEntry);
+        }
     }
 }
 

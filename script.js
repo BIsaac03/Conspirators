@@ -137,6 +137,20 @@ io.on("connection", (socket) => {
         io.emit("playerKicked", playerID);
     })
 
+    socket.on("tutorialRequest", (what, data) => {
+        const myLobby = ongoingGames.find((game) => game.getGameDetails().roomCode == "tutorial");
+        if (what == "setWaitingOn"){
+            myLobby.getPlayers()[0].waitingOn = data;
+        }
+        if (what == "confirmCard"){
+            const action = allActions.find((action) => action.name == "Work");
+            myLobby.getPlayers()[0].confirmAction(action, 0, true);
+        }
+        if (what == "discardCard"){
+            myLobby.getPlayers()[0].discardPlayedCard();
+        }
+    })
+
     socket.on("startGame", (roomCode) => {
         const myLobby = ongoingGames.find((game) => game.getGameDetails().roomCode == roomCode);
         if (!myLobby.getGameDetails().isGameInProgress){
@@ -158,7 +172,7 @@ io.on("connection", (socket) => {
         players[playerNum].confirmAction(action, target, isFinal);
         players[playerNum].isReady = true;
 
-        socket.emit("updateCards", players, "hand", false);
+        socket.emit("updateCards", players, [], "hand", false);
         socket.broadcast.emit("opponentActionChosen", playerNum);
 
         const keepWaiting = players.find((player) => !player.isReady)
@@ -182,7 +196,7 @@ io.on("connection", (socket) => {
         const players = myGame.getPlayers();
         players[playerNum].retrieveSelectedCards(retrievedCards);
         players[playerNum].isReady = true;
-        checkEndOfRound(players, myGame.shop);
+        checkEndOfRound(players, myGame.getGameDetails().shop);
     })
 
     socket.on("gaveDonation", (giver, receiver, coins) => {
@@ -193,11 +207,11 @@ io.on("connection", (socket) => {
 
     socket.on("getUpdatedCards", (where, shouldDisplay, myID) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
-        let isTutorial = true;
-        if (myGame.roomCode == "tutorial"){
+        let isTutorial = false;
+        if (myGame.getGameDetails().roomCode == "tutorial"){
             isTutorial = true;
         };
-        socket.emit("updateCards", myGame.getPlayers(), where, shouldDisplay, isTutorial);
+        socket.emit("updateCards", myGame.getPlayers(), myGame.getGameDetails().shop, where, shouldDisplay, isTutorial);
     })
 })
 
@@ -340,9 +354,9 @@ function checkEndOfRound(players){
     if (!waitingOn){
         roundEndCleanup(players);
         io.emit("updateStats", players);
-        io.emit("updateCards", players, "hand", false);
-        io.emit("updateCards", players, "discard", false);
-        io.emit("updateCards", shop, "shop", false);
+        io.emit("updateCards", players, [], "hand", false);
+        io.emit("updateCards", players, [], "discard", false);
+        io.emit("updateCards", players, shop, "shop", false);
 
         if (!checkGameEnd()){
             players.forEach((player) => {
