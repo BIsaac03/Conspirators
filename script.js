@@ -65,10 +65,10 @@ io.on("connection", (socket) => {
         const me = new Player(myID, "Me", ['#00eeff', false], 0);
         me.createStartingHand([BA1, BA2]);
         tutorialGame.addPlayer(me);
-        const opp1 = new Player("testID2", "Opp1", ['#ff0000', false], 1);
+        const opp1 = new Player("testID2", "Grudgie", ['#ff0000', false], 1);
         opp1.createStartingHand([BA1, BA2]);
         tutorialGame.addPlayer(opp1)
-        const opp2 = new Player("testID3", "Opp2", ['#ff0000', false], 2);
+        const opp2 = new Player("testID3", "Pudgie", ['#ff0000', false], 2);
         opp2.createStartingHand([BA1, BA2]);
         tutorialGame.addPlayer(opp2);
         tutorialGame.startGame();
@@ -146,6 +146,9 @@ io.on("connection", (socket) => {
             const action = allActions.find((action) => action.name == "Work");
             myLobby.getPlayers()[0].confirmAction(action, 0, true);
         }
+        if (what == "setCoins"){
+            myLobby.getPlayers()[0].numCoins = data;
+        }
         if (what == "discardCard"){
             myLobby.getPlayers()[0].discardPlayedCard();
         }
@@ -188,6 +191,22 @@ io.on("connection", (socket) => {
                 }, 2000)
             }
             
+        }
+    })
+
+    socket.on("attemptedPurchase", (cardsToBuy, myID) => {
+        const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
+        const buyer = myGame.getPlayers().find((player) => player.playerID == myID);
+        
+        let totalCost = 0;
+        cardsToBuy.forEach((card) => {
+            totalCost += card.cost;
+        })
+        if (totalCost > buyer.numCoins){
+            //!! insufficient coins
+        }
+        else{
+            buyer.buyCards(cardsToBuy, totalCost);
         }
     })
 

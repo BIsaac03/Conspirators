@@ -73,9 +73,9 @@ button:hover{
 #tutorial{
     position: absolute;
     align-self: center;
-    right: 5vw;
+    right: 3vw;
     height: 20vh;
-    width: 20vw;
+    width: 25vw;
     display: grid;
     grid-template-rows: 1fr auto;
     justify-items: center;
@@ -86,6 +86,9 @@ button:hover{
     background-color: antiquewhite;
     border: 3px solid yellow;
     z-index: 10;
+}
+#tutorialMessage{
+    align-self: anchor-center;
 }
 .tutorialProgress{
     align-self: center;
@@ -276,9 +279,9 @@ div[id^="player"] .playedCard{
 #cardSwapPopUp{
     position: absolute;
     align-self: center;
-    left: 50vh;
+    left: 52vh;
     display: flex;
-    gap: 10vh;
+    gap: 6vh;
 }
 #cardSwapPopUp button{
     width: 15vh;
@@ -431,6 +434,15 @@ div[id^="player"] #handIcon{
     background-color: #41A7BF;
     border-radius: 1vh;
 }
+#stealValueScorecard{
+    position: absolute;
+    top: 89vh;
+    left: 15vh;
+    width: 6vh;
+    height: 9vh;
+    background-color: #BA0000;
+    border-radius: 1vh;
+}
 #blownUpScorecard{
     position: absolute;
     align-self: center;
@@ -439,15 +451,22 @@ div[id^="player"] #handIcon{
     height: 39vh;
     display: grid;
     grid-template-columns: 1fr 1fr;
+    grid-template-rows: 8vh;
     align-items: center;
     justify-items: center;
     color: white;
     font-weight: bold;
     font-size: 3vh;
-    background-color: #41A7BF;
     border: 2px solid black;
     border-radius: 4vh;
 }
+#blownUpScorecard.work{
+    background-color: #41A7BF;
+}
+#blownUpScorecard.steal{
+    background-color: #BA0000;
+}
+
 #donationScreen{
     position: absolute;
     align-self: center;

@@ -59,7 +59,7 @@ export class Player{
         }
         // discard other played cards
         else{
-            const actionInDiscard = this.discard.find((action) => action.name === this.playedCard.name);
+            const actionInDiscard = this.discard.find((entry) => entry[0].name == this.playedCard.name);
             if (!actionInDiscard){
                 this.discard.push([this.playedCard, 1])
             }
@@ -67,6 +67,19 @@ export class Player{
                 actionInDiscard[1]++;
             }
         }
+    }
+    buyCards(boughtCards, cost){
+        this.numCoins -= cost;
+        boughtCards.forEach((card)=> {
+            console.log(card.name);
+            const actionInDiscard = this.discard.find((entry) => entry[0].name == card.name);
+            if (!actionInDiscard){
+                this.discard.push([card, 1])
+            }
+            else{
+                actionInDiscard[1]++;
+            }
+        })
     }
 
     prepareToRetrieveCards(numCardsToRetrieve, io){
