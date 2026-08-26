@@ -199,14 +199,14 @@ export const allActions = [
     {
         "name": "Hijack",
         "background": "static/Images/Backgrounds/green_red_arrow.png",
-        "text": "Take 3 coins. Redirect any number of cards targeting targeted player.<br><b>Steal -2</b>.",
+        "text": "Take 3 coins.<br>Redirect any number<br>of cards targeting targeted player.<br><b>Steal -2</b>.",
         "isWork": false,
         "isSteal": true,
         "isTargetting": true,
         "effect":   `steal(player, players[player.currentTarget], -2);
                     player.numCoins += 3;`, // !! allow redirect any other cards targeting player
         "priority": 6,
-        "cost": 5,
+        "cost": 6,
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
@@ -256,11 +256,11 @@ export const allActions = [
     {
         "name": "Recruit",
         "background": "static/Images/Backgrounds/purple_blue.png",
-        "text": "<b>Work</b>.<br>You may put the first card you buy this turn into your hand.",
+        "text": "<b>Work</b>.<br>Cards you buy this<br>turn are added into your hand.",
         "isWork": true,
         "isSteal": false,
         "isTargetting": false,
-        "effect": `work(player, workValue)`, // !! add first bought card to hand
+        "effect": `work(player, workValue)`, // !! add bought cards to hand
         "priority": 0,
         "cost": 4,
         "isBasicAction": false,
@@ -306,6 +306,69 @@ export const allActions = [
         "effect":  `player.numCoins++; 
                     player.numCardSwaps++;`, //!! allow redirection of cards
         "priority": 3,
+        "cost": 5,
+        "isBasicAction": false,
+        "isSecondaryBA": false,
+        "isOneShot": false,
+    },
+    {
+        "name": "Sacrifice",
+        "background": "static/Images/Backgrounds/yellow.png",
+        "text": "Discard your hand.<br>Take 1 coin per card discarded.",
+        "isWork": false,
+        "isSteal": false,
+        "isTargetting": false,
+        "effect":  ``, // !! discard hand, get coins
+        "priority": 0,
+        "cost": 4,
+        "isBasicAction": false,
+        "isSecondaryBA": false,
+        "isOneShot": false,
+    },
+    {
+        "name": "Accuse",
+        "background": "static/Images/Backgrounds/blue_arrow.png",
+        "text": "<b>Work -1</b>.<br>If targeting a Thief, take 5 coins.",
+        "isWork": true,
+        "isSteal": false,
+        "isTargetting": true,
+        "effect":  `work(player, workValue, -1); 
+                    if(players[player.currentTarget].playedCard.isSteal){
+                        player.numCoins+=5
+                    }`,
+        "priority": 0,
+        "cost": 4,
+        "isBasicAction": false,
+        "isSecondaryBA": false,
+        "isOneShot": false,
+    },
+    {
+        "name": "Abduct!",
+        "background": "static/Images/Backgrounds/yellow.png",
+        "text": "Take any card from<br>the Shop and add it<br>to your discard.",
+        "isWork": false,
+        "isSteal": false,
+        "isTargetting": false,
+        "effect":  ``, // !! take action from shop
+        "priority": 0,
+        "cost": 3,
+        "isBasicAction": false,
+        "isSecondaryBA": false,
+        "isOneShot": true,
+    },
+    {
+        "name": "Proselytize",
+        "background": "static/Images/Backgrounds/blue_arrow.png",
+        "text": "<b>Work -1</b>.<br>If targeted player played a Basic Action, you both take 4 coins.",
+        "isWork": true,
+        "isSteal": false,
+        "isTargetting": true,
+        "effect":  `work(player, workValue, -1); 
+                    if (players[player.currentTarget].playedCard.isBasicAction){
+                        players[player.currentTarget].numCoins += 4;
+                        player.numCoins += 4;
+                    }`,
+        "priority": 0,
         "cost": 6,
         "isBasicAction": false,
         "isSecondaryBA": false,

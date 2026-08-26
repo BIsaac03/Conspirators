@@ -71,7 +71,6 @@ export class Player{
     buyCards(boughtCards, cost){
         this.numCoins -= cost;
         boughtCards.forEach((card)=> {
-            console.log(card.name);
             const actionInDiscard = this.discard.find((entry) => entry[0].name == card.name);
             if (!actionInDiscard){
                 this.discard.push([card, 1])
