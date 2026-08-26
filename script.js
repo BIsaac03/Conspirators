@@ -258,6 +258,10 @@ function createShop(type){
         const sabotage = allActions.find((action) => action.name == "Sabotage!");
         const unionize = allActions.find((action) => action.name == "Unionize");
         const whistle = allActions.find((action) => action.name == "Whistle");
+        const sacrifice = allActions.find((action) => action.name == "Sacrifice");
+        const accuse = allActions.find((action) => action.name == "Accuse");
+        const abduct = allActions.find((action) => action.name == "Abduct!");
+        const proselytize = allActions.find((action) => action.name == "Proselytize");
 
         forSale.push([ransack, 4]);
         forSale.push([honor, 4]);
@@ -271,6 +275,10 @@ function createShop(type){
         forSale.push([bewitch, 4]);
         forSale.push([sabotage, 4]);
         forSale.push([pillage, 4]);
+        forSale.push([sacrifice, 4]);
+        forSale.push([accuse, 4]);
+        forSale.push([abduct, 4]);
+        forSale.push([proselytize, 4]);
     }
 
     else if (type == "random"){
@@ -285,8 +293,9 @@ function createShop(type){
             forSale.push([uniqueCard[i], 4]);
         }
     }
-    const costOrderedSale = forSale.sort((a, b) => a[0].cost - b[0].cost);
-    const finalOrderedSale = costOrderedSale.sort((a, b) => b[0].isOneShot - a[0].isOneShot)
+    const nameOrderedSale = forSale.sort((a, b) => a[0].name.localeCompare(b[0].name));
+    const costOrderedSale = nameOrderedSale.sort((a, b) => a[0].cost - b[0].cost);
+    const finalOrderedSale = costOrderedSale.sort((a, b) => a[0].isOneShot - b[0].isOneShot)
 
     return finalOrderedSale;
 }

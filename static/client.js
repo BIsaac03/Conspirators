@@ -560,16 +560,16 @@ function tutorialPhase(phase){
             addTutorialProgressArrows([ "Bewitch is a special type of action called a One-Shot.",
                                         "One-Shots have powerful abilities, but can only be played once, returning to the Shop rather than your discard.",
                                         "They can be distinguished by their unique name formatting and slightly darker background.",
-                                        "Next, the number in a gold circle on the left of a card denotes its cost in coins.",
+                                        "All cards in the shop have a number in a gold circle on the left, denoting its cost in coins.",
                                         "This can differentiate Basic Actions (the ones in your starting hand) from non-Basic Actions.",
                                         "The color of a card has no MECHANICAL impact, but can help identify a card's ability at a glance.",
-                                        "Cards with an arrow affect the player it targets.",
+                                        "Cards with an arrow affect the player it targets. (All cards still 'target' someone, even if they don't have an arrow.",
                                         "Blue cards Work, making players who played one 'Workers'.",
                                         "Red cards Steal.",
                                         "Purple cards (like Bewitch) have a special effect that lasts beyond the normal action phase.",
                                         "Yellow cards have none of these defining features.",
                                         "Some cards are also green, but that will be explained in a later section.",
-                                        "Finally, the text at the bottom of the card explains the effect it will have when played.",
+                                        "Finally, the text at the bottom of the card explains the exact effect it will have when played.",
                                         "Click on the COST of Bewitch to continue."
                                         ], 16, tutorialDiv);
             break
@@ -606,9 +606,10 @@ function tutorialPhase(phase){
 
         case 19:
             tutorialProgress.remove();
-            addTutorialProgressArrows([ "You can buy up to 3 cards each round.",
-                                        "Whenever you buy a card, all other cards you buy that round will have their price reduced by 1.",
-                                        "Let's buy a Recruit and a Curse. (You may need to scroll through the shop if you cannot find them.)"
+            addTutorialProgressArrows([ "You can buy up to 3 different cards each round.",
+                                        "If you buy more than 1 card, you'll get a rebate.",
+                                        "Buying 2 cards will earn you 1 coin, while buying 3 will earn you 3.",
+                                        "Let's buy a Curse and a Sabotage. (You may need to scroll through the shop if you cannot find them.)"
                                         ], 20, tutorialDiv);
             break;
     
@@ -786,7 +787,7 @@ function tutorialPhase(phase){
         case 32:
             addTutorialProgressArrows([ "Even though Grudgie goes before us in turn order, our Retaliate will block their Steal.",
                                         "Green cards are always performed, in full, before ANY non-green cards, regardless of turn order.",
-                                        "If multiple green cards are played in the same round, the one with the lowest numbered on the right takes priority.",
+                                        "If multiple green cards are played in the same round, the lowest numbered one takes priority.",
                                         "In the event that multiple players play the same green action, regular turn order determines which is first.",
                                         ""
                                         ], 33, tutorialDiv);
@@ -816,17 +817,14 @@ function tutorialPhase(phase){
                                         "...",
                                         "Oh, you want to learn how to win?",
                                         "*sigh* I guess...",
-                                        ""
-                                        ], 36, tutorialDiv);
-            break;
-
-        case 36:
-            tutorialProgress.remove();
-            addTutorialProgressArrows([ "Once a player has at least 20 cards in their hand, the end of the game has been triggered.",
+                                        "Once a player has at least 20 cards in their hand, the end of the game has been triggered.",
                                         "Any players who reached this milestone will earn 10 additional points.",
                                         "Then, players add the cost of all actions in their hand and discard, earning points equal to half this number, rounded down.",
-                                        "Finally, players will earn a point for every coin in their possession at the end of the game."
-                                        ], 37, tutorialDiv);
+                                        "Finally, players will earn a point for every coin in their possession at the end of the game.",
+                                        "Now it is truly time to say goodbye.",
+                                        "Click 'Leave Tutorial' in the top-right."
+                                        ], 36, tutorialDiv);
+            break;
     }
 }
 function tutorialOpenedHand(){
@@ -1268,8 +1266,7 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
                     }
                 }
                 if (player.waitingOn == "buyCards"){
-                    // !! add listeners for Recruit and Curse
-                    if (card.name == "Recruit" || card.name == "Curse"){
+                    if (card.name == "Sabotage!" || card.name == "Curse"){
                         if (possibleAction.classList.contains("selected")){
                             possibleAction.classList.remove("selected");
                         }
@@ -1504,8 +1501,8 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
 
             if (isTutorial){
                 const curse = allActions.find((action) => action.name == "Curse");
-                const recruit = allActions.find((action) => action.name == "Recruit");
-                if ((actionsToBuy[0] == curse || actionsToBuy[0] == recruit)&&(actionsToBuy[1] == curse || actionsToBuy[1] == recruit)){
+                const sabotage = allActions.find((action) => action.name == "Sabotage!");
+                if ((actionsToBuy[0] == curse || actionsToBuy[0] == sabotage)&&(actionsToBuy[1] == curse || actionsToBuy[1] == sabotage)){
                     socket.emit("attemptedPurchase", actionsToBuy, myID);
                     tutorialPhase(21);
                     openCloseShopDisplay();
@@ -1522,7 +1519,11 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
         const totalCost = document.createElement("p");
         totalCost.classList.add("sum");
 
+        const rebate = document.createElement("p");
+        rebate.classList.add("rebate");
+
         bottomRow.appendChild(finalizePurchase);
+        bottomRow.appendChild(rebate);
         bottomRow.appendChild(totalCost);
         checkOutList.appendChild(bottomRow);
     }
@@ -1533,44 +1534,23 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
             checkOutList.remove();
         }
         else{
-            existingEntry.remove();
-
-            let newTotal = 0;
-            const otherEntryCosts = checkOutList.querySelectorAll(`.cost`);
-            otherEntryCosts.forEach((cost) => {
-                if (cost.classList.contains("discounted")){
-                    cost.textContent = Number(cost.textContent) + 1;
-                    
-                    const actionName = cost.parentElement.querySelector(`.name`).textContent;
-                    const action = allActions.find((action => action.name == actionName));
-                    if (action.cost == cost.textContent){
-                        cost.classList.remove("discounted");
-                    }
-                }
-                newTotal += Number(cost.textContent);
-            })
+            existingEntry.remove()
             const totalCost = checkOutList.querySelector(`.sum`);
-            totalCost.textContent = newTotal;
+            totalCost.textContent = Number(totalCost.textContent) - actionCost;
+            const rebate = checkOutList.querySelector(`.rebate`);
+            if (rebate.textContent == "1"){
+                rebate.textContent = "";
+            }
+            else{
+                rebate.textContent = "1";
+            }
         }
-
-        const shopDisplay = document.getElementById("shopDisplayDiv");
-        const shopCosts = shopDisplay.querySelectorAll(`.cost`);
-        shopCosts.forEach((entry) => {
-            entry.textContent = Number(entry.textContent) + 1;
-        })
     }
 
    else{
-        const shopDisplay = document.getElementById("shopDisplayDiv");
-        const shopCosts = shopDisplay.querySelectorAll(`.cost`);
-        shopCosts.forEach((entry) => {
-            entry.textContent = Number(entry.textContent) - 1;
-        })
-
         const totalCost = checkOutList.querySelector(`.sum`);
-        const newActionCost = actionCost - checkOutList.childElementCount + 1;
-        if (Number(totalCost.textContent) + newActionCost <= coinsToSpend){
-            totalCost.textContent = Number(totalCost.textContent) + newActionCost;
+        if (Number(totalCost.textContent) + actionCost <= coinsToSpend){
+            totalCost.textContent = Number(totalCost.textContent) + actionCost;
 
             const newEntry = document.createElement("div");
             newEntry.setAttribute("action", actionName);
@@ -1579,14 +1559,22 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
             name.textContent = actionName;
             const cost = document.createElement("p");
             cost.classList.add("cost");
-            cost.textContent = newActionCost;
-            if (newActionCost < actionCost){
-                cost.classList.add("discounted")
-            }
+            cost.textContent = actionCost;
 
             newEntry.appendChild(name);
             newEntry.appendChild(cost);
             checkOutList.appendChild(newEntry);
+
+            const rebate = checkOutList.querySelector(`.rebate`);
+            if (checkOutList.childElementCount == 3){
+                rebate.textContent = "1";
+            }
+            else if (checkOutList.childElementCount == 4){
+                rebate.textContent = "3"
+            }
+        }
+        else{
+            // !! display not enough coins message
         }
     }
 }

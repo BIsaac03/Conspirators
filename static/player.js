@@ -69,7 +69,6 @@ export class Player{
         }
     }
     buyCards(boughtCards, cost){
-        this.numCoins -= cost;
         boughtCards.forEach((card)=> {
             const actionInDiscard = this.discard.find((entry) => entry[0].name == card.name);
             if (!actionInDiscard){
@@ -79,6 +78,13 @@ export class Player{
                 actionInDiscard[1]++;
             }
         })
+        this.numCoins -= cost;
+        if (boughtCards.length == 2){
+            this.numCoins++;
+        }
+        else if (boughtCards.length == 3){
+            this.numCoins += 3;
+        }
     }
 
     prepareToRetrieveCards(numCardsToRetrieve, io){

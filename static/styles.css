@@ -513,13 +513,13 @@ div[id^="player"] #handIcon{
 #checkOutList button{
     grid-area: -1 / 1 / -2 / 2
 }
-#checkOutList div:has(.discounted){
+#checkOutList .rebate{
+    font-size: 5vh;
     color: green;
 }
 .selected{
     width: calc(100% - 5px);
     border: 5px dashed goldenrod;
-    
 }
 
 #notificationContainer{
