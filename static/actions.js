@@ -143,7 +143,9 @@ export const allActions = [
         "isWork": false,
         "isSteal": true,
         "isTargetting": true,
-        "effect": `steal(player, players[player.currentTarget], -1);`, // !! targets neighbora get 2 coins
+        "effect":   `steal(player, players[player.currentTarget], -1);
+                    players[(player.currentTarget + 1) % players.length].numCoins++;
+                    players[(player.currentTarget - 1 + players.length) % players.length].numCoins++;`,
         "priority": 0,
         "cost": 3,
         "isBasicAction": false,
@@ -157,7 +159,12 @@ export const allActions = [
         "isWork": true,
         "isSteal": false,
         "isTargetting": false,
-        "effect": `work(player, workValue, 4)`, // !! bewitch other players
+        "effect":   `work(player, workValue, 4)
+                    players.forEach((other) => {
+                        if (other.playerID != player.playerID){
+                            other.isBewitched = true;
+                        } 
+                    })`,
         "priority": 0,
         "cost": 4,
         "isBasicAction": false,
@@ -189,7 +196,12 @@ export const allActions = [
         "isWork": false,
         "isSteal": false,
         "isTargetting": false,
-        "effect": `player.numCoins += 2`, // !! nullify cards targetting you, returning non-BAs
+        "effect":   `player.numCoins += 2;
+                    players.forEach((other) => {
+                        if (other.currentTarget == player.playerNum){
+                            cursed(other);
+                        }
+                    })`,
         "priority": 2,
         "cost": 5,
         "isBasicAction": false,
@@ -246,7 +258,9 @@ export const allActions = [
         "isWork": false,
         "isSteal": true,
         "isTargetting": true,
-        "effect": `steal(player, players[player.currentTarget], 5)`, // !! take difference from 9 from bank
+        "effect":   `const beforeCoins = player.numCoins;
+                    steal(player, players[player.currentTarget], 5);
+                    player.numCoins = beforeCoins + 9`,
         "priority": 0,
         "cost": 5,
         "isBasicAction": false,
@@ -260,7 +274,8 @@ export const allActions = [
         "isWork": true,
         "isSteal": false,
         "isTargetting": false,
-        "effect": `work(player, workValue)`, // !! add bought cards to hand
+        "effect":   `work(player, workValue);
+                    player.hasRecruited = true;`, // !! add bought cards to hand
         "priority": 0,
         "cost": 4,
         "isBasicAction": false,
@@ -289,7 +304,11 @@ export const allActions = [
         "isSteal": false,
         "isTargetting": false,
         "effect":  `work(player, workValue, 1);
-                    players.forEach((player) => {})`, 
+                    players.forEach((player) => {
+                        if (player.playedCard.isWork){
+                            player.numCoins += 2;
+                        }
+                    })`, 
         "priority": 0,
         "cost": 5,
         "isBasicAction": false,

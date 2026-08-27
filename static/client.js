@@ -95,7 +95,8 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, r
                 retrieveCards(reconnectedPlayer, 2, false);
             }
             else if (reconnectedPlayer.waitingOn == "donate"){
-    
+                // !! determine recipient of donations after reconnection
+                promptDonation(reconnectedPlayer, receiver, 4, "How many coins will you return to "+receiver.name+" ?", false);
             }
 
             // ROUND END
@@ -192,7 +193,10 @@ socket.on("retrieveCards", (player, numCardsToRetrieve) => {
     }
 })
 socket.on("donate", (giver, receiver, maxCoins, context) => {
-    promptDonation(giver, receiver, maxCoins, context)
+    if (giver.playerID = myID){
+        promptDonation(giver, receiver, maxCoins, context);
+    }
+    
 })
 socket.on("updateStats", (players) => {
     updateStats(players);
@@ -879,7 +883,7 @@ function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
 function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
     const playedCard = document.querySelector(`#player${originPlayerNum} .playedCard`);
     const targetAngle = calculateTargetAngle(originPlayerNum, targetPlayerNum, numPlayers);
-    playedCard.style.transform = "translateX("+(-5*Math.sin(targetAngle))+"vh) translateY("+(-18*Math.cos(targetAngle))+"vh) rotate("+(targetAngle)+"rad)";       
+    playedCard.style.transform = "translateX("+(-10*Math.sin(targetAngle))+"vh) translateY("+(-15*Math.cos(targetAngle))+"vh) rotate("+(targetAngle)+"rad)";       
 }
 
 function createGameSpace(players){
@@ -1609,30 +1613,28 @@ function promptDonation(giver, receiver, maxCoins, context, isTutorial){
     contextMessage.textContent = context;
     donationScreen.appendChild(contextMessage);
 
-    if (isTutorial || myPlayerNum == giver.playerNum){
-        const donationEntry = document.createElement("input");
-        donationEntry.type = "text";
-        donationEntry.maxLength = 1;
-        donationScreen.appendChild(donationEntry);
+    const donationEntry = document.createElement("input");
+    donationEntry.type = "text";
+    donationEntry.maxLength = 1;
+    donationScreen.appendChild(donationEntry);
 
-        const submit = document.createElement("button");
-        submit.id = "submit";
-        submit.textContent = "Confirm";
-        submit.addEventListener("click", () => {
-            if (donationEntry.value >= 0 && donationEntry.value <= maxCoins){
-                if (isTutorial){
-                    if (donationEntry.value == 0){
-                        donationScreen.remove();
-                        tutorialPhase(14);
-                    }
+    const submit = document.createElement("button");
+    submit.id = "submit";
+    submit.textContent = "Confirm";
+    submit.addEventListener("click", () => {
+        if (donationEntry.value >= 0 && donationEntry.value <= maxCoins){
+            if (isTutorial){
+                if (donationEntry.value == 0){
+                    donationScreen.remove();
+                    tutorialPhase(14);
                 }
-                else{
-                    socket.emit("gaveDonation", giver, receiver, donationEntry.value);
-                } 
             }
-        })
-        donationScreen.appendChild(submit);
-    }    
+            else{
+                socket.emit("gaveDonation", giver, receiver, donationEntry.value);
+            } 
+        }
+    })
+    donationScreen.appendChild(submit);    
     bodyElement.appendChild(donationScreen);
 }
 

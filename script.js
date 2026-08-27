@@ -357,9 +357,11 @@ function resolveOrderedActions(players){
     // !! adjust iterations to equal number of IN-GAME ordered cards-1
     for (let i = 1; i < 8; i++){
         players.forEach((player) => {
-            if (player.playedCard.priority == i) {
-                eval(player.playedCard.effect);
-            }
+            if (player.playedCard){
+                if (player.playedCard.priority == i) {
+                    eval(player.playedCard.effect);
+                }
+            } 
         })
     }
     resolveUnorderedActions(players, workValue);
@@ -367,8 +369,10 @@ function resolveOrderedActions(players){
 
 function resolveUnorderedActions(players, workValue){
     players.forEach((player) => {
-        if (player.playedCard.priority == 0) {
-            eval(player.playedCard.effect);
+        if (player.playedCard){
+            if (player.playedCard.priority == 0) {
+                eval(player.playedCard.effect);
+            }
         }
     })
     checkEndOfRound(players)
@@ -386,11 +390,11 @@ function checkEndOfRound(players){
         const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
         roundEndCleanup(players);
         io.emit("updateStats", players);
-        io.emit("updateCards", players, [], "hand", false);
         io.emit("updateCards", players, [], "discard", false);
+        io.emit("updateCards", players, [], "hand", false);
         io.emit("updateCards", players, myGame.getGameDetails().shop, "shop", false);
 
-        if (!checkGameEnd()){
+        if (!checkGameEnd(players)){
             players.forEach((player) => {
                 player.isReady = false;
                 player.waitingOn = "selectAction";
@@ -405,8 +409,12 @@ function checkEndOfRound(players){
     }
 }
 
-function checkGameEnd(){
-    // !!! should check if end condition met
+function checkGameEnd(players){
+    players.forEach((player) => {
+        if (player.hand.length >= 20){
+            return true;
+        }
+    })
     return false
 }
 
@@ -427,6 +435,29 @@ function donate(giver, receiver, maxCoins, context){
     io.emit("donate", giver, receiver, realMaxCoins, context)
 }
 
+function cursed(cursed){
+    if (cursed.playedCard.isBasicAction){
+        cursed.discardPlayedCard();
+    }
+    else{
+        const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == cursed.playerID));
+        returnToShop(cursed.playedCard, myGame.getGameDetails().shop);
+        cursed.playedCard = undefined;
+    }
+
+    // !! update display
+}
+
+function returnToShop(action, shop){
+    const actionInShop = shop.find((entry) => entry[0].name == action.name);
+    if (!actionInShop){
+        shop.push([action, 1])
+    }
+    else{
+        actionInShop[1]++;
+    }
+}
+
 function updatePlayerWaitingOn(players, newWaitingOn){
     players.forEach((player) => {
         player.waitingOn = newWaitingOn;
@@ -437,5 +468,8 @@ function updatePlayerWaitingOn(players, newWaitingOn){
 function roundEndCleanup(players){
     players.forEach(player => {
         player.discardPlayedCard();
+        player.isImmune = false;
+        player.hasRecruited = false;
+        // !! remove Bewitched status after playing a card while bewitched 
     })
 }

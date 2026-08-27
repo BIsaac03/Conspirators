@@ -15,6 +15,8 @@ export class Player{
     numCardSwaps = 1;
     numCoins = 0;
     isImmune = false;
+    isBewitched = false;
+    hasRecruited = false;
     isInGame = false;
     isReady = false;
     waitingOn = undefined;
@@ -53,18 +55,21 @@ export class Player{
     }
     discardPlayedCard(){
         // return Rest to hand
-        if (this.playedCard.name === "Rest"){
-            this.hand.push([this.playedCard, 1]);
-        }
-        // discard other played cards
-        else{
-            const actionInDiscard = this.discard.find((entry) => entry[0].name == this.playedCard.name);
-            if (!actionInDiscard){
-                this.discard.push([this.playedCard, 1])
+        if (this.playedCard){
+            if (this.playedCard.name === "Rest"){
+                this.hand.push([this.playedCard, 1]);
             }
+            // discard other played cards
             else{
-                actionInDiscard[1]++;
+                const actionInDiscard = this.discard.find((entry) => entry[0].name == this.playedCard.name);
+                if (!actionInDiscard){
+                    this.discard.push([this.playedCard, 1])
+                }
+                else{
+                    actionInDiscard[1]++;
+                }
             }
+            this.playedCard = undefined;
         }
     }
     buyCards(boughtCards, cost){
