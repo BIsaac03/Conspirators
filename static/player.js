@@ -12,10 +12,8 @@ export class Player{
     discard = [];
     playedCard = undefined;
     currentTarget = undefined;
-    numCardSwaps = 0;
-    numRedirects = 0;
+    numCardSwaps = 1;
     numCoins = 0;
-    numCoinsInVault = 0;
     isImmune = false;
     isInGame = false;
     isReady = false;

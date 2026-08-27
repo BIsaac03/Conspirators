@@ -888,7 +888,7 @@ function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
 function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
     const playedCard = document.querySelector(`#player${originPlayerNum} .playedCard`);
     const targetAngle = calculateTargetAngle(originPlayerNum, targetPlayerNum, numPlayers);
-    playedCard.style.transform = "translateY("+(-30*Math.sin(targetAngle)+2*Math.sign(targetAngle))+"vh) translateX("+(20*(1-Math.cos(targetAngle))+2)+"vh)  rotate("+(targetAngle-Math.PI/2)+"rad)";       
+    playedCard.style.transform = "translateY("+(-20*Math.sin(targetAngle))+"vh) translateX("+(30*(1-Math.cos(targetAngle)))+"vh)  rotate("+(targetAngle-Math.PI/2)+"rad)";       
 }
 
 function createGameSpace(players){
@@ -1647,7 +1647,7 @@ function promptDonation(giver, receiver, maxCoins, context, isTutorial){
 
 function createStats(players){
     for (let i = 0; i < players.length; i++){
-        const statsDisplay = document.querySelector(`#player${i} .playerIcon`);
+        const statsDisplay = document.createElement("div");
         statsDisplay.classList.add("statsDisplay");
 
         const playerName = document.createElement("p");
@@ -1655,10 +1655,13 @@ function createStats(players){
         playerName.style.color = players[(myPlayerNum + i)%players.length].playerColor[0];
         playerName.classList.add("playerName");
 
-        const coinsIcon = document.createElement("img");
-        coinsIcon.src = "static/Images/Icons/coins.svg";
+        const coinDiv = document.createElement("div");
+        const coinIcon = document.createElement("img");
+        coinIcon.src = "static/Images/Icons/coins.svg";
         const numCoins = document.createElement("p");
         numCoins.classList.add("numCoins");
+        coinDiv.appendChild(coinIcon);
+        coinDiv.appendChild(numCoins);
         
         const cardSwapDiv = document.createElement("div");
         const cardSwapIcon = document.createElement("img");
@@ -1667,15 +1670,6 @@ function createStats(players){
         numCardSwaps.classList.add("numCardSwaps");
         cardSwapDiv.appendChild(cardSwapIcon);
         cardSwapDiv.appendChild(numCardSwaps);
-
-        const redirectDiv = document.createElement("div");
-        const redirectIcon = document.createElement("img");
-        redirectIcon.src = "static/Images/Icons/redirect.svg";
-        redirectIcon.style.transform = "rotate(110deg)";
-        const numRedirects = document.createElement("p");
-        numRedirects.classList.add("numRedirects");
-        redirectDiv.appendChild(redirectIcon);
-        redirectDiv.appendChild(numRedirects);
 
         const handDiv = document.createElement("div");
         const handIcon = document.createElement("img");
@@ -1694,28 +1688,24 @@ function createStats(players){
         discardDiv.appendChild(discardIcon);
         discardDiv.appendChild(numCardsInDiscard);
 
-        const vaultIcon = document.createElement("img");
-        vaultIcon.src = "static/Images/Icons/safe.svg";
-        const numCoinsInVault = document.createElement("p");
-        numCoinsInVault.classList.add("numCoinsInVault");
-
         statsDisplay.appendChild(playerName);
         statsDisplay.appendChild(handDiv);
         statsDisplay.appendChild(discardDiv);
-        //statsDisplay.appendChild(coinsIcon);
-        //statsDisplay.appendChild(numCoins);
+        statsDisplay.appendChild(coinDiv);
         statsDisplay.appendChild(cardSwapDiv);
-        statsDisplay.appendChild(redirectDiv);
-        
-        
-        //statsDisplay.appendChild(vaultIcon);
-        //statsDisplay.appendChild(numCoinsInVault)
         
         const playerDiv = document.getElementById(`player${i}`);
         const playerRotation = playerDiv.style.transform.trim().split(/[()]\s*/)[1].slice(0, -3);
         const counterRotation = eval(playerRotation) * -1;
 
-        statsDisplay.style.transform = `rotate(${counterRotation}rad)`;
+        if (Math.sign(Math.cos(playerRotation) < 0)){
+            statsDisplay.style.transform = `rotate(${counterRotation}rad) translateX(${-23}vh) translateY(${Math.sin(playerRotation) * -3}vh)`;
+        }
+        else{
+            statsDisplay.style.transform = `rotate(${counterRotation}rad) translateX(${23}vh) translateY(${Math.sin(playerRotation) * -3}vh)`;
+        }
+
+        playerDiv.appendChild(statsDisplay);        
     }
 }
 
@@ -1725,17 +1715,10 @@ function updateStats(players){
         numCardsInHand.textContent = calculateNumCards(players[i].hand);
         const numCardsInDiscard = document.querySelector(`#player${i} .statsDisplay .discardNum`);
         numCardsInDiscard.textContent = calculateNumCards(players[i].discard);
-        //const numCoins = document.querySelector(`#player${i} .statsDisplay .numCoins`);
-        //numCoins.textContent = players[i].numCoins;
+        const numCoins = document.querySelector(`#player${i} .statsDisplay .numCoins`);
+        numCoins.textContent = players[i].numCoins;
         const numCardSwaps = document.querySelector(`#player${i} .statsDisplay .numCardSwaps`)
         numCardSwaps.textContent = players[i].numCardSwaps;
-        const numRedirects = document.querySelector(`#player${i} .statsDisplay .numRedirects`)
-        numRedirects.textContent = players[i].numRedirects;
-        //const numCoinsInVault = document.querySelector(`#player${i} .statsDisplay .numCoinsInVault`);
-        //if (i == myPlayerNum){
-        //    numCoinsInVault.textContent = players[i].numCoinsInVault;
-        //}
-        //else{numCoinsInVault.textContent = '?'};
     }
 }
 

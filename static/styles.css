@@ -72,7 +72,7 @@ button:hover{
 }
 #tutorial{
     position: absolute;
-    align-self: center;
+    top: 70vh;
     right: 3vw;
     height: 20vh;
     width: 25vw;
@@ -203,27 +203,34 @@ button:hover{
 }
 
 .statsDisplay{
+    position: absolute;
+    grid-column: 2 /3;
     display: grid;
-    grid-template: 4vh 5vh 5vh / 9.5vh 9.5vh;
-    row-gap: 1vh;
+    grid-template: 5vh 5vh 5vh / 1fr 1fr;
+    gap: 1vh;
     align-items: center;
+    justify-items: center;
     font-weight: bold;
     text-align: center;
     font-size: 3vh;
-    height: fit-content;
+    width: fit-content;
+    background-color: rgba(255, 248, 220, 0.5);
+    padding: 1.5vh;
+    padding-top: 0vh;
+    border-radius: 20%;
 }
 .statsDisplay .playerName{
-    margin-top: -10vh;
     grid-area: 1 / 1 / 2 / 3;
-    width: 100%;
+    width: min-content;
     text-align: center;
-    font-size: 5vh;
+    font-size: 3vh;
     font-weight: bold;
 }
 .statsDisplay div{
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-evenly;
+    width: 100%;
 }
 .statsDisplay img{
     width: 5vh;
@@ -231,8 +238,7 @@ button:hover{
 
 #blownUp{
     position: absolute;
-    align-self: center;
-    left: 50vh;
+    place-self: center;
     width: 40vh;
     border-radius: 10%;
     z-index: 5;
@@ -240,17 +246,16 @@ button:hover{
 
 #gameSpace{
     position: absolute;
-    left: 30vh;
-    align-self: center;
-    width: 80vh;
-    height: 80vh;
+    place-self: center;
+    width: 75vh;
+    height: 75vh;
     border-radius: 50%;
     background-color: blanchedalmond;
 }
 #gameSpace>div[id^="player"]{
     position: absolute;
     display: grid;
-    grid-template-columns: 30vh 20vh;
+    grid-template-columns: 27vh 20vh;
     align-items: center;
     left: calc(50% - 20vh);
     top: calc(50% - 10vh);
@@ -265,9 +270,9 @@ div[id^="player"] .playerIcon{
     border-radius: 50%;
 }
 div[id^="player"] .playedCard{
-    position: fixed;
-    margin-left: 5vh;
-    width: 20vh;
+    position: relative;
+    justify-self: end;
+    width: 15vh;
     border-radius: 13%;
     border: 3px dashed cyan;
 }
@@ -278,8 +283,7 @@ div[id^="player"] .playedCard{
 
 #cardSwapPopUp{
     position: absolute;
-    align-self: center;
-    left: 52vh;
+    place-self: center;
     display: flex;
     gap: 6vh;
 }
@@ -402,8 +406,7 @@ div[id^="player"] #handIcon{
 
 #confirmAction{
     position: absolute;
-    align-self: center;
-    left: 63vh;
+    place-self: center;
     height: 7vh;
     width: 14vh;
     font-size: 3vh;
@@ -412,7 +415,6 @@ div[id^="player"] #handIcon{
 #retrieveDiv{
     position: absolute;
     display: grid;
-
 }
 .retrieveIcon{
     position: relative;
@@ -445,8 +447,7 @@ div[id^="player"] #handIcon{
 }
 #blownUpScorecard{
     position: absolute;
-    align-self: center;
-    left: 57vh;
+    place-self: center;
     width: 26vh;
     height: 39vh;
     display: grid;
@@ -469,8 +470,7 @@ div[id^="player"] #handIcon{
 
 #donationScreen{
     position: absolute;
-    align-self: center;
-    left: 55vh;
+    place-self: center;
     width: 30vh;
     padding: 10px;
     display: grid;
