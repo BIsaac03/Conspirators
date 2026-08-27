@@ -139,6 +139,9 @@ io.on("connection", (socket) => {
 
     socket.on("tutorialRequest", (what, data, ID) => {
         const myLobby = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == ID));
+        if (what == "save"){
+            myLobby.getPlayers()[0].tutorialPhase = data;
+        }
         if (what == "setWaitingOn"){
             myLobby.getPlayers()[0].waitingOn = data;
         }
@@ -380,11 +383,12 @@ function roundStart(players){
 function checkEndOfRound(players){
     const waitingOn = players.find((player) => !player.isReady);
     if (!waitingOn){
+        const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
         roundEndCleanup(players);
         io.emit("updateStats", players);
         io.emit("updateCards", players, [], "hand", false);
         io.emit("updateCards", players, [], "discard", false);
-        io.emit("updateCards", players, shop, "shop", false);
+        io.emit("updateCards", players, myGame.getGameDetails().shop, "shop", false);
 
         if (!checkGameEnd()){
             players.forEach((player) => {

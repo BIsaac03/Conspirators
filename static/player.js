@@ -18,6 +18,7 @@ export class Player{
     isInGame = false;
     isReady = false;
     waitingOn = undefined;
+    tutorialPhase = 1;
 
     createStartingHand(selectedBAs){
         const steal = allActions.find((action) => action.name == "Steal");

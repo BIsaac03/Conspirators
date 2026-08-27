@@ -270,8 +270,9 @@ div[id^="player"] .playerIcon{
     border-radius: 50%;
 }
 div[id^="player"] .playedCard{
-    position: relative;
-    justify-self: end;
+    position: fixed;
+    justify-self: center;
+    margin-left: -5vh;
     width: 15vh;
     border-radius: 13%;
     border: 3px dashed cyan;

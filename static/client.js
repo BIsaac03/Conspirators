@@ -21,7 +21,7 @@ socket.on("sendToMainMenu", () => {
 })
 
 socket.on("startTutorial", (players) => {
-    startTutorial(players);
+    startTutorial(players, 1);
 })
 
 socket.on("newPlayer", (isGameInProgress, roomCode) => {
@@ -37,7 +37,8 @@ socket.on("newPlayer", (isGameInProgress, roomCode) => {
 socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, roomCode) => {
     bodyElement.innerHTML = "";
     if (roomCode == "tutorial"){
-        startTutorial(players)
+        // !! first create function to catch up on previous tutorial changes
+        startTutorial(players, reconnectedPlayer.tutorialPhase)
     }
     else if (!reconnectedPlayer.isInGame){
         if (isGameInProgress){
@@ -283,7 +284,7 @@ function displayMainMenu(){
     bodyElement.appendChild(mainMenu);
 }
 
-function startTutorial(players){
+function startTutorial(players, phase){
     myPlayerNum = 0;
     createGameSpace(players);
     createNotificationContainer();
@@ -294,11 +295,10 @@ function startTutorial(players){
     tutorialDiv.id = "tutorial"
     const tutorialMessage = document.createElement("p");
     tutorialMessage.id = "tutorialMessage";
-    tutorialMessage.textContent = "Welcome"
     tutorialDiv.appendChild(tutorialMessage);
     bodyElement.appendChild(tutorialDiv);
 
-    tutorialPhase(1);
+    tutorialPhase(phase);
 
 
     const leaveTutorial = document.createElement("button");
@@ -864,31 +864,22 @@ function calculateNumCards(where){
 
 function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
     // NUMS GET BIGGER CLOCKWISE
-    const totalInsideAngle = Math.PI * (numPlayers - 2);
-    const totalPlayerSelectionAngle = totalInsideAngle / numPlayers;
-    const angleModPerPlayer = totalPlayerSelectionAngle / (numPlayers - (numPlayers % 2));  
-    
-            // CALCULATIONS
-            // (myPlayerNum + X) % numPlayers == targetPlayerNum
-            // myPlayerNum + X == numPlayers*k + targetPlayerNum
-            // X = numPlayers*k + targetPlayerNum - myPlayerNum
-    let distanceClockwise = undefined;
-    if (numPlayers*0 + targetPlayerNum - myPlayerNum > 0){
-        distanceClockwise = numPlayers*0 + targetPlayerNum - myPlayerNum;
+    const anglePerPlayer = Math.PI / numPlayers
+    let distanceFromLeft = 0;
+    if (targetPlayerNum > myPlayerNum){
+        distanceFromLeft = targetPlayerNum - myPlayerNum;
     }
-    else {
-        distanceClockwise = numPlayers*1 + targetPlayerNum - myPlayerNum;
+    else{
+        distanceFromLeft = numPlayers - (myPlayerNum - targetPlayerNum);
     }
-    const playersOffCenter = distanceClockwise - numPlayers/2;
-    const targetAngle =  2*playersOffCenter*angleModPerPlayer;
-
-    return targetAngle;
+    const angleFromLeft = anglePerPlayer * distanceFromLeft;
+    return (angleFromLeft - Math.PI);
 }
 
 function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
     const playedCard = document.querySelector(`#player${originPlayerNum} .playedCard`);
     const targetAngle = calculateTargetAngle(originPlayerNum, targetPlayerNum, numPlayers);
-    playedCard.style.transform = "translateY("+(-20*Math.sin(targetAngle))+"vh) translateX("+(30*(1-Math.cos(targetAngle)))+"vh)  rotate("+(targetAngle-Math.PI/2)+"rad)";       
+    playedCard.style.transform = "translateX("+(-5*Math.sin(targetAngle))+"vh) translateY("+(-18*Math.cos(targetAngle))+"vh) rotate("+(targetAngle)+"rad)";       
 }
 
 function createGameSpace(players){
@@ -1358,7 +1349,7 @@ function promptActionSelection(player, isTutorial){
     }
 }
 
-function actionSelection(players, originalCard){
+function actionSelection(players, myPlayerNum, originalCard){
     const myCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
     myCard.style.opacity = "1";
     promptActionSelection(players[myPlayerNum], false);
@@ -1538,11 +1529,11 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
             const totalCost = checkOutList.querySelector(`.sum`);
             totalCost.textContent = Number(totalCost.textContent) - actionCost;
             const rebate = checkOutList.querySelector(`.rebate`);
-            if (rebate.textContent == "1"){
+            if (rebate.textContent == "+1"){
                 rebate.textContent = "";
             }
             else{
-                rebate.textContent = "1";
+                rebate.textContent = "+1";
             }
         }
     }
@@ -1567,10 +1558,10 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
 
             const rebate = checkOutList.querySelector(`.rebate`);
             if (checkOutList.childElementCount == 3){
-                rebate.textContent = "1";
+                rebate.textContent = "+1";
             }
             else if (checkOutList.childElementCount == 4){
-                rebate.textContent = "3"
+                rebate.textContent = "+3"
             }
         }
         else{
