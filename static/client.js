@@ -1095,27 +1095,37 @@ function addCardDisplayListeners(){
 }
 
 function openCloseShopDisplay(){
-    const actionDisplayDiv = document.getElementById("shopDisplay");
+    const shopDisplay = document.getElementById("shopDisplay");
     const sliderIcon = document.querySelector(`#shopDisplayVisibilityToggle img`);
     if (sliderIcon.src.includes("/static/Images/Icons/leftArrows.svg")){
-        actionDisplayDiv.style.left = "calc(100vw - 120vh)";
+        const playerSliderIcon = document.querySelector(`#playerDisplayVisibilityToggle img`);
+        if (playerSliderIcon.src.includes("/static/Images/Icons/leftArrows.svg")){
+            openClosePlayerDisplay()
+        }
+
+        shopDisplay.style.left = "calc(100vw - 120vh)";
         sliderIcon.src = "/static/Images/Icons/rightArrows.svg";
     }
     else if (sliderIcon.src.includes("/static/Images/Icons/rightArrows.svg")){
-        actionDisplayDiv.style.left = "calc(100vw - 5vh)";
+        shopDisplay.style.left = "calc(100vw - 5vh)";
         sliderIcon.src = "/static/Images/Icons/leftArrows.svg";
     }
 }
 
 function openClosePlayerDisplay(){
-    const actionDisplayDiv = document.getElementById("playerDisplay");
+    const playerDisplay= document.getElementById("playerDisplay");
     const sliderIcon = document.querySelector(`#playerDisplayVisibilityToggle img`);
     if (sliderIcon.src.includes("/static/Images/Icons/rightArrows.svg")){
-        actionDisplayDiv.style.right = "calc(100vw - 120vh)";
+        const shopSliderIcon = document.querySelector(`#shopDisplayVisibilityToggle img`);
+        if (shopSliderIcon.src.includes("/static/Images/Icons/rightArrows.svg")){
+            openCloseShopDisplay()
+        }
+
+        playerDisplay.style.right = "calc(100vw - 120vh)";
         sliderIcon.src = "/static/Images/Icons/leftArrows.svg";
     }
     else if (sliderIcon.src.includes("/static/Images/Icons/leftArrows.svg")){
-        actionDisplayDiv.style.right = "calc(100vw - 4vh)";
+        playerDisplay.style.right = "calc(100vw - 4vh)";
         sliderIcon.src = "/static/Images/Icons/rightArrows.svg";
     }
 }
