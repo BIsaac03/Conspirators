@@ -622,7 +622,7 @@ function tutorialPhase(phase){
 
         case 22:
             socket.emit("getUpdatedCards", "hand", false, myID);
-            const discardToggle = document.getElementById("discardToggleDiv");
+            const discardToggle = document.getElementById("discardToggle");
             discardToggle.addEventListener("click", tutorialOpenedDiscard);
             break;
         
@@ -836,7 +836,7 @@ function tutorialOpenedShop(){
     tutorialPhase(19);
 }
 function tutorialOpenedDiscard(){
-    const displayToggle = document.getElementById("discardToggleDiv");
+    const displayToggle = document.getElementById("discardToggle");
     displayToggle.removeEventListener("click", tutorialOpenedDiscard);
     tutorialPhase(23);
 }
@@ -1422,31 +1422,59 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
                 checkOutList.remove();
             }
         })
+        const coinIcon = document.createElement("img");
+        coinIcon.src = "static/Images/Icons/coins.svg";
+
+        const remainingCoins = document.createElement("div");
+        remainingCoins.classList.add("coinDiv");
+        const numRemainingCoins = document.createElement("p");
+        numRemainingCoins.classList.add("leftover");
+        numRemainingCoins.textContent = coinsToSpend;
+        remainingCoins.appendChild(coinIcon);
+        remainingCoins.appendChild(numRemainingCoins);
+
+        const rebate = document.createElement("p");
+        rebate.classList.add("rebate");
+        rebate.textContent = "+0";
+
+        bottomRow.appendChild(finalizePurchase);
+        bottomRow.appendChild(remainingCoins);
+        bottomRow.appendChild(rebate);
+        checkOutList.appendChild(bottomRow);
+
+        const coinRow = document.createElement("div");
+        const myCoins = document.createElement("div");
+        myCoins.classList.add("coinDiv");
+        const numMyCoins = document.createElement("p");
+        numMyCoins.classList.add("myCoins");
+        numMyCoins.textContent = coinsToSpend;
+        const clonedIcon = coinIcon.cloneNode(true);
+        myCoins.appendChild(clonedIcon);
+        myCoins.appendChild(numMyCoins);
 
         const totalCost = document.createElement("p");
         totalCost.classList.add("sum");
 
-        const rebate = document.createElement("p");
-        rebate.classList.add("rebate");
-
-        bottomRow.appendChild(finalizePurchase);
-        bottomRow.appendChild(rebate);
-        bottomRow.appendChild(totalCost);
-        checkOutList.appendChild(bottomRow);
+        coinRow.appendChild(myCoins);
+        coinRow.appendChild(totalCost);
+        checkOutList.appendChild(coinRow);
     }
               
     const existingEntry = checkOutList.querySelector(`[action = "${actionName}"]`)
     if (existingEntry){
-        if (checkOutList.childElementCount == 2){
+        if (checkOutList.childElementCount == 3){
             checkOutList.remove();
         }
         else{
             existingEntry.remove()
             const totalCost = checkOutList.querySelector(`.sum`);
-            totalCost.textContent = Number(totalCost.textContent) - actionCost;
+            totalCost.textContent = Number(totalCost.textContent) + actionCost;
+            const remainingCoins = checkOutList.querySelector(`.leftover`);
+            remainingCoins.textContent = Number(remainingCoins.textContent) + actionCost
+
             const rebate = checkOutList.querySelector(`.rebate`);
             if (rebate.textContent == "+1"){
-                rebate.textContent = "";
+                rebate.textContent = "+0";
             }
             else{
                 rebate.textContent = "+1";
@@ -1455,9 +1483,11 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
     }
 
    else{
-        const totalCost = checkOutList.querySelector(`.sum`);
-        if (Number(totalCost.textContent) + actionCost <= coinsToSpend){
-            totalCost.textContent = Number(totalCost.textContent) + actionCost;
+        const remainingCoins = checkOutList.querySelector(`.leftover`);
+        if (Number(remainingCoins.textContent) >= actionCost){
+            remainingCoins.textContent = Number(remainingCoins.textContent) - actionCost;
+            const totalCost = checkOutList.querySelector(`.sum`);
+            totalCost.textContent = Number(totalCost.textContent) - actionCost;
 
             const newEntry = document.createElement("div");
             newEntry.setAttribute("action", actionName);
@@ -1473,10 +1503,10 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
             checkOutList.appendChild(newEntry);
 
             const rebate = checkOutList.querySelector(`.rebate`);
-            if (checkOutList.childElementCount == 3){
+            if (checkOutList.childElementCount == 4){
                 rebate.textContent = "+1";
             }
-            else if (checkOutList.childElementCount == 4){
+            else if (checkOutList.childElementCount == 5){
                 rebate.textContent = "+3"
             }
         }
