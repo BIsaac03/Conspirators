@@ -28,7 +28,7 @@
     cursor: pointer;
 }
 
-form.playerCustomization{
+#playerCustomization{
     display: grid;
     grid-template: auto auto / auto auto;
     height: 20vh;
@@ -37,28 +37,28 @@ form.playerCustomization{
     align-items: center;
     padding: 20px;
 }
-form.playerCustomization label{
+#playerCustomization label{
     font-weight: bold;
     font-size: 40px;
     padding-left: 10px;
     grid-area: 1 / 1 / 2 / 3;
 }
-form.playerCustomization input[type = "text"]{
+#playerCustomization input[type = "text"]{
     font-size: 30px;
     border-radius: 15px;
     padding-left: 10px;
     height: 50px;
 }
-form.playerCustomization .playerName{
+#playerCustomization #playerName{
     grid-area: 1 / 1 / 2 / 2;
 }
-form.playerCustomization input.colorSelect{
+#playerCustomization #colorSelect{
     align-self: center;
     width: 50px;
     height: 50px;
     grid-area: 1 / 2 / 2 / 3;
 }
-form.playerCustomization input.joinGame{
+#playerCustomization #joinGame{
     width: 35vw;
     height: max(8vh, 50px);
     justify-self: center;
@@ -69,7 +69,7 @@ form.playerCustomization input.joinGame{
     grid-area: 2 / 1 / 3 / 3;
     margin-top: 20px;
 }
-input.joinGame:hover{
+#joinGame:hover{
     cursor: pointer;
 }
 

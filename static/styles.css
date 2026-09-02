@@ -301,9 +301,10 @@ div[id^="player"] #handIcon{
     width: 7.5vh;
 }
 
-#playerDisplayDiv{
+#playerDisplay{
     position: absolute;
     align-self: center;
+    right: calc(100vw - 4vh);
     width: 120vh;
     height: 90vh;
     display: grid;
@@ -319,9 +320,10 @@ div[id^="player"] #handIcon{
     align-items: center;
     font-size: 5vh;
 }
-#shopDisplayDiv{
+#shopDisplay{
     position: absolute;
     align-self: center;
+    left: calc(100vw - 5vh);
     width: 120vh;
     height: 90vh;
     display: grid;
@@ -369,9 +371,16 @@ div[id^="player"] #handIcon{
     width: 100%;
     height: 100%;
 }
-#cardLocationToggle>div>button{
+#cardLocationToggle>div>p{
     width: 50%;
+    background-color: whitesmoke;
+    border: solid 1px black;
+    text-align: center;
     font-size: 3.6vh;
+    border-radius: 1vh;
+}
+#cardLocationToggle>div:hover{
+    cursor: pointer;
 }
 .actionSelection.play{
     grid-row: 2 / 3;

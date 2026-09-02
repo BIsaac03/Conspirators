@@ -5,7 +5,7 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { dirname, join } from 'path';
 import { gameInProgressError, modifyPlayerList } from "./static/lobby.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -16,17 +16,13 @@ const app = express();
 const httpServer = createServer(app);
 const port = process.env.PORT || 3000 ;
 
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
-});
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/static/client.js');
-});
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/static/styles.css');
-});
+app.use(express.static(__dirname));
 
-app.use("/static", express.static('./static/'));
+app.use("/static", express.static(join(__dirname, 'static')));
+
+app.get('/', (req, res) => {
+    res.sendFile(join(__dirname, 'index.html'));
+});
 
 const io = new Server(httpServer, {
     cors: {
@@ -51,7 +47,7 @@ io.on("connection", (socket) => {
         socket.emit("displayExistingPlayers", myGame.getPlayers());
     }
     else{
-        socket.emit("sendToMainMenu");
+        socket.emit("outsideLobby");
     }
 
     socket.on("setUpTutorial", (myID) => {

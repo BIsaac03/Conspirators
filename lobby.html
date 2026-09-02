@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conspirators - Lobby</title>
+    <link rel="stylesheet" type="text/css" href="static/lobby.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js"></script>
+    <script src="static/client.js" defer type="module"></script>
+</head>
+<body>
+    <div class="header"></div>
+    <div id="roomCode">
+        <img src="/static/Images/Icons/copy.svg">
+        <p></p>
+    </div>
+    <p class="title">Lobby</p>
+    <div id="lobby">
+        <div action="" id="playerCustomization">
+            <input type="text" id="playerName" placeholder="Name" maxlength="20">
+            <input type="color" id="playerColor">
+            <button id="joinGame">Join Game</button>
+        </div>
+        <ul id="playerList">Joined Players:</ul>
+        <button id="startGame" style="display: none;">Start Game</button>
+    </div>
+</body>
+</html>

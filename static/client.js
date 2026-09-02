@@ -16,8 +16,15 @@ const socket = io("http://localhost:3000", {
 
 const bodyElement = document.body;
 
-socket.on("sendToMainMenu", () => {
-    displayMainMenu();
+socket.on("outsideLobby", () => {
+    if (window.location.href == "http://localhost:3000/" || window.location.href == "http://localhost:3000/index.html"){
+        addMainMenuListeners();
+    }
+    else if (window.location.href == "http://localhost:3000/lobby.html"){
+        const roomCode = (Math.random().toString(36).slice(2, 6)).toUpperCase();
+        lobby.populateLobby(bodyElement, socket, roomCode);
+        socket.emit("createNewLobby", roomCode);
+    }    
 })
 
 socket.on("startTutorial", (players) => {
@@ -25,17 +32,15 @@ socket.on("startTutorial", (players) => {
 })
 
 socket.on("newPlayer", (isGameInProgress, roomCode) => {
-    bodyElement.innerHTML = "";
     if (isGameInProgress){
         lobby.gameInProgressError(bodyElement);
     }
     else{
-        lobby.createLobby(bodyElement, socket, roomCode);
+        lobby.populateLobby(bodyElement, socket, roomCode);
     }
 })
 
 socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, roomCode) => {
-    bodyElement.innerHTML = "";
     if (roomCode == "tutorial"){
         // !! first create function to catch up on previous tutorial changes
         startTutorial(players, reconnectedPlayer.tutorialPhase)
@@ -45,7 +50,7 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, r
             lobby.gameInProgressError(bodyElement);
         }
         else{
-            lobby.createLobby(bodyElement, socket, roomCode);
+            lobby.populateLobby(bodyElement, socket, roomCode);
             for (let i = 0; i < players.length; i++){
                 console.log("modify")
                 lobby.modifyPlayerList(players[i].playerID, players[i].playerName, players[i].playerColor, socket);
@@ -56,16 +61,11 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, r
     else{
         myPlayerNum = reconnectedPlayer.playerNum;
 
-        createGameSpace(players);
-        createNotificationContainer();
-        createWorkValueScorecard(players.length, false, false);
-        createStealValueScorecard(players.length, false, false);
+        populateGameSpace(players);
+        addScorecardListeners(players.length, false);
         createStats(players);
         updateStats(players);
-        createCardDisplay("player");
-        createCardDisplay("shop");
-        openClosePlayerDisplay();
-        openCloseShopDisplay();
+        addCardDisplayListeners();
         displayCards(players[myPlayerNum], reconnectedPlayer.hand, "play", false);
         displayCards(players[myPlayerNum], shop, "buy", false);
 
@@ -146,16 +146,12 @@ socket.on("playerKicked", (playerID) => {
 })
 
 socket.on("createGameSpace", (players, shop) => {
-    createGameSpace(players);
-    createNotificationContainer();
-    createWorkValueScorecard(players.length, false, false);
-    createStealValueScorecard(players.length, false, false);
+    window.location.href = "gameSpace.html"
+    populateGameSpace(players);
+    addScorecardListeners(players.length, false);
     createStats(players);
     updateStats(players);
-    createCardDisplay("player");
-    createCardDisplay("shop");
-    openClosePlayerDisplay();
-    openCloseShopDisplay();
+    addCardDisplayListeners();
     displayCards(players[myPlayerNum], players[myPlayerNum].hand, "play", false);
     displayCards(players[myPlayerNum], shop, "buy", false);
 })
@@ -223,31 +219,16 @@ socket.on("notification", (playerNum, notification) => {
     }
 })
 
-function displayMainMenu(){
-    document.body.innerHTML = "";
-    const mainMenu = document.createElement("div");
-    mainMenu.id = "mainMenu";
+function addMainMenuListeners(){
+    const mainMenu = document.getElementById("mainMenu");
+    const options = document.getElementById("options");
 
-    const title = document.createElement("p");
-    title.textContent = "Conspirators";
-    mainMenu.appendChild(title);
-
-    const options = document.createElement("div");
-    options.id = "options";
-    mainMenu.appendChild(options);
-
-    const createLobby = document.createElement("button");
-    createLobby.textContent = "Create New Lobby";
+    const createLobby = options.querySelector(`.createLobby`);
     createLobby.addEventListener("click", () => {
-        const roomCode = (Math.random().toString(36).slice(2, 6)).toUpperCase();
-        socket.emit("createNewLobby", roomCode);
-        lobby.createLobby(bodyElement, socket, roomCode);
-        mainMenu.remove();
+        window.location.href = "lobby.html";
     })
-    options.appendChild(createLobby);
 
-    const joinLobby = document.createElement("button");
-    joinLobby.textContent = "Join an existing lobby";
+    const joinLobby = options.querySelector(`.joinLobby`);
     joinLobby.addEventListener("click", () => {
         const existingPopUp = document.getElementById("roomCodePopUp");
         if (!existingPopUp){
@@ -275,25 +256,24 @@ function displayMainMenu(){
             existingPopUp.remove();
         }
     })
-    options.appendChild(joinLobby);
 
-    const tutorial = document.createElement("button");
-    tutorial.textContent = "Tutorial";
+    const tutorial = options.querySelector(`.startTutorial`);
     tutorial.addEventListener("click", () => {
-        mainMenu.remove();
         socket.emit("setUpTutorial", myID);
+        setTimeout(()=> {
+            window.location.href = "gameSpace.html";
+        }, 100)
     })
-    options.appendChild(tutorial);
-
-    bodyElement.appendChild(mainMenu);
 }
 
 function startTutorial(players, phase){
     myPlayerNum = 0;
-    createGameSpace(players);
-    createNotificationContainer();
+    hideElementsForTutorial()
+    populateGameSpace(players);
     createStats(players);
     updateStats(players);
+    addCardDisplayListeners();
+    addScorecardListeners(3, true);
 
     const tutorialDiv = document.createElement("div")
     tutorialDiv.id = "tutorial"
@@ -304,15 +284,29 @@ function startTutorial(players, phase){
 
     tutorialPhase(phase);
 
-
     const leaveTutorial = document.createElement("button");
     leaveTutorial.textContent = "Leave tutorial";
     leaveTutorial.id = "leaveTutorial";
     leaveTutorial.addEventListener("click", () => {
         socket.emit("leaveTutorial", myID);
-        displayMainMenu();
+        setTimeout(() => {
+            window.location.href = "index.html";
+            addMainMenuListeners();
+
+        }, 100);
     })
     bodyElement.appendChild(leaveTutorial);
+}
+function hideElementsForTutorial(){
+    const playerDisplay = document.getElementById("playerDisplay")
+    const shopDisplay = document.getElementById("shopDisplay");
+    const workValueScorecard = document.getElementById("workValueScorecard");
+    const stealValueScorecard = document.getElementById("stealValueScorecard");
+
+    playerDisplay.style.visibility = "hidden";
+    shopDisplay.style.visibility = "hidden";
+    workValueScorecard.style.visibility = "hidden";
+    stealValueScorecard.style.visibility = "hidden";
 }
 function addTutorialProgressArrows(messages, nextPhaseNum, tutorialDiv){
     const tutorialProgress = document.createElement("div");
@@ -368,16 +362,16 @@ function tutorialPhase(phase){
             break;
 
         case 2:
-            var clickedBefore = document.getElementById("playerDisplayDiv");
-            if (!clickedBefore){
-                createCardDisplay("player");
-                openClosePlayerDisplay();
+            const playerDisplay = document.getElementById("playerDisplay");
+            console.log(playerDisplay.style.visibility);
+            if (playerDisplay.style.visibility == "hidden"){
+                playerDisplay.style.visibility = "visible";
                 socket.emit("tutorialRequest", "setWaitingOn", "clickWork", myID);
 
-                const discardToggle = document.getElementById("discardToggleDiv");
+                const discardToggle = document.getElementById("discardToggle");
                 const discardClone = discardToggle.cloneNode(true);
                 discardToggle.replaceWith(discardClone);
-                const handToggle = document.getElementById("handToggleDiv");
+                const handToggle = document.getElementById("handToggle");
                 const handClone = handToggle.cloneNode(true);
                 handToggle.replaceWith(handClone);
 
@@ -503,10 +497,8 @@ function tutorialPhase(phase){
             break;
         
         case 9:
-            var alreadyClicked = document.getElementById("workValueScorecard");
-            if (!alreadyClicked){
-                createWorkValueScorecard(3, false, true);
-            }
+            const workValueScorecard = document.getElementById("workValueScorecard");
+            workValueScorecard.style.visibility = "visible";
             break;
 
         case 10:
@@ -595,11 +587,9 @@ function tutorialPhase(phase){
             break;
 
         case 18:
-            var clickedBefore = document.getElementById("shopDisplayDiv");
-            if (!clickedBefore){
-                createCardDisplay("shop");
-                openCloseShopDisplay();
-
+            const shopDisplay = document.getElementById("shopDisplay");
+            if (shopDisplay.style.visibility == "hidden"){
+                shopDisplay.style.visibility = "visible";
                 var displayBar = document.getElementById("shopDisplayVisibilityToggle");
                 displayBar.addEventListener("click", tutorialOpenedShop);
                 displayBar.addEventListener("click", () => {
@@ -631,14 +621,9 @@ function tutorialPhase(phase){
             break;
 
         case 22:
-            const restrictedDisplay = document.getElementById("playerDisplayDiv");
-            restrictedDisplay.remove();
-            createCardDisplay("player");
-            openClosePlayerDisplay();
             socket.emit("getUpdatedCards", "hand", false, myID);
-
-            const displayToggle = document.getElementById("discardToggleDiv");
-            displayToggle.addEventListener("click", tutorialOpenedDiscard);
+            const discardToggle = document.getElementById("discardToggleDiv");
+            discardToggle.addEventListener("click", tutorialOpenedDiscard);
             break;
         
         case 23:
@@ -808,10 +793,8 @@ function tutorialPhase(phase){
             break;
 
         case 34:
-            var alreadyClicked = document.getElementById("stealValueScorecard");
-            if (!alreadyClicked){
-                createStealValueScorecard(3, false, true);
-            }
+            const stealValueScorecard = document.getElementById("stealValueScorecard");
+            stealValueScorecard.style.visibility = "visible";
             break;
 
         case 35:
@@ -886,13 +869,10 @@ function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
     playedCard.style.transform = "translateX("+(-10*Math.sin(targetAngle))+"vh) translateY("+(-15*Math.cos(targetAngle))+"vh) rotate("+(targetAngle)+"rad)";       
 }
 
-function createGameSpace(players){
+function populateGameSpace(players){
     const thisPlayer = players.find((player) => player.playerID == myID);
     myPlayerNum = thisPlayer.playerNum;
-    
-    bodyElement.innerHTML = "";
-    const gameSpace = document.createElement("div");
-    gameSpace.id = "gameSpace";
+    const gameSpace = document.getElementById("gameSpace");
 
     const radianOffset = Math.PI/2 - myPlayerNum*2*Math.PI/players.length;
     for (let i = 0; i < players.length; i++){
@@ -958,126 +938,101 @@ function createGameSpace(players){
     bodyElement.appendChild(gameSpace);
 }
 
-function createWorkValueScorecard(numPlayers, isBlownUp, isTutorial){
-    const workValueScorecard = document.createElement("div");
-
-    if (isBlownUp){
-        workValueScorecard.id = "blownUpScorecard";
-        workValueScorecard.classList.add("work");
-        const workersTitle = document.createElement("p");
-        workersTitle.textContent = "Workers";
-        const coinsTitle = document.createElement("p");
-        coinsTitle.textContent = "Coins";
-        workValueScorecard.appendChild(workersTitle);
-        workValueScorecard.appendChild(coinsTitle);
-        for (let i = 1; i < numPlayers+1; i++){
-            const numWorkers = document.createElement("p");
-            numWorkers.textContent = i
-            workValueScorecard.appendChild(numWorkers);
-            const numCoins = document.createElement("p");
-            // fewer workers = more coins per worker
-            switch (i){
-                case 1: 
-                    numCoins.textContent = Math.min(7, numPlayers + 3);
-                    break;
-                case 2:
-                    numCoins.textContent = Math.min(7, numPlayers + 1);
-                    break;
-                default:
-                    numCoins.textContent = numPlayers + 2 - i;
-            }
-            workValueScorecard.appendChild(numCoins);
+function addScorecardListeners(numPlayers, isTutorial){
+    for (let i = 0; i < 2; i++){
+        let scorecard = undefined;
+        let scorecardType = undefined;
+        if (i == 0){
+            scorecard = document.getElementById("workValueScorecard");
+            scorecardType = "work";
         }
-    }
-    else{
-        workValueScorecard.id = "workValueScorecard";
-        workValueScorecard.addEventListener("mouseenter", () => {
+        else{
+            scorecard = document.getElementById("stealValueScorecard");
+            scorecardType = "steal";
+        }
+
+        scorecard.addEventListener("mouseenter", () => {
             const alreadyBlownUp = document.getElementById("blownUpScorecard");
             if (!alreadyBlownUp){
-                createWorkValueScorecard(numPlayers, true, isTutorial);
+                blowUpScorecard(numPlayers, scorecardType);
                 if (isTutorial){
-                    setTimeout(() => {
-                        tutorialPhase(10);
-                    }, 500);
+                    if (scorecardType == "work"){
+                        setTimeout(() => {
+                            tutorialPhase(10);
+                        }, 500);
+                    }
+                    else if (scorecardType == "steal"){
+                        setTimeout(() => {
+                            tutorialPhase(35);
+                        }, 500);
+                    }
                 }
             }
         })
-        workValueScorecard.addEventListener("mouseleave", () => {
+        
+        scorecard.addEventListener("mouseleave", () => {
             const alreadyBlownUp = document.getElementById("blownUpScorecard");
             if (alreadyBlownUp){
                 alreadyBlownUp.remove();
-                if (isTutorial){
-                    workValueScorecard.remove();
-                    createWorkValueScorecard(numPlayers, false, false);
-                }
             }
         })
     }
-    bodyElement.appendChild(workValueScorecard);
 }
 
-function createStealValueScorecard(numPlayers, isBlownUp, isTutorial){
-    const stealValueScorecard = document.createElement("div");
+function blowUpScorecard(numPlayers, scoreCardType){
+    const blownUpScorecard = document.createElement("div");
+    blownUpScorecard.id = "blownUpScorecard";
+    
+    const numPlayersTitle = document.createElement("p");
+    const numCoinsTitle = document.createElement("p");
+    numCoinsTitle.textContent = "Coins";
 
-    if (isBlownUp){
-        stealValueScorecard.id = "blownUpScorecard"
-        stealValueScorecard.classList.add("steal");
-        const thievesTitle = document.createElement("p");
-        thievesTitle.textContent = "Thieves";
-        const coinsTitle = document.createElement("p");
-        coinsTitle.textContent = "Coins";
-        stealValueScorecard.appendChild(thievesTitle);
-        stealValueScorecard.appendChild(coinsTitle);
-        for (let i = 1; i < numPlayers; i++){
-            const numThieves = document.createElement("p");
-            numThieves.textContent = i
-            stealValueScorecard.appendChild(numThieves);
-            const numCoins = document.createElement("p");
-            // fewer thieves = fewer coins per thief
-            switch (i){
-                case 1: 
-                    numCoins.textContent = 4;
-                    break;
-                case 2:
-                    numCoins.textContent = 3;
-                    break;
-                default:
-                    numCoins.textContent = 2;
-            }
-            stealValueScorecard.appendChild(numCoins);
+    blownUpScorecard.appendChild(numPlayersTitle);
+    blownUpScorecard.appendChild(numCoinsTitle);
+
+    for (let i = 1; i < numPlayers+1; i++){
+        const playerNum = document.createElement("p");
+        playerNum.textContent = i
+        blownUpScorecard.appendChild(playerNum);
+        const numCoins = document.createElement("p");
+        switch (scoreCardType){
+            case "work":
+                switch (i){
+                    case 1: 
+                        numCoins.textContent = Math.min(7, numPlayers + 3);
+                        break;
+                    case 2:
+                        numCoins.textContent = Math.min(7, numPlayers + 1);
+                        break;
+                    default:
+                        numCoins.textContent = numPlayers + 2 - i;
+                }
+            case "steal":
+                switch (i){
+                    case 1: 
+                        numCoins.textContent = 4;
+                        break;
+                    case 2:
+                        numCoins.textContent = 3;
+                        break;
+                    default:
+                        numCoins.textContent = 2;
+                }
         }
+        blownUpScorecard.appendChild(numCoins);
     }
-    else{
-        stealValueScorecard.id = "stealValueScorecard";
-        stealValueScorecard.addEventListener("mouseenter", () => {
-            const alreadyBlownUp = document.getElementById("blownUpScorecard");
-            if (!alreadyBlownUp){
-                createStealValueScorecard(numPlayers, true, isTutorial);
-                if (isTutorial){
-                    setTimeout(() => {
-                        tutorialPhase(35);
-                    }, 500);
-                }
-            }
-        })
-        stealValueScorecard.addEventListener("mouseleave", () => {
-            const alreadyBlownUp = document.getElementById("blownUpScorecard");
-            if (alreadyBlownUp){
-                alreadyBlownUp.remove();
-                if (isTutorial){
-                    stealValueScorecard.remove();
-                    createStealValueScorecard(numPlayers, false, false);
-                }
-            }
-        })
-    }
-    bodyElement.appendChild(stealValueScorecard);
-}
 
-function createNotificationContainer(){
-    const notificationContainer = document.createElement("div");
-    notificationContainer.id = "notificationContainer";
-    bodyElement.appendChild(notificationContainer);
+    if (scoreCardType == "work"){
+        blownUpScorecard.classList.add("work");
+        numPlayersTitle.textContent = "Workers";
+    }
+
+    else if (scoreCardType == "steal"){
+        blownUpScorecard.classList.add("steal");
+        numPlayersTitle.textContent = "Thieves";
+    }
+
+    bodyElement.appendChild(blownUpScorecard);
 }
 
 function generateCard(div, card){
@@ -1119,117 +1074,64 @@ function generateCard(div, card){
     div.appendChild(background);
 }
 
-function createCardDisplay(type){
-    const actionDisplayDiv = document.createElement("div");
+function addCardDisplayListeners(){
+    const playerDisplayVisibilityToggle = document.getElementById("playerDisplayVisibilityToggle")
+    playerDisplayVisibilityToggle.addEventListener("click", openClosePlayerDisplay);
 
-    const displayVisibilityToggle = document.createElement("div");
-    const sliderIcon = document.createElement("img");
-    sliderIcon.classList.add("sliderIcon");
-    displayVisibilityToggle.appendChild(sliderIcon);
-    actionDisplayDiv.appendChild(displayVisibilityToggle);
+    const discardToggle = document.getElementById("discardToggle");
+    discardToggle.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
+    discardToggle.addEventListener("click", () => {
+        socket.emit("getUpdatedCards", "discard", true, myID);
+    })
 
+    const handToggle = document.getElementById("handToggle");
+    handToggle.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
+    handToggle.addEventListener("click", () => {
+        socket.emit("getUpdatedCards", "hand", true, myID);
+    })
 
-    const actionSelection = document.createElement("div");
-    actionSelection.classList.add("actionSelection");
-    actionDisplayDiv.appendChild(actionSelection);
-
-    if (type == "player"){
-        actionDisplayDiv.id = "playerDisplayDiv";
-        displayVisibilityToggle.id = "playerDisplayVisibilityToggle";
-        sliderIcon.src = "/static/Images/Icons/leftArrows.svg";
-        displayVisibilityToggle.addEventListener("click", openClosePlayerDisplay);
-
-        const discardToggleDiv = document.createElement("div");
-        discardToggleDiv.id = "discardToggleDiv";
-        discardToggleDiv.classList.add("cardLocationToggle");
-        discardToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
-        const discardToggle = document.createElement("button");
-        discardToggle.textContent = "Discard"
-        discardToggleDiv.addEventListener("click", () => {
-            socket.emit("getUpdatedCards", "discard", true, myID);
-        })
-        discardToggleDiv.appendChild(discardToggle);
-
-        const handToggleDiv = document.createElement("div");
-        handToggleDiv.id = "handToggleDiv";
-        handToggleDiv.classList.add("cardLocationToggle");
-        handToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
-        const handToggle = document.createElement("button");
-        handToggle.textContent = "Hand";
-        handToggleDiv.addEventListener("click", () => {
-            socket.emit("getUpdatedCards", "hand", true, myID);
-        })
-        handToggleDiv.appendChild(handToggle);
-
-        const cardLocationToggle = document.createElement("div");
-        cardLocationToggle.id = "cardLocationToggle";
-        cardLocationToggle.appendChild(discardToggleDiv);
-        cardLocationToggle.appendChild(handToggleDiv);
-        actionDisplayDiv.appendChild(cardLocationToggle);
-
-        actionSelection.classList.add("play");
-    }
-
-    else if (type == "shop"){
-        actionDisplayDiv.id = "shopDisplayDiv";
-        displayVisibilityToggle.id = "shopDisplayVisibilityToggle";
-        sliderIcon.src = "/static/Images/Icons/rightArrows.svg";
-        displayVisibilityToggle.addEventListener("click", openCloseShopDisplay);
-        actionSelection.classList.add("buy");
-
-        const displayLabel = document.createElement("div");
-        displayLabel.classList.add("shopLabel");
-        const labelText = document.createElement("p");
-        labelText.textContent = "Shop";
-        displayLabel.appendChild(labelText);
-        actionDisplayDiv.appendChild(displayLabel);
-    }
-
-    bodyElement.appendChild(actionDisplayDiv);
+    const shopDisplayVisibilityToggle = document.getElementById("shopDisplayVisibilityToggle");
+    shopDisplayVisibilityToggle.addEventListener("click", openCloseShopDisplay);
 }
 
 function openCloseShopDisplay(){
-    const actionDisplayDiv = document.getElementById("shopDisplayDiv");
+    const actionDisplayDiv = document.getElementById("shopDisplay");
     const sliderIcon = document.querySelector(`#shopDisplayVisibilityToggle img`);
     if (sliderIcon.src.includes("/static/Images/Icons/leftArrows.svg")){
-        actionDisplayDiv.style.right = "0vh";
-        actionDisplayDiv.style.left = "";
+        actionDisplayDiv.style.left = "calc(100vw - 120vh)";
         sliderIcon.src = "/static/Images/Icons/rightArrows.svg";
     }
     else if (sliderIcon.src.includes("/static/Images/Icons/rightArrows.svg")){
         actionDisplayDiv.style.left = "calc(100vw - 5vh)";
-        actionDisplayDiv.style.right = "";
         sliderIcon.src = "/static/Images/Icons/leftArrows.svg";
     }
 }
 
 function openClosePlayerDisplay(){
-    const actionDisplayDiv = document.getElementById("playerDisplayDiv");
+    const actionDisplayDiv = document.getElementById("playerDisplay");
     const sliderIcon = document.querySelector(`#playerDisplayVisibilityToggle img`);
     if (sliderIcon.src.includes("/static/Images/Icons/rightArrows.svg")){
-        actionDisplayDiv.style.left = "0vw";
-        actionDisplayDiv.style.right = "";
+        actionDisplayDiv.style.right = "calc(100vw - 120vh)";
         sliderIcon.src = "/static/Images/Icons/leftArrows.svg";
     }
     else if (sliderIcon.src.includes("/static/Images/Icons/leftArrows.svg")){
         actionDisplayDiv.style.right = "calc(100vw - 4vh)";
-        actionDisplayDiv.style.left = "";
         sliderIcon.src = "/static/Images/Icons/rightArrows.svg";
     }
 }
 
 function openRelevantPlayerDisplay(player, where, isTutorial){
-    const discardToggleDiv = document.getElementById("discardToggleDiv");
-    const handToggleDiv = document.getElementById("handToggleDiv");
-    const sliderIcon = document.querySelector(`#playerDisplayDiv .sliderIcon`);
+    const discardToggle = document.getElementById("discardToggle");
+    const handToggle = document.getElementById("handToggle");
+    const sliderIcon = document.querySelector(`#playerDisplay .sliderIcon`);
     if (where == "hand"){
-        handToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
-        discardToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";     
+        handToggle.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
+        discardToggle.style.backgroundColor ="rgba(110, 110, 110, 0.83)";     
         displayCards(player, player.hand, "play", isTutorial);
     }
     else if (where == "discard"){
-        handToggleDiv.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
-        discardToggleDiv.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
+        handToggle.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
+        discardToggle.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
         displayCards(player, player.discard, "play", isTutorial);
     }
     if (sliderIcon.src.includes("/static/Images/Icons/rightArrows.svg")){

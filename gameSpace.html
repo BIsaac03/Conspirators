@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conspirators</title>
+    <link rel="stylesheet" type="text/css" href="static/styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js"></script>
+    <script src="static/client.js" defer type="module"></script>
+</head>
+<body>
+    <div id="gameSpace"></div>
+
+    <div id="playerDisplay">
+        <div id="cardLocationToggle">
+            <div id="discardToggle">
+                <p>Discard</p>
+            </div>
+            <div id="handToggle">
+                <p>Hand</p>
+            </div>
+        </div>
+        <div id="playerDisplayVisibilityToggle">
+            <img src="/static/Images/Icons/rightArrows.svg" alt="toggle player display" class="sliderIcon">
+        </div>
+        <div class="actionSelection play"></div>
+    </div>
+
+    <div id="shopDisplay">
+        <div class="shopLabel">
+            <p>Shop</p>
+        </div>
+        <div id="shopDisplayVisibilityToggle">
+            <img src="/static/Images/Icons/leftArrows.svg" alt="toggle shop display">
+        </div>
+        <div class="actionSelection buy"></div>
+    </div>
+
+    <div id="workValueScorecard"></div>
+    <div id="stealValueScorecard"></div>
+    <div id="notificationCenter"></div>
+</body>
+</html>

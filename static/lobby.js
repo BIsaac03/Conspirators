@@ -1,63 +1,32 @@
-function createLobby(bodyElement, socket, roomCode){
-    const header = document.createElement("div");
-    header.classList.add("header");
-    bodyElement.appendChild(header);
+function populateLobby(bodyElement, socket, roomCode){
+    const codeDiv = document.getElementById("roomCode");
 
-    const codeDiv = document.createElement("div");
-    codeDiv.id = "roomCode"
-    const code = document.createElement("p");
+    const code = codeDiv.querySelector(`p`);
     code.textContent = roomCode;
-    const copyCode = document.createElement("img");
+
+    const copyCode = codeDiv.querySelector(`img`);
     copyCode.src = "./static/Images/Icons/copy.svg";
     copyCode.addEventListener("click", () => {
         navigator.clipboard.writeText(roomCode);
     })
-    codeDiv.appendChild(copyCode);
-    codeDiv.appendChild(code);
-    bodyElement.appendChild(codeDiv);
-    
-    const title = document.createElement("p");
-    title.classList.add("title");
-    title.textContent = "Lobby";
-    bodyElement.appendChild(title);
-    
-    const lobby = document.createElement("div");
-    lobby.id = "lobby";
-    
-    const playerCustomization = document.createElement("form");
-    playerCustomization.classList.add("playerCustomization");
-    playerCustomization.addEventListener('submit', (e) => e.preventDefault());
 
-    const playerName = document.createElement("input");
-    playerName.classList.add("playerName");
-    playerName.setAttribute("placeholder", "Name");
-    playerName.setAttribute("type", "text");
-    playerName.setAttribute("maxlength", "20");
-    playerName.id = "playerName";
+    const playerName = document.getElementById("playerName")
     let chosenName = localStorage.getItem("chosenName");
-    if (chosenName != undefined){
+    if (chosenName){
         playerName.value = chosenName;
     }
     
-    const playerColor = document.createElement("input");
-    playerColor.classList.add("colorSelect");
-    playerColor.setAttribute("type", "color");
-    playerColor.setAttribute("name", "playerColor");
-    playerColor.id = "playerColor";
+    const playerColor = document.getElementById("playerColor");
     let preferredColor = localStorage.getItem("preferredColor");
-    if (preferredColor != undefined){
+    if (preferredColor){
         playerColor.value = preferredColor;
     }
     
-    const joinGameButton = document.createElement("input");
-    joinGameButton.classList.add("joinGame");
-    joinGameButton.setAttribute("type", "submit");
-    joinGameButton.setAttribute("value", "Join Game");
+    const joinGameButton = document.getElementById("joinGame");
     joinGameButton.addEventListener("click", () => {
-
         const name = playerName.value;
         const color = playerColor.value;
-        if (name != ""){
+        if (name){
             localStorage.setItem('chosenName', name);
             localStorage.setItem('preferredColor', color);
             socket.emit("playerJoinedLobby", document.cookie.slice(7), name, color, roomCode);
@@ -65,42 +34,26 @@ function createLobby(bodyElement, socket, roomCode){
         }
     })
 
-    const startGameButton = document.createElement("button");
-    startGameButton.id = "startGame";
-    startGameButton.textContent = "Start Game"
+    const startGameButton = document.getElementById("startGame");
     startGameButton.addEventListener("click", () => {
         if (confirm("Are you sure you want to start the game? New players will not be able to join an in-progress game.")){
             socket.emit("startGame", roomCode);
         }
     })
-    startGameButton.style.display = "none";  
-    
-    playerCustomization.appendChild(playerName);
-    playerCustomization.appendChild(playerColor);
-    playerCustomization.appendChild(joinGameButton);
-    
-    const playerListDOM = document.createElement("ul");
-    playerListDOM.id = "playerList"
-    playerListDOM.textContent = "Joined players:"
-    
-    lobby.appendChild(playerCustomization);
-    lobby.appendChild(playerListDOM);
-    lobby.appendChild(startGameButton);
-    bodyElement.appendChild(lobby);
 }
 
 function joinedLobbyUpdate(){
-    const joinGameButton = document.getElementsByClassName("joinGame")[0];
-    joinGameButton.value = "Update";
+    const joinGameButton = document.getElementById("joinGame");
+    joinGameButton.textContent = "Update";
     const startGameButton = document.getElementById("startGame");
     startGameButton.style.display = "block";
 }
 
 function modifyPlayerList(playerID, playerName, playerColor, socket){
     const playerList = document.getElementById("playerList");
-    if (playerList != undefined){
+    if (playerList){
         const existingPlayer = document.getElementById(playerID);
-        if (existingPlayer === null){
+        if (!existingPlayer){
             const player = document.createElement("div");
             player.id = playerID;
             player.classList.add("player");
@@ -142,4 +95,4 @@ function gameInProgressError(bodyElement){
     bodyElement.appendChild(error)
 }
 
-export { createLobby, joinedLobbyUpdate, modifyPlayerList, gameInProgressError }
+export { populateLobby, joinedLobbyUpdate, modifyPlayerList, gameInProgressError }
