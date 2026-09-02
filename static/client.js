@@ -62,7 +62,7 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, r
         myPlayerNum = reconnectedPlayer.playerNum;
 
         populateGameSpace(players);
-        addScorecardListeners(players.length, false);
+        addScorecardListeners(players.length);
         createStats(players);
         updateStats(players);
         addCardDisplayListeners();
@@ -148,7 +148,7 @@ socket.on("playerKicked", (playerID) => {
 socket.on("createGameSpace", (players, shop) => {
     window.location.href = "gameSpace.html"
     populateGameSpace(players);
-    addScorecardListeners(players.length, false);
+    addScorecardListeners(players.length);
     createStats(players);
     updateStats(players);
     addCardDisplayListeners();
@@ -273,7 +273,7 @@ function startTutorial(players, phase){
     createStats(players);
     updateStats(players);
     addCardDisplayListeners();
-    addScorecardListeners(3, true);
+    addScorecardListeners(3);
 
     const tutorialDiv = document.createElement("div")
     tutorialDiv.id = "tutorial"
@@ -292,7 +292,6 @@ function startTutorial(players, phase){
         setTimeout(() => {
             window.location.href = "index.html";
             addMainMenuListeners();
-
         }, 100);
     })
     bodyElement.appendChild(leaveTutorial);
@@ -367,13 +366,6 @@ function tutorialPhase(phase){
             if (playerDisplay.style.visibility == "hidden"){
                 playerDisplay.style.visibility = "visible";
                 socket.emit("tutorialRequest", "setWaitingOn", "clickWork", myID);
-
-                const discardToggle = document.getElementById("discardToggle");
-                const discardClone = discardToggle.cloneNode(true);
-                discardToggle.replaceWith(discardClone);
-                const handToggle = document.getElementById("handToggle");
-                const handClone = handToggle.cloneNode(true);
-                handToggle.replaceWith(handClone);
 
                 var displayBar = document.getElementById("playerDisplayVisibilityToggle");
                 displayBar.addEventListener("click", tutorialOpenedHand);
@@ -498,7 +490,11 @@ function tutorialPhase(phase){
         
         case 9:
             const workValueScorecard = document.getElementById("workValueScorecard");
-            workValueScorecard.style.visibility = "visible";
+            if (workValueScorecard.style.visibility == "hidden"){
+                workValueScorecard.style.visibility = "visible";
+                workValueScorecard.addEventListener("hover", tutorialHoveredWorkScorecard);
+            }
+            
             break;
 
         case 10:
@@ -794,7 +790,10 @@ function tutorialPhase(phase){
 
         case 34:
             const stealValueScorecard = document.getElementById("stealValueScorecard");
-            stealValueScorecard.style.visibility = "visible";
+            if (stealValueScorecard.style.visibility == "hidden"){
+                stealValueScorecard.style.visibility = "visible";
+                stealValueScorecard.addEventListener("hover", tutorialHoveredStealScorecard);
+            }
             break;
 
         case 35:
@@ -819,6 +818,13 @@ function tutorialOpenedHand(){
     displayBar.removeEventListener("click", tutorialOpenedHand);
     tutorialPhase(3);
 }
+function tutorialHoveredWorkScorecard(){
+    const workValueScorecard = document.getElementById("workValueScorecard");
+    workValueScorecard.removeEventListener("hover", tutorialHoveredWorkScorecard)
+    setTimeout(() => {
+        tutorialPhase(10);
+    }, 500);
+}
 function tutorialHoveredCard(){
     const cardToHover = document.querySelector(`#player1 .playedCard`);
     setTimeout(() => {
@@ -839,6 +845,13 @@ function tutorialOpenedDiscard(){
     const displayToggle = document.getElementById("discardToggle");
     displayToggle.removeEventListener("click", tutorialOpenedDiscard);
     tutorialPhase(23);
+}
+function tutorialHoveredStealScorecard(){
+    const stealValueScorecard = document.getElementById("stealValueScorecard");
+    stealValueScorecard.removeEventListener("hover", tutorialHoveredStealScorecard)
+    setTimeout(() => {
+        tutorialPhase(35);
+    }, 500);
 }
 
 function calculateNumCards(where){
@@ -938,7 +951,7 @@ function populateGameSpace(players){
     bodyElement.appendChild(gameSpace);
 }
 
-function addScorecardListeners(numPlayers, isTutorial){
+function addScorecardListeners(numPlayers){
     for (let i = 0; i < 2; i++){
         let scorecard = undefined;
         let scorecardType = undefined;
@@ -955,18 +968,6 @@ function addScorecardListeners(numPlayers, isTutorial){
             const alreadyBlownUp = document.getElementById("blownUpScorecard");
             if (!alreadyBlownUp){
                 blowUpScorecard(numPlayers, scorecardType);
-                if (isTutorial){
-                    if (scorecardType == "work"){
-                        setTimeout(() => {
-                            tutorialPhase(10);
-                        }, 500);
-                    }
-                    else if (scorecardType == "steal"){
-                        setTimeout(() => {
-                            tutorialPhase(35);
-                        }, 500);
-                    }
-                }
             }
         })
         
@@ -1414,7 +1415,6 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
                     tutorialPhase(21);
                     openCloseShopDisplay();
                     checkOutList.remove();
-                    
                 }
             }
             else{ 
@@ -1516,8 +1516,8 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
     }
 }
 
-function retrieveCards(player, numCardsToRetrieve, isTutorial){
-    openRelevantPlayerDisplay(player, "discard", isTutorial);
+function retrieveCards(player, numCardsToRetrieve){
+    openRelevantPlayerDisplay(player, "discard", false);
 
     const retrieveDiv = document.createElement("div");
     retrieveDiv.id = "retrieveDiv";
