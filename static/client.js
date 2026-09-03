@@ -137,11 +137,11 @@ socket.on("playerKicked", (playerID) => {
     const playerDOM = document.getElementById(playerID);
     playerList.removeChild(playerDOM);
 
-    if (document.cookie == playerID){
-        const joinGameButton = document.getElementsByClassName("joinGame")[0];
-        joinGameButton.value = "Join Game";
+    if (document.cookie.slice(7) == playerID){
+        const joinGameButton = document.getElementById("joinGame");
+        joinGameButton.textContent = "Join Game";
         const startGameButton = document.getElementById("startGame");
-        startGameButton.style.display = "none";
+        startGameButton.style.visibility = "hidden";
     }
 })
 
@@ -492,13 +492,16 @@ function tutorialPhase(phase){
             const workValueScorecard = document.getElementById("workValueScorecard");
             if (workValueScorecard.style.visibility == "hidden"){
                 workValueScorecard.style.visibility = "visible";
-                workValueScorecard.addEventListener("hover", tutorialHoveredWorkScorecard);
+                workValueScorecard.addEventListener("mouseenter", tutorialHoveredWorkScorecard);
             }
             
             break;
 
         case 10:
             tutorialProgress.remove();
+            document.querySelector(`#player0 .numCoins`).textContent = "4";
+            document.querySelector(`#player2 .numCoins`).textContent = "4";
+            socket.emit("tutorialRequest", "setCoins", 4, myID);
             addTutorialProgressArrows([ "Since all 3 players are workers this round, each work will only give 2 coins.",
                                         "Grudgie's card modifies their work value by -2, so they won't receive any coins!",
                                         "That's not the only thing their card does, however.",
@@ -513,6 +516,8 @@ function tutorialPhase(phase){
 
         case 12:
             tutorialProgress.remove();
+            document.querySelector(`#player0 .numCoins`).textContent = "9";
+            socket.emit("tutorialRequest", "setCoins", 9, myID);
             addTutorialProgressArrows([ "Grudgie's Cooperate gave us 5 coins. They are likely expecting at least a few back.",
                                         "Since this is a tutorial, and we have no long-term consequences to fear, let's keep all of them.",
                                         "Enter a '0' and click 'Confirm'."
@@ -529,8 +534,14 @@ function tutorialPhase(phase){
         case 14:
             tutorialProgress.remove();
             socket.emit("tutorialRequest", "discardCard", "", myID);
-            socket.emit("tutorialRequest", "setCoins", 9, myID);
             endRoundCleanUp(3);
+            document.querySelector(`#player0 .handNum`).textContent = "11";
+            document.querySelector(`#player1 .handNum`).textContent = "11";
+            document.querySelector(`#player2 .handNum`).textContent = "11";
+            document.querySelector(`#player0 .discardNum`).textContent = "1";
+            document.querySelector(`#player1 .discardNum`).textContent = "1";
+            document.querySelector(`#player2 .discardNum`).textContent = "1";
+
             addTutorialProgressArrows([ "Actions you play are sent to your personal discard at the end of the round.",
                                         "Then, players can spend their coins to buy new cards from the Shop.",
                                         "We will get to that shortly.",
@@ -599,17 +610,27 @@ function tutorialPhase(phase){
             addTutorialProgressArrows([ "You can buy up to 3 different cards each round.",
                                         "If you buy more than 1 card, you'll get a rebate.",
                                         "Buying 2 cards will earn you 1 coin, while buying 3 will earn you 3.",
-                                        "Let's buy a Curse and a Sabotage. (You may need to scroll through the shop if you cannot find them.)"
+                                        "Let's buy a Curse and a Bewitch. (You may need to scroll through the shop if you cannot find them.)"
                                         ], 20, tutorialDiv);
             break;
     
         case 20:
+            const checkOutList = document.getElementById("checkOutList");
+            if (checkOutList){
+                checkOutList.remove();
+            }
             socket.emit("tutorialRequest", "setWaitingOn", "buyCards", myID);
             socket.emit("getUpdatedCards", "shop", false, myID);
             break;
 
         case 21:
             tutorialProgress.remove();
+            document.querySelector(`#player0 .discardNum`).textContent = "3";
+            document.querySelector(`#player0 .numCoins`).textContent = "1";
+            document.querySelector(`#player1 .discardNum`).textContent = "1";
+            document.querySelector(`#player1 .numCoins`).textContent = "2";
+            document.querySelector(`#player2 .discardNum`).textContent = "2";
+            document.querySelector(`#player2 .numCoins`).textContent = "0";
             socket.emit("tutorialRequest", "setWaitingOn", "", myID);
             addTutorialProgressArrows([ "Newly bought cards will go in your discard, so you won't be able to play them next round.",
                                         "Open the player display again, and navigate to your Discard."
@@ -637,6 +658,9 @@ function tutorialPhase(phase){
 
         case 25:
             tutorialProgress.remove();
+            document.querySelector(`#player0 .numCoins`).textContent = "3";
+            document.querySelector(`#player1 .numCoins`).textContent = "4";
+            document.querySelector(`#player2 .numCoins`).textContent = "2";
             addTutorialProgressArrows([ "At the start of each round (including the first), players get 2 coins.",
                                         "Then, players choose their action.",
                                         "Let's 'Prepare' so we can have more flexibility on future rounds."
@@ -709,6 +733,7 @@ function tutorialPhase(phase){
             const useCardSwap = document.createElement("button");
             useCardSwap.textContent = "Use Card Swap";
             useCardSwap.addEventListener("click", () => {
+                document.querySelector(`#player0 .numCardSwaps`).textContent = "0";
                 cardSwapPopUp.remove();
                 endRoundCleanUp(1);
 
@@ -736,7 +761,6 @@ function tutorialPhase(phase){
                                 oldPlayerIcon.parentNode.replaceChild(newPlayerIcon, oldPlayerIcon);
                             }
                         }
-
                         confirm.remove();
                         tutorialPhase(31);
                     }  
@@ -792,7 +816,7 @@ function tutorialPhase(phase){
             const stealValueScorecard = document.getElementById("stealValueScorecard");
             if (stealValueScorecard.style.visibility == "hidden"){
                 stealValueScorecard.style.visibility = "visible";
-                stealValueScorecard.addEventListener("hover", tutorialHoveredStealScorecard);
+                stealValueScorecard.addEventListener("mouseenter", tutorialHoveredStealScorecard);
             }
             break;
 
@@ -820,7 +844,7 @@ function tutorialOpenedHand(){
 }
 function tutorialHoveredWorkScorecard(){
     const workValueScorecard = document.getElementById("workValueScorecard");
-    workValueScorecard.removeEventListener("hover", tutorialHoveredWorkScorecard)
+    workValueScorecard.removeEventListener("mouseenter", tutorialHoveredWorkScorecard)
     setTimeout(() => {
         tutorialPhase(10);
     }, 500);
@@ -848,7 +872,7 @@ function tutorialOpenedDiscard(){
 }
 function tutorialHoveredStealScorecard(){
     const stealValueScorecard = document.getElementById("stealValueScorecard");
-    stealValueScorecard.removeEventListener("hover", tutorialHoveredStealScorecard)
+    stealValueScorecard.removeEventListener("mouseenter", tutorialHoveredStealScorecard)
     setTimeout(() => {
         tutorialPhase(35);
     }, 500);
@@ -1174,7 +1198,7 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
                     }
                 }
                 if (player.waitingOn == "buyCards"){
-                    if (card.name == "Sabotage!" || card.name == "Curse"){
+                    if (card.name == "Bewitch!" || card.name == "Curse"){
                         if (possibleAction.classList.contains("selected")){
                             possibleAction.classList.remove("selected");
                         }
@@ -1409,8 +1433,8 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
 
             if (isTutorial){
                 const curse = allActions.find((action) => action.name == "Curse");
-                const sabotage = allActions.find((action) => action.name == "Sabotage!");
-                if ((actionsToBuy[0] == curse || actionsToBuy[0] == sabotage)&&(actionsToBuy[1] == curse || actionsToBuy[1] == sabotage)){
+                const bewitch = allActions.find((action) => action.name == "Bewitch!");
+                if ((actionsToBuy[0] == curse || actionsToBuy[0] == bewitch)&&(actionsToBuy[1] == curse || actionsToBuy[1] == bewitch)){
                     socket.emit("attemptedPurchase", actionsToBuy, myID);
                     tutorialPhase(21);
                     openCloseShopDisplay();
@@ -1678,15 +1702,15 @@ function displayNotification(notification){
     notificationDiv.appendChild(notificationIcon);
     notificationDiv.appendChild(notificationContent);
     notificationDiv.appendChild(closeNotifiction);
-    const notificationContainer = document.getElementById("notificationContainer");
+    const notificationCenter = document.getElementById("notificationCenter");
 
     let keepScrollPosition = true;
-    if (notificationContainer.scrollTop == -1*(notificationContainer.scrollHeight - notificationContainer.offsetHeight)){
+    if (notificationCenter.scrollTop == -1*(notificationCenter.scrollHeight - notificationCenter.offsetHeight)){
         keepScrollPosition = false;
     }
-    notificationContainer.appendChild(notificationDiv);
+    notificationCenter.appendChild(notificationDiv);
     if (!keepScrollPosition){
-        notificationContainer.scrollTop = -1*notificationContainer.scrollHeight;
+        notificationCenter.scrollTop = -1*notificationCenter.scrollHeight;
     }
 
     setTimeout(() => {notificationDiv.remove()}, 60000);
