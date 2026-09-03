@@ -18,11 +18,23 @@
     <div id="lobby">
         <div action="" id="playerCustomization">
             <input type="text" id="playerName" placeholder="Name" maxlength="20">
-            <input type="color" id="playerColor">
+            <input type="color" id="playerColor" list="colors">
+            <datalist id="colors">
+                <option>#8b0000</option>
+                <option>#ff8c00</option>
+                <option>#ffde21</option>
+                <option>#008000</option>
+                <option>#00ffff</option>
+                <option>#00008b</option>
+                <option>#800080</option>
+                <option>#ffb6c1</option>
+                <option>#808080</option>
+                <option>#6f4e37</option>
+            </datalist>
             <button id="joinGame">Join Game</button>
         </div>
         <ul id="playerList">Joined Players:</ul>
-        <button id="startGame" style="display: none;">Start Game</button>
+        <button id="startGame" style="visibility: hidden;">Start Game</button>
     </div>
 </body>
 </html>
