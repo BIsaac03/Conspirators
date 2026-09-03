@@ -1,12 +1,17 @@
+*{
+    padding: 0px;
+    margin: 0px;
+}
 #lobby{
     display: grid;
     column-gap: 10vw;
     grid-template-columns: 45vw 45vw;
+    grid-template-rows: 5fr 1fr;
 }
 .title{
     height: 10vh;
     padding: 2vh;
-    margin-bottom: 4vh;
+    margin-bottom: 6vh;
     font-size: 80px;
     text-align: center;
 }
@@ -29,6 +34,7 @@
 }
 
 #playerCustomization{
+    align-self: center;
     display: grid;
     grid-template: auto auto / auto auto;
     height: 20vh;
@@ -44,13 +50,17 @@
     grid-area: 1 / 1 / 2 / 3;
 }
 #playerCustomization input[type = "text"]{
-    font-size: 30px;
+    font-size: max(4.2vh, 30px);
     border-radius: 15px;
     padding-left: 10px;
-    height: 50px;
+    height: max(7vh, 50px);
 }
 #playerCustomization #playerName{
     grid-area: 1 / 1 / 2 / 2;
+}
+#playerCustomization input[type = "color"]{
+    width: max(7vh, 50px);
+    height: max(7vh, 50px);
 }
 #playerCustomization #colorSelect{
     align-self: center;
@@ -88,8 +98,8 @@ ul#playerList{
     font-size: 30px;
 }
 #playerList .player .playerColor{
-    width: 50px;
-    height: 50px;
+    width: max(7vh, 50px);
+    height: max(7vh, 50px);
 }
 #playerList #leaveLobbyButton{
     width: 30px;
@@ -103,8 +113,8 @@ ul#playerList{
 #startGame{
     grid-column: 1 / 3;
     justify-self: center;
-    width: 500px;
-    height: 100px;
+    width: 40vw;
+    height: 12vh;
     background-color: black;
     color: white;
     font-size: 50px;

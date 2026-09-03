@@ -46,7 +46,7 @@ function joinedLobbyUpdate(){
     const joinGameButton = document.getElementById("joinGame");
     joinGameButton.textContent = "Update";
     const startGameButton = document.getElementById("startGame");
-    startGameButton.style.display = "block";
+    startGameButton.style.visibility = "visible";
 }
 
 function modifyPlayerList(playerID, playerName, playerColor, socket){

@@ -538,7 +538,7 @@ div[id^="player"] #handIcon{
     border: 5px dashed goldenrod;
 }
 
-#notificationContainer{
+#notificationCenter{
     position: absolute;
     right: 5vh;
     bottom: 0vh;
@@ -550,7 +550,7 @@ div[id^="player"] #handIcon{
     scrollbar-gutter: stable;
     scrollbar-width: thin;
 }
-#notificationContainer .notificationDiv{
+#notificationCenter .notificationDiv{
     width: 20vw;
     min-height: 70px;
     font-size: 20px;
@@ -560,11 +560,11 @@ div[id^="player"] #handIcon{
     text-align: center;
     background-color: aquamarine;
 }
-#notificationContainer .notificationDiv img{
+#notificationCenter .notificationDiv img{
     width: 20px;
     padding: 5px;
 }
-#notificationContainer .notificationDiv button{
+#notificationCenter .notificationDiv button{
     width: 20px;
     height: 20px;
     margin: 10px;

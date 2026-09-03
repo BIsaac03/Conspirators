@@ -235,7 +235,7 @@ function addMainMenuListeners(){
             attemptJoinButton.textContent = "Join"
             attemptJoinButton.addEventListener("click", () => {
                 if (roomCodeEntry.value.length == 4){
-                    window.location.href = `lobby.html?roomCode=${roomCodeEntry.value}`;
+                    window.location.href = `lobby.html?roomCode=${roomCodeEntry.value.toUpperCase()}`;
                 }
             })
             roomCodePopUp.appendChild(attemptJoinButton);
