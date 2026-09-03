@@ -20,10 +20,11 @@ socket.on("outsideLobby", () => {
     if (window.location.href == "http://localhost:3000/" || window.location.href == "http://localhost:3000/index.html"){
         addMainMenuListeners();
     }
-    else if (window.location.href == "http://localhost:3000/lobby.html"){
-        const roomCode = (Math.random().toString(36).slice(2, 6)).toUpperCase();
+    else if (window.location.href.startsWith("http://localhost:3000/lobby.html")){
+        const params = new URLSearchParams(window.location.search);
+        const roomCode = params.get('roomCode');
+        socket.emit("connectToNewLobby", roomCode); 
         lobby.populateLobby(bodyElement, socket, roomCode);
-        socket.emit("createNewLobby", roomCode);
     }    
 })
 
@@ -31,13 +32,8 @@ socket.on("startTutorial", (players) => {
     startTutorial(players, 1);
 })
 
-socket.on("newPlayer", (isGameInProgress, roomCode) => {
-    if (isGameInProgress){
-        lobby.gameInProgressError(bodyElement);
-    }
-    else{
-        lobby.populateLobby(bodyElement, socket, roomCode);
-    }
+socket.on("gameInProgress", () => {
+    lobby.gameInProgressError(bodyElement);
 })
 
 socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, roomCode) => {
@@ -145,15 +141,8 @@ socket.on("playerKicked", (playerID) => {
     }
 })
 
-socket.on("createGameSpace", (players, shop) => {
+socket.on("sendToGame", () => {
     window.location.href = "gameSpace.html"
-    populateGameSpace(players);
-    addScorecardListeners(players.length);
-    createStats(players);
-    updateStats(players);
-    addCardDisplayListeners();
-    displayCards(players[myPlayerNum], players[myPlayerNum].hand, "play", false);
-    displayCards(players[myPlayerNum], shop, "buy", false);
 })
 socket.on("selectAction", (players) => {
     actionSelection(players, myPlayerNum);
@@ -225,7 +214,8 @@ function addMainMenuListeners(){
 
     const createLobby = options.querySelector(`.createLobby`);
     createLobby.addEventListener("click", () => {
-        window.location.href = "lobby.html";
+        const roomCode = (Math.random().toString(36).slice(2, 6)).toUpperCase();
+        window.location.href = `lobby.html?roomCode=${roomCode}`;
     })
 
     const joinLobby = options.querySelector(`.joinLobby`);
@@ -245,7 +235,7 @@ function addMainMenuListeners(){
             attemptJoinButton.textContent = "Join"
             attemptJoinButton.addEventListener("click", () => {
                 if (roomCodeEntry.value.length == 4){
-                    socket.emit("attemptEnterRoom", roomCodeEntry.value);
+                    window.location.href = `lobby.html?roomCode=${roomCodeEntry.value}`;
                 }
             })
             roomCodePopUp.appendChild(attemptJoinButton);
@@ -291,7 +281,6 @@ function startTutorial(players, phase){
         socket.emit("leaveTutorial", myID);
         setTimeout(() => {
             window.location.href = "index.html";
-            addMainMenuListeners();
         }, 100);
     })
     bodyElement.appendChild(leaveTutorial);
@@ -362,7 +351,6 @@ function tutorialPhase(phase){
 
         case 2:
             const playerDisplay = document.getElementById("playerDisplay");
-            console.log(playerDisplay.style.visibility);
             if (playerDisplay.style.visibility == "hidden"){
                 playerDisplay.style.visibility = "visible";
                 socket.emit("tutorialRequest", "setWaitingOn", "clickWork", myID);
@@ -821,6 +809,9 @@ function tutorialPhase(phase){
             break;
 
         case 35:
+            document.querySelector(`#player0 .numCoins`).textContent = "10";
+            document.querySelector(`#player1 .numCoins`).textContent = "0";
+            document.querySelector(`#player1 .numCardSwaps`).textContent = "4";
             tutorialProgress.remove();
             addTutorialProgressArrows([ "That's all you need to know to become a masterful conspirator.",
                                         "...",

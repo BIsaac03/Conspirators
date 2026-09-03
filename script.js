@@ -75,21 +75,21 @@ io.on("connection", (socket) => {
         const indexToRemove = ongoingGames.findIndex((game) => game.getPlayers().find((player) => player.playerID == ID));
         ongoingGames.splice(indexToRemove, 1);
     })
-    socket.on("createNewLobby", (roomCode) => {
-        const shop = createShop("basic");
-        const newGame = makeGame(roomCode, shop)
-        ongoingGames.push(newGame);
-    })
-    socket.on("attemptEnterRoom", (roomCode) => {
-        const gameToFind = ongoingGames.find((game) => game.getGameDetails().roomCode == roomCode);
-        if (gameToFind){
-            socket.emit("newPlayer", gameToFind.getGameDetails().isGameInProgress, roomCode);
-            socket.emit("displayExistingPlayers", gameToFind.getPlayers());
+    socket.on("connectToNewLobby", (roomCode) => {
+        const existingLobby = ongoingGames.find((game) => game.getGameDetails().roomCode == roomCode);
+        if (!existingLobby){
+            const shop = createShop("basic");
+            const newGame = makeGame(roomCode, shop)
+            ongoingGames.push(newGame);
         }
         else{
-            // !! add client listener
-            socket.emit("InvalidRoomCode");
-        }
+            if (existingLobby.getGameDetails().isGameInProgress){
+                socket.emit("gameInProgress");
+            }
+            else{
+                socket.emit("displayExistingPlayers", existingLobby.getPlayers());
+            }     
+        }  
     })
     socket.on("playerJoinedLobby", (playerID, playerName, playerColor, roomCode) => {
         const myLobby = ongoingGames.find((game) => game.getGameDetails().roomCode == roomCode);
@@ -163,7 +163,7 @@ io.on("connection", (socket) => {
 
             myLobby.getGameDetails().isGameInProgress = true;
             roundStart(myLobby.getPlayers());
-            io.emit("createGameSpace", myLobby.getPlayers(), myLobby.getGameDetails().shop);
+            io.emit("sendToGame");
             io.emit("selectAction", myLobby.getPlayers());
         }
     })
