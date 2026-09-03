@@ -142,8 +142,8 @@ io.on("connection", (socket) => {
             myLobby.getPlayers()[0].waitingOn = data;
         }
         if (what == "confirmCard"){
-            const action = allActions.find((action) => action.name == "Work");
-            myLobby.getPlayers()[0].confirmAction(action, 0, true);
+            const action = allActions.find((action) => action.name == data[0]);
+            myLobby.getPlayers()[0].confirmAction(action, data[1], data[2]);
         }
         if (what == "setCoins"){
             myLobby.getPlayers()[0].numCoins = data;

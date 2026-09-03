@@ -39,6 +39,7 @@ socket.on("gameInProgress", () => {
 socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, roomCode) => {
     if (roomCode == "tutorial"){
         // !! first create function to catch up on previous tutorial changes
+
         startTutorial(players, reconnectedPlayer.tutorialPhase)
     }
     else if (!reconnectedPlayer.isInGame){
@@ -272,6 +273,9 @@ function startTutorial(players, phase){
     tutorialDiv.appendChild(tutorialMessage);
     bodyElement.appendChild(tutorialDiv);
 
+    if (phase != 1){
+        loadPreviousTutorialSteps(phase, players[0].currentTarget);
+    }
     tutorialPhase(phase);
 
     const leaveTutorial = document.createElement("button");
@@ -286,7 +290,7 @@ function startTutorial(players, phase){
     bodyElement.appendChild(leaveTutorial);
 }
 function hideElementsForTutorial(){
-    const playerDisplay = document.getElementById("playerDisplay")
+    const playerDisplay = document.getElementById("playerDisplay");
     const shopDisplay = document.getElementById("shopDisplay");
     const workValueScorecard = document.getElementById("workValueScorecard");
     const stealValueScorecard = document.getElementById("stealValueScorecard");
@@ -364,6 +368,7 @@ function tutorialPhase(phase){
             break;
         
         case 3:
+            socket.emit("tutorialRequest", "save", 3, myID);
             if (tutorialProgress){
                 tutorialProgress.remove();
             }
@@ -371,6 +376,7 @@ function tutorialPhase(phase){
             break;
 
         case 4:
+            socket.emit("tutorialRequest", "save", 4, myID);
             socket.emit("tutorialRequest", "setWaitingOn", "", myID);
             if (tutorialProgress){
                 tutorialProgress.remove();
@@ -414,7 +420,7 @@ function tutorialPhase(phase){
                                 oldPlayerIcon.parentNode.replaceChild(newPlayerIcon, oldPlayerIcon);
                             }
                         }
-
+                        socket.emit("tutorialRequest", "confirmCard", ["Work", targetPlayerNum, false], myID);
                         confirm.remove();
                         orientCardToPlayer(1, 0, 3);
                         lockInCard(1)
@@ -428,7 +434,11 @@ function tutorialPhase(phase){
             break;
 
         case 6:
-            tutorialProgress.remove();
+            socket.emit("tutorialRequest", "save", 6, myID);
+            if (tutorialProgress){
+                tutorialProgress.remove();
+            }
+            tutorialHighlight("numCardSwaps", true);
             addTutorialProgressArrows([ "After each player has confirmed their action, they may spend a Card Swap token to change it.",
                                         "Each player starts the game with 1, and will earn more through card effects.",
                                         "Let's save ours for later. Click 'Carry On'."
@@ -447,7 +457,7 @@ function tutorialPhase(phase){
                 const keepActionAsIs = document.createElement("button");
                 keepActionAsIs.textContent = "Carry On";
                 keepActionAsIs.addEventListener("click", () => {
-                    socket.emit("tutorialRequest", "confirmCard", "", myID);
+                    socket.emit("tutorialRequest", "confirmCard", ["Work", 1, true], myID);
                     cardSwapPopUp.remove();
                     tutorialPhase(8);
                 })
@@ -459,7 +469,14 @@ function tutorialPhase(phase){
             break;
 
         case 8:
-            tutorialProgress.remove();
+            socket.emit("tutorialRequest", "save", 8, myID);
+            if (tutorialProgress){
+                tutorialProgress.remove();
+            }
+            document.querySelector(`#player0 .handNum`).textContent = "11";
+            document.querySelector(`#player1 .handNum`).textContent = "11";
+            document.querySelector(`#player2 .handNum`).textContent = "11";
+            tutorialHighlight("numCardSwaps", false);
             const work = allActions.find((action) => action.name == "Work");
             const cooperate = allActions.find((action) => action.name == "Cooperate");
 
@@ -486,10 +503,13 @@ function tutorialPhase(phase){
             break;
 
         case 10:
-            tutorialProgress.remove();
+            socket.emit("tutorialRequest", "save", 10, myID);
+            if (tutorialProgress){
+                tutorialProgress.remove();
+            }
+            tutorialHighlight("numCoins", true);
             document.querySelector(`#player0 .numCoins`).textContent = "4";
             document.querySelector(`#player2 .numCoins`).textContent = "4";
-            socket.emit("tutorialRequest", "setCoins", 4, myID);
             addTutorialProgressArrows([ "Since all 3 players are workers this round, each work will only give 2 coins.",
                                         "Grudgie's card modifies their work value by -2, so they won't receive any coins!",
                                         "That's not the only thing their card does, however.",
@@ -503,11 +523,14 @@ function tutorialPhase(phase){
             break;
 
         case 12:
-            tutorialProgress.remove();
+            socket.emit("tutorialRequest", "save", 12, myID);
+            if (tutorialProgress){
+                tutorialProgress.remove();
+            }
             document.querySelector(`#player0 .numCoins`).textContent = "9";
             socket.emit("tutorialRequest", "setCoins", 9, myID);
             addTutorialProgressArrows([ "Grudgie's Cooperate gave us 5 coins. They are likely expecting at least a few back.",
-                                        "Since this is a tutorial, and we have no long-term consequences to fear, let's keep all of them.",
+                                        "Let's keep all of them.",
                                         "Enter a '0' and click 'Confirm'."
                                         ], 13, tutorialDiv);
             break;
@@ -520,12 +543,13 @@ function tutorialPhase(phase){
             break;
         
         case 14:
-            tutorialProgress.remove();
+            socket.emit("tutorialRequest", "save", 14, myID);
+            if (tutorialProgress){
+                tutorialProgress.remove();
+            }
+            tutorialHighlight("numCoins", false);
             socket.emit("tutorialRequest", "discardCard", "", myID);
             endRoundCleanUp(3);
-            document.querySelector(`#player0 .handNum`).textContent = "11";
-            document.querySelector(`#player1 .handNum`).textContent = "11";
-            document.querySelector(`#player2 .handNum`).textContent = "11";
             document.querySelector(`#player0 .discardNum`).textContent = "1";
             document.querySelector(`#player1 .discardNum`).textContent = "1";
             document.querySelector(`#player2 .discardNum`).textContent = "1";
@@ -539,6 +563,10 @@ function tutorialPhase(phase){
             break;
 
         case 15:
+            socket.emit("tutorialRequest", "save", 15, myID);
+            if (tutorialProgress){
+                tutorialProgress.remove();
+            } 
             const background = document.createElement("div");
             background.classList = "background";
             const testDisplay = document.createElement("div");
@@ -547,14 +575,13 @@ function tutorialPhase(phase){
             bodyElement.appendChild(background);
             const card = allActions.find((card) => card.name == "Bewitch!");
             generateCard(testDisplay, card)
-            tutorialProgress.remove();
             addTutorialProgressArrows([ "Bewitch is a special type of action called a One-Shot.",
                                         "One-Shots have powerful abilities, but can only be played once, returning to the Shop rather than your discard.",
                                         "They can be distinguished by their unique name formatting and slightly darker background.",
                                         "All cards in the shop have a number in a gold circle on the left, denoting its cost in coins.",
                                         "This can differentiate Basic Actions (the ones in your starting hand) from non-Basic Actions.",
                                         "The color of a card has no MECHANICAL impact, but can help identify a card's ability at a glance.",
-                                        "Cards with an arrow affect the player it targets. (All cards still 'target' someone, even if they don't have an arrow.",
+                                        "Cards with an arrow affect the player it targets. (All cards still 'target' someone, even if they don't have an arrow.)",
                                         "Blue cards Work, making players who played one 'Workers'.",
                                         "Red cards Steal.",
                                         "Purple cards (like Bewitch) have a special effect that lasts beyond the normal action phase.",
@@ -575,7 +602,10 @@ function tutorialPhase(phase){
             break;
 
         case 17: 
-            tutorialProgress.remove();
+            socket.emit("tutorialRequest", "save", 17, myID);
+            if (tutorialProgress){
+                tutorialProgress.remove();
+            } 
             addTutorialProgressArrows([ "Let's buy a new card!",
                                         "Click the gold bar on the right to look at the Shop."
                                         ], 18, tutorialDiv);
@@ -594,7 +624,10 @@ function tutorialPhase(phase){
             break;
 
         case 19:
-            tutorialProgress.remove();
+            socket.emit("tutorialRequest", "save", 19, myID);
+            if (tutorialProgress){
+                tutorialProgress.remove();
+            } 
             addTutorialProgressArrows([ "You can buy up to 3 different cards each round.",
                                         "If you buy more than 1 card, you'll get a rebate.",
                                         "Buying 2 cards will earn you 1 coin, while buying 3 will earn you 3.",
@@ -612,7 +645,11 @@ function tutorialPhase(phase){
             break;
 
         case 21:
-            tutorialProgress.remove();
+            socket.emit("tutorialRequest", "save", 21, myID);
+            if (tutorialProgress){
+                tutorialProgress.remove();
+            } 
+            tutorialHighlight("discardNum", true);
             document.querySelector(`#player0 .discardNum`).textContent = "3";
             document.querySelector(`#player0 .numCoins`).textContent = "1";
             document.querySelector(`#player1 .discardNum`).textContent = "1";
@@ -632,7 +669,12 @@ function tutorialPhase(phase){
             break;
         
         case 23:
-            tutorialProgress.remove();
+            socket.emit("tutorialRequest", "save", 23, myID);
+            if (tutorialProgress){
+                tutorialProgress.remove();
+            } 
+            tutorialHighlight("discardNum", false);
+            tutorialHighlight("handNum", true);
             socket.emit("tutorialRequest", "setWaitingOn", "clickRest", myID);
             addTutorialProgressArrows([ "In order to play cards in your discard pile, you must first add them to your hand.",
                                         "You will get to do this when you 'Rest'.",
@@ -645,7 +687,11 @@ function tutorialPhase(phase){
             break;
 
         case 25:
-            tutorialProgress.remove();
+            socket.emit("tutorialRequest", "save", 25, myID);
+            if (tutorialProgress){
+                tutorialProgress.remove();
+            } 
+            tutorialHighlight("handNum", false);
             document.querySelector(`#player0 .numCoins`).textContent = "3";
             document.querySelector(`#player1 .numCoins`).textContent = "4";
             document.querySelector(`#player2 .numCoins`).textContent = "2";
@@ -693,7 +739,7 @@ function tutorialPhase(phase){
                                 oldPlayerIcon.parentNode.replaceChild(newPlayerIcon, oldPlayerIcon);
                             }
                         }
-
+                        socket.emit("tutorialRequest", "confirmCard", ["Prepare", targetPlayerNum, false], myID);
                         confirm.remove();
                         orientCardToPlayer(1, 0, 3);
                         lockInCard(1)
@@ -707,14 +753,19 @@ function tutorialPhase(phase){
             break;
         
         case 28:
-            tutorialProgress.remove();
+            socket.emit("tutorialRequest", "save", 28, myID);
+            if (tutorialProgress){
+                tutorialProgress.remove();
+            } 
             addTutorialProgressArrows([ "Uh oh. It's looking like Grudgie might be holding a grudge.",
                                         "Use a Card Swap token to 'Retaliate' against Grudgie."
                                         ], 29, tutorialDiv);
             break;
 
         case 29:
-            tutorialProgress.remove();
+            if (tutorialProgress){
+                tutorialProgress.remove();
+            } 
             const cardSwapPopUp = document.createElement("div");
             cardSwapPopUp.id = "cardSwapPopUp";
 
@@ -749,6 +800,7 @@ function tutorialPhase(phase){
                                 oldPlayerIcon.parentNode.replaceChild(newPlayerIcon, oldPlayerIcon);
                             }
                         }
+                        socket.emit("tutorialRequest", "confirmCard", ["Retaliate", 1, true], myID);
                         confirm.remove();
                         tutorialPhase(31);
                     }  
@@ -782,20 +834,26 @@ function tutorialPhase(phase){
             break;
 
         case 32:
+            socket.emit("tutorialRequest", "save", 32, myID);
+            document.querySelector(`#player0 .handNum`).textContent = "10";
+            document.querySelector(`#player1 .handNum`).textContent = "10";
+            document.querySelector(`#player2 .handNum`).textContent = "10";
             addTutorialProgressArrows([ "Even though Grudgie goes before us in turn order, our Retaliate will block their Steal.",
                                         "Green cards are always performed, in full, before ANY non-green cards, regardless of turn order.",
                                         "If multiple green cards are played in the same round, the lowest numbered one takes priority.",
-                                        "In the event that multiple players play the same green action, regular turn order determines which is first.",
+                                        "In the event that multiple players play the same green action, regular turn order determines which is resolved first.",
                                         ""
                                         ], 33, tutorialDiv);
             break;
 
         case 33:
-            tutorialProgress.remove();
-            addTutorialProgressArrows([ "The number of coins taken on a Steal action is determined by how many players are stealing from them.",
+            socket.emit("tutorialRequest", "save", 33, myID);
+            if (tutorialProgress){
+                tutorialProgress.remove();
+            } 
+            addTutorialProgressArrows([ "The number of coins taken on a Steal action is determined by how many players are stealing from your target.",
                                         "The more thieves focused on a single player, the fewer coins each thief steals.",
-                                        "The value of the Steal is resolved before any player takes coins, and the thievery occurs in turn order.",
-                                        "This means an earlier thief may be able to sneak in and rob your target before you can.",
+                                        "The value of the Steal is resolved before any player performs their Steals.",
                                         "Hover over the red scorecard in the bottom-left corner to see exactly how many coins doubled-up thieves steal."
                                         ], 34, tutorialDiv);
             break;
@@ -809,10 +867,13 @@ function tutorialPhase(phase){
             break;
 
         case 35:
+            socket.emit("tutorialRequest", "save", 35, myID);
+            if (tutorialProgress){
+                tutorialProgress.remove();
+            } 
             document.querySelector(`#player0 .numCoins`).textContent = "10";
             document.querySelector(`#player1 .numCoins`).textContent = "0";
-            document.querySelector(`#player1 .numCardSwaps`).textContent = "4";
-            tutorialProgress.remove();
+            document.querySelector(`#player2 .numCardSwaps`).textContent = "4";
             addTutorialProgressArrows([ "That's all you need to know to become a masterful conspirator.",
                                         "...",
                                         "...",
@@ -867,6 +928,140 @@ function tutorialHoveredStealScorecard(){
     setTimeout(() => {
         tutorialPhase(35);
     }, 500);
+}
+function tutorialHighlight(className, makeColorful){
+    const relevantNums = document.querySelectorAll(`.${className}`)
+    relevantNums.forEach((num) => {
+        const relevantDiv = num.parentElement;
+        if (makeColorful){
+            relevantDiv.style.filter = "invert(50%) sepia(100%) saturate(1000%) hue-rotate(90deg)";
+        }
+        else{
+            relevantDiv.style.filter = "";
+        }
+    })
+}
+function loadPreviousTutorialSteps(phase, target){
+    console.log(phase);
+    socket.emit("tutorialRequestion", "setWaitingOn", "", myID);
+
+    // reveal hidden elements
+    document.getElementById("playerDisplay").style.visibility = "visible";
+    const playerToggle = document.getElementById("playerDisplayVisibilityToggle");
+    playerToggle.addEventListener("click", () => {
+        socket.emit("getUpdatedCards", "hand", false, myID);
+    })
+    if (phase >= 10){
+        const workValueScorecard = document.getElementById("workValueScorecard");
+        workValueScorecard.style.visibility = "visible";
+    }
+    if (phase >= 19){
+        const shopDisplay = document.getElementById("shopDisplay");
+        shopDisplay.style.visibility = "visible";
+        const shopToggle = document.getElementById("shopDisplayVisibilityToggle");
+        shopToggle.addEventListener("click", () => {
+            socket.emit("getUpdatedCards", "shop", false, myID)
+        });
+    }
+    if (phase == 35){
+        const stealValueScorecard = document.getElementById("stealValueScorecard");
+        stealValueScorecard.style.visibility = "visible";
+    }
+
+    // update player card
+    if (4 <= phase && phase <= 12){
+        const work = allActions.find((action) => action.name == "Work");
+        const myPlayedCard = document.querySelector(`#player0 .playedCard`);
+        generateCard(myPlayedCard, work);
+    }
+    else if (phase == 28){
+        const prepare = allActions.find((action) => action.name == "Prepare");
+        const myPlayedCard = document.querySelector(`#player0 .playedCard`);
+        generateCard(myPlayedCard, prepare);
+    }
+    else if (phase >= 32){
+        const retaliate = allActions.find((action) => action.name == "Retaliate");
+        const myPlayedCard = document.querySelector(`#player0 .playedCard`);
+        generateCard(myPlayedCard, retaliate);
+    }
+
+    // update opponent cards
+    if (phase == 6 || phase == 25 || phase == 28){
+        for (let i = 1; i < 3; i++){
+            const playedCard = document.querySelector(`#player${i} .playedCard`);
+            const actionBack = document.createElement("img");
+            actionBack.src = "/static/Images/Misc/back.png";
+            playedCard.appendChild(actionBack);
+            playedCard.style.opacity = "0.5";
+        }
+    }
+    else if (phase == 10 || phase == 12){
+        const work = allActions.find((action) => action.name == "Work");
+        const cooperate = allActions.find((action) => action.name == "Cooperate");
+
+        const grudgieCard = document.querySelector(`#player1 .playedCard`);
+        generateCard(grudgieCard, cooperate);
+        const pudgieCard = document.querySelector(`#player2 .playedCard`);
+        generateCard(pudgieCard, work);
+    }
+
+    else if (phase >= 32){
+        const steal = allActions.find((action) => action.name == "Steal");
+        const prepare = allActions.find((action) => action.name == "Prepare");
+
+        const grudgieCard = document.querySelector(`#player1 .playedCard`);
+        generateCard(grudgieCard, steal);
+        const pudgieCard = document.querySelector(`#player2 .playedCard`);
+        generateCard(pudgieCard, prepare);
+    }
+
+    // orient cards
+    if ((6 <= phase && phase <= 12) || 28 <= phase){
+        orientCardToPlayer(0, target, 3)
+        orientCardToPlayer(1, 0, 3);
+        orientCardToPlayer(2, 1, 3);
+        lockInCard(0)
+        lockInCard(1)
+        lockInCard(2);
+    }
+    
+    // update stats
+    if (phase >= 10){
+        document.querySelector(`#player0 .handNum`).textContent = "11";
+        document.querySelector(`#player1 .handNum`).textContent = "11";
+        document.querySelector(`#player2 .handNum`).textContent = "11";
+    }
+    if (10 <= phase && phase <= 19){
+        document.querySelector(`#player2 .numCoins`).textContent = "4";
+    }
+    if (14 <= phase && phase <= 19){
+        document.querySelector(`#player0 .numCoins`).textContent = "9";
+    }
+    if (15 <= phase && phase <= 19){
+        document.querySelector(`#player0 .discardNum`).textContent = "1";
+        document.querySelector(`#player1 .discardNum`).textContent = "1";
+        document.querySelector(`#player2 .discardNum`).textContent = "1";
+    }
+    if (phase >= 23){
+        document.querySelector(`#player0 .discardNum`).textContent = "3";
+        document.querySelector(`#player1 .discardNum`).textContent = "1";
+        document.querySelector(`#player2 .discardNum`).textContent = "2";
+    }
+    if (phase == 23){
+        document.querySelector(`#player0 .numCoins`).textContent = "1";
+        document.querySelector(`#player1 .numCoins`).textContent = "2";
+        document.querySelector(`#player2 .numCoins`).textContent = "0";
+    }
+    if (phase >= 28){
+        document.querySelector(`#player0 .numCoins`).textContent = "3";
+        document.querySelector(`#player1 .numCoins`).textContent = "4";
+        document.querySelector(`#player2 .numCoins`).textContent = "2";
+    } 
+    if (phase >= 33){
+        document.querySelector(`#player0 .handNum`).textContent = "10";
+        document.querySelector(`#player1 .handNum`).textContent = "10";
+        document.querySelector(`#player2 .handNum`).textContent = "10";
+    }
 }
 
 function calculateNumCards(where){
