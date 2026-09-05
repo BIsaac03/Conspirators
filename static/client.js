@@ -67,37 +67,50 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, r
         displayCards(players[myPlayerNum], shop, "buy", false);
 
         if (!reconnectedPlayer.isReady){
-            // FIRST PHASE OF ROUND
-            if (reconnectedPlayer.waitingOn == "selectAction"){
-                actionSelection(players, myPlayerNum);
-                players.forEach(player => {if (player.isReady){
-                    lockInCard(player.playerNum);
-                }})
-            }
+            switch (reconnectedPlayer.waitingOn){
+                // FIRST PHASE OF ROUND
+                case "selectAction":
+                    actionSelection(players, myPlayerNum);
+                    players.forEach((player) => {
+                        if (player.isReady){
+                            lockInCard(player.playerNum);
+                        }
+                    })
+                    break;
 
-            // SECOND PHASE OF ROUND
-            else if (reconnectedPlayer.waitingOn == "useCardSwap"){
-                allowCardSwaps(players);
-                players.forEach(player => {
-                    orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
-                })
-            }
+                // SECOND PHASE OF ROUND
+                case "useCardSwap":
+                    allowCardSwaps(players);
+                    players.forEach(player => {
+                        orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
+                    })
+                    break;
 
-            // REVEALED ACTIONS
-            else if (reconnectedPlayer.waitingOn == "redirectCards"){
+                // REVEALED ACTIONS
+                case "redirectCards":
+                    break;
 
-            }
-            else if (reconnectedPlayer.waitingOn == "retrieveCards"){
-                // !!! should store number of retrieved cards
-                retrieveCards(reconnectedPlayer, 2, false);
-            }
-            else if (reconnectedPlayer.waitingOn == "donate"){
-                // !! determine recipient of donations after reconnection
-                promptDonation(reconnectedPlayer, receiver, 4, "How many coins will you return to "+receiver.name+" ?", false);
-            }
+                case "retrieveCards":
+                    // !!! should store number of retrieved cards
+                    retrieveCards(reconnectedPlayer, 2, false);
+                    break;
 
-            // ROUND END
-            else if (reconnectedPlayer.waitingOn == "buyCards"){
+                case "donate":
+                    // !! determine recipient of donations after reconnection
+                    promptDonation(reconnectedPlayer, receiver, 4, "How many coins will you return to "+receiver.name+" ?", false);
+                    break;
+
+                case "whistleRedirects":
+                    promptRedirects("whistle");
+                    break;
+
+                case "hijackRedirects":
+                    promptRedirects("whistle");
+                    break;
+                
+                // ROUND END
+                case "buyCards":
+                    break;
             }
         }
 
@@ -158,6 +171,7 @@ socket.on("revealActions", (players) => {
     revealActions(players);
 })
 socket.on("allowShopPurchases", (shop, players) => {
+    console.log("shopping");
     displayCards(players[myPlayerNum], shop, "buy", false);
 })
 socket.on("resetGameDisplay", () => {
@@ -182,11 +196,22 @@ socket.on("retrieveCards", (player, numCardsToRetrieve) => {
     }
 })
 socket.on("donate", (giver, receiver, maxCoins, context) => {
-    if (giver.playerID = myID){
+    if (giver.playerID == myID){
         promptDonation(giver, receiver, maxCoins, context);
     }
     
 })
+socket.on("whistleRedirects", (playerID) => {
+    if (playerID == myID){
+        promptRedirects("whistle");
+    }
+})
+socket.on("hijackRedirects", (playerID) => {
+    if (playerID == myID){
+        promptRedirects("hijack");
+    }
+})
+
 socket.on("updateStats", (players) => {
     updateStats(players);
 })
@@ -1091,6 +1116,7 @@ function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
 
 function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
     const playedCard = document.querySelector(`#player${originPlayerNum} .playedCard`);
+    playedCard.setAttribute("targetNum", targetPlayerNum);
     const targetAngle = calculateTargetAngle(originPlayerNum, targetPlayerNum, numPlayers);
     playedCard.style.transform = "translateX("+(10 + 5*Math.sin(targetAngle))+"vh) translateY("+(-15*Math.cos(targetAngle))+"vh) rotate("+(targetAngle)+"rad)";       
 }
@@ -1216,7 +1242,7 @@ function blowUpScorecard(numPlayers, scoreCardType){
                         numCoins.textContent = Math.min(7, numPlayers + 3);
                         break;
                     case 2:
-                        numCoins.textContent = Math.min(7, numPlayers + 1);
+                        numCoins.textContent = Math.min(5, numPlayers + 1);
                         break;
                     default:
                         numCoins.textContent = numPlayers + 2 - i;
@@ -1798,6 +1824,67 @@ function promptDonation(giver, receiver, maxCoins, context, isTutorial){
     })
     donationScreen.appendChild(submit);    
     bodyElement.appendChild(donationScreen);
+}
+
+function promptRedirects(type){
+    const playedCards = document.querySelectorAll(`.playedCard`);
+    switch(type){
+        case "whistle":
+            playedCards.forEach((card) => {
+                const target = card.getAttribute("targetNum");
+                if (target == myPlayerNum || target == (myPlayerNum + 1) % playedCards.length || target == (myPlayerNum - 1 + playedCards.length) % playedCards.length){
+                    card.classList.add("redirectable");
+                    // !! add highlighting to cards with "redirectable" class
+                    card.setAttribute("originalTarget", target);
+                    card.addEventListener("click", () => {
+                        if (card.getAttribute("targetNum") != myPlayerNum){
+                            orientCardToPlayer(card.parentElement.id.slice(6), myPlayerNum, playedCards.length);
+                        }
+                        else if (card.getAttribute("originalTarget") != myPlayerNum){
+                            orientCardToPlayer(card.parentElement.id.slice(6), card.getAttribute("originalTarget"), playedCards.length);
+                        }
+                        else{
+                            // !! allow user to choose new target
+                        }
+                    })
+                }
+            })
+            break;
+        
+        case "hijack":
+            const myTarget = document.querySelector(`#player${myPlayerNum} .playedCard`).getAttribute("targetNum");
+            playedCards.forEach((card) => {
+                const target = card.getAttribute("targetNum");
+                if (target == myTarget){
+                    card.classList.add("redirectable");
+                    card.setAttribute("originalTarget", target);
+                    card.addEventListener("click", () => {
+                        if (card.getAttribute("targetNum") != myTarget){
+                            orientCardToPlayer(card.parentElement.id.slice(6), myTarget, playedCards.length);
+                        }
+                        else{
+                            // !! allow user to choose new targets
+                        }
+                    })
+                }
+            })
+            break;
+    }
+
+    const finalizeTargeting = document.createElement("button");
+    finalizeTargeting.textContent = "Finalize Targeting";
+    finalizeTargeting.addEventListener("click", () => {
+        const newTargets = []
+        finalizeTargeting.remove();
+        const playedCards = document.querySelectorAll(`.playedCard`);
+        playedCards.forEach((card) => {
+            newTargets.push(card.getAttribute("targetNum"));
+            const clone = card.cloneNode(true);
+            card.replaceWith(clone);
+        })
+        socket.emit("finishedRedirecting", newTargets, myID);
+    })
+    bodyElement.appendChild(finalizeTargeting);
 }
 
 function createStats(players){

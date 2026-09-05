@@ -187,7 +187,7 @@ io.on("connection", (socket) => {
                 io.emit("revealActions", players);
                 setTimeout(() => {
                     resolveOrderedActions(players);
-                }, 2000)
+                }, 5000)
             }
             
         }
@@ -206,6 +206,8 @@ io.on("connection", (socket) => {
         }
         else{
             buyer.buyCards(cardsToBuy, totalCost);
+            buyer.isReady = true;
+            checkEndOfRound(myGame.getPlayers());
         }
     })
 
@@ -221,6 +223,13 @@ io.on("connection", (socket) => {
         giver.numCoins -= coins;
         receiver.numCoins += coins;
         io.emit("notification", receiver.playerNum, giver.playerName+" gave you "+coins+" coins!");
+    })
+
+    socket.on("finishedRedirecting", (newTargets, myID) => {
+        const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
+        for (let i = 0; i < myGame.getPlayers().length; i++){
+            myGame.getPlayers()[i].currentTarget = newTargets[i];
+        }
     })
 
     socket.on("getUpdatedCards", (where, shouldDisplay, myID) => {
@@ -326,21 +335,34 @@ function makeGame(code, actionShop){
 }
 
 function establishWorkValue(players){
-    // workers earn 5 coins -1 per other worker
-    let workValue = 6;
-    for (let i = 0; i < players.length; i++){
-        if (players[i].playedCard.isWork){
-            workValue--;
+    let workValue = 0;
+    let numWorkers = 0;
+    players.forEach((player) => {
+        if (player.playedCard.isWork){
+            numWorkers++;
         }
+    })
+    switch (numWorkers){
+        case 0:
+            workValue = 0;
+            break;
+        case 1: 
+            workValue = Math.min(7, players.length + 3);
+            break;
+        case 2:
+            workValue = Math.min(5, players.length + 1);
+            break;
+        default:
+            workValue = players.length + 2 - numWorkers;
     }
     return workValue;
 }
 
 function establishStealValue(target, players){
-    // thieves steal 4 coins -1 per other thief with the same target
+    // thieves steal 4 coins -1 per other thief with the same target (min 2)
     let stealValue = 5;
     for (let i = 0; i < players.length; i++){
-        if (players[i].currentTarget == target && players[i].playedCard.isSteal){
+        if (players[i].currentTarget == target && players[i].playedCard.isSteal && stealValue > 2){
             stealvalue--;
         }
     }
@@ -371,7 +393,16 @@ function resolveUnorderedActions(players, workValue){
             }
         }
     })
-    checkEndOfRound(players)
+    checkShopPhase(players)
+}
+
+function checkShopPhase(players){
+    const waitingOn = players.find((player) => !player.isReady);
+    if (!waitingOn){
+        console.log("shopping");
+        const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
+        io.emit("allowShopPurchases", myGame.getGameDetails().shop, players);
+    }
 }
 
 function roundStart(players){
@@ -420,9 +451,11 @@ function work(worker, workValue, modification){
 
 function steal(stealer, stealFrom, modification, players){
     const stealValue = establishStealValue(stealFrom, players);
-    const coinsToSteal = Math.min(stealValue + modification, stealFrom.numCoins); // !!! should vary based on number of steals
-    stealer.numCoins += coinsToSteal;
-    stealFrom.numCoins -= coinsToSteal;
+    const coinsToSteal = Math.min(stealValue + modification, stealFrom.numCoins);
+    if (!stealFrom.isImmune){
+        stealer.numCoins += coinsToSteal;
+        stealFrom.numCoins -= coinsToSteal;
+    }
 }
 
 function donate(giver, receiver, maxCoins, context){
@@ -466,6 +499,7 @@ function roundEndCleanup(players){
         player.discardPlayedCard();
         player.isImmune = false;
         player.hasRecruited = false;
+        player.isSabotaged = false;
         // !! remove Bewitched status after playing a card while bewitched 
     })
 }

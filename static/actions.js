@@ -144,7 +144,7 @@ export const allActions = [
         "isWork": false,
         "isSteal": true,
         "isTargetting": true,
-        "effect":   `steal(player, players[player.currentTarget], -1);
+        "effect":   `steal(player, players[player.currentTarget], -1, players);
                     players[(player.currentTarget + 1) % players.length].numCoins++;
                     players[(player.currentTarget - 1 + players.length) % players.length].numCoins++;`,
         "priority": 0,
@@ -197,7 +197,7 @@ export const allActions = [
         "isWork": false,
         "isSteal": false,
         "isTargetting": false,
-        "effect":   `player.numCoins += 2;
+        "effect":   `player.numCoins += 3;
                     players.forEach((other) => {
                         if (other.currentTarget == player.playerNum){
                             cursed(other);
@@ -216,8 +216,11 @@ export const allActions = [
         "isWork": false,
         "isSteal": true,
         "isTargetting": true,
-        "effect":   `steal(player, players[player.currentTarget], -2);
-                    player.numCoins += 3;`, // !! allow redirect any other cards targeting player
+        "effect":   `player.numCoins += 3;
+                    player.isReady = false;
+                    player.waitingOn = "hijackRedirects";
+                    io.emit("hijackRedirects", player.playerID);
+                    steal(player, players[player.currentTarget], -2, players);`, // !! steal after redirects RESOLVED
         "priority": 6,
         "cost": 6,
         "isBasicAction": false,
@@ -260,7 +263,7 @@ export const allActions = [
         "isSteal": true,
         "isTargetting": true,
         "effect":   `const beforeCoins = player.numCoins;
-                    steal(player, players[player.currentTarget], 5);
+                    steal(player, players[player.currentTarget], 5, players);
                     player.numCoins = beforeCoins + 9`,
         "priority": 0,
         "cost": 5,
@@ -276,7 +279,7 @@ export const allActions = [
         "isSteal": false,
         "isTargetting": false,
         "effect":   `work(player, workValue);
-                    player.hasRecruited = true;`, // !! add bought cards to hand
+                    player.hasRecruited = true;`,
         "priority": 0,
         "cost": 4,
         "isBasicAction": false,
@@ -290,7 +293,22 @@ export const allActions = [
         "isWork": false,
         "isSteal": true,
         "isTargetting": true,
-        "effect": ``, // !! no coins for workers, redirect steal
+        "effect":   `players.forEach((player) => {
+                        player.isSabotaged = true;
+                        let tries = 0;
+                        while (players[player.currentTarget].playedCard.isWork && tries < players.length){
+                            tries++;
+                            const nextClockwise = (player.currentTarget + 1) % players.length;
+                            if (nextClockwise != player.playerNum){
+                                player.currentTarget = nextClockwise;
+                            }
+                            else{
+                                tries++
+                                player.currentTarget = (player.currentTarget + 2) % players.length
+                            }
+                        }
+                        steal(player, players[player.currentTarget], 2, players);
+                    })`, // !! visually display redirects
         "priority": 7,
         "cost": 4,
         "isBasicAction": false,
@@ -324,7 +342,10 @@ export const allActions = [
         "isSteal": false,
         "isTargetting": false,
         "effect":  `player.numCoins++; 
-                    player.numCardSwaps++;`, //!! allow redirection of cards
+                    player.numCardSwaps++;
+                    player.isReady = false;
+                    player.waitingOn = "whistleRedirects";
+                    io.emit("whistleRedirects", player.playerID);`,
         "priority": 3,
         "cost": 5,
         "isBasicAction": false,
@@ -365,7 +386,7 @@ export const allActions = [
     {
         "name": "Abduct!",
         "background": "static/Images/Backgrounds/yellow.png",
-        "text": "Take any card from<br>the Shop and add it<br>to your discard.",
+        "text": "Take any card from<br>the Shop and add it<br>to your hand.",
         "isWork": false,
         "isSteal": false,
         "isTargetting": false,
