@@ -50,8 +50,9 @@ export const allActions = [
         "isWork": false,
         "isSteal": `if(players[player.currentTarget].playedCard.name != "Retaliate && players[player.currentTarget].playedCard.isSteal)`,
         "isTargetting": true,
-        "effect":  `if(players[player.currentTarget].playedCard.isSteal){
-                        steal(player, players[player.currentTarget], 4)
+        "effect":  `player.numCoins += 3;
+                    if(players[player.currentTarget].playedCard.isSteal){
+                        steal(player, players[player.currentTarget], 0, players)
                     }`,
         "priority": 5,
         "cost": 0,

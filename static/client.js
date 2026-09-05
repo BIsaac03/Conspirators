@@ -157,6 +157,9 @@ socket.on("cardSwapPhase", (players) => {
 socket.on("revealActions", (players) => {
     revealActions(players);
 })
+socket.on("allowShopPurchases", (shop, players) => {
+    displayCards(players[myPlayerNum], shop, "buy", false);
+})
 socket.on("resetGameDisplay", () => {
     const selectedPlayerIcon = document.getElementById("selectedPlayer");
     selectedPlayerIcon.id = ""
@@ -256,7 +259,7 @@ function addMainMenuListeners(){
         }, 100)
     })
 }
-
+// TUTORIAL
 function startTutorial(players, phase){
     myPlayerNum = 0;
     hideElementsForTutorial()
@@ -1089,7 +1092,7 @@ function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
 function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
     const playedCard = document.querySelector(`#player${originPlayerNum} .playedCard`);
     const targetAngle = calculateTargetAngle(originPlayerNum, targetPlayerNum, numPlayers);
-    playedCard.style.transform = "translateX("+(-10*Math.sin(targetAngle))+"vh) translateY("+(-15*Math.cos(targetAngle))+"vh) rotate("+(targetAngle)+"rad)";       
+    playedCard.style.transform = "translateX("+(10 + 5*Math.sin(targetAngle))+"vh) translateY("+(-15*Math.cos(targetAngle))+"vh) rotate("+(targetAngle)+"rad)";       
 }
 
 function populateGameSpace(players){
@@ -1109,7 +1112,7 @@ function populateGameSpace(players){
         const playedCard = document.createElement("div");
         playedCard.classList.add("card");
         playedCard.classList.add("playedCard");
-        playedCard.style.transform = 'translateX(2vh) rotate(-90deg)';
+        playedCard.style.transform = 'translateX(5vh) rotate(-90deg)';
 
         if (i == myPlayerNum){
             playedCard.addEventListener("click", () => {
@@ -1218,6 +1221,8 @@ function blowUpScorecard(numPlayers, scoreCardType){
                     default:
                         numCoins.textContent = numPlayers + 2 - i;
                 }
+                break;
+
             case "steal":
                 switch (i){
                     case 1: 
@@ -1229,6 +1234,7 @@ function blowUpScorecard(numPlayers, scoreCardType){
                     default:
                         numCoins.textContent = 2;
                 }
+                break;
         }
         blownUpScorecard.appendChild(numCoins);
     }
@@ -1455,7 +1461,6 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
                 }
             }
             else if (!player.isReady && player.waitingOn == "buyCards"){
-                // !! visually indicate selected cards
                 modifyCheckOutList(cardsToDisplay[i][0].name, cardsToDisplay[i][0].cost, false);
             }
         })
@@ -1562,6 +1567,11 @@ function lockInCard(playerNum){
 }
 
 function allowCardSwaps(players){
+    players.forEach((player) => {
+        const playedCard = document.querySelector(`#player${player.playerNum} .playedCard`);
+        orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
+    })
+
     const originalCard = players[myPlayerNum].playedCard;
     const originalTarget = players[myPlayerNum].currentTarget;
 
@@ -1572,7 +1582,7 @@ function allowCardSwaps(players){
     useCardSwap.textContent = "Use Card Swap";
     useCardSwap.addEventListener("click", () => {
         cardSwapPopUp.remove();
-        actionSelection(players, originalCard, originalTarget);
+        actionSelection(players, myPlayerNum, originalCard);
     })
     if (players[myPlayerNum].numCardSwaps < 1){
         useCardSwap.disabled = true;
@@ -1796,8 +1806,8 @@ function createStats(players){
         statsDisplay.classList.add("statsDisplay");
 
         const playerName = document.createElement("p");
-        playerName.textContent = players[(myPlayerNum + i)%players.length].playerName;
-        playerName.style.color = players[(myPlayerNum + i)%players.length].playerColor[0];
+        playerName.textContent = players[i].playerName;
+        playerName.style.color = players[i].playerColor[0];
         playerName.classList.add("playerName");
 
         const coinDiv = document.createElement("div");
@@ -1909,7 +1919,7 @@ function endRoundCleanUp(numPlayers){
             playedCard.innerHTML = "";
             playedCard.removeAttribute("action");
             playedCard.style.border = "3px dashed cyan";
-            playedCard.style.transform = "translateX(2vh) rotate(-90deg)";
+            playedCard.style.transform = "translateX(5vh) rotate(-90deg)";
         }
     const selectedPlayer = document.getElementById("selectedPlayer");
     if (selectedPlayer){
