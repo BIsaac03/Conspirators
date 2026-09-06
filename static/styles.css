@@ -225,6 +225,9 @@ button:hover{
     font-size: 3vh;
     font-weight: bold;
 }
+#startPlayer.playerName{
+    text-decoration: underline;
+}
 .statsDisplay div{
     display: flex;
     align-items: center;

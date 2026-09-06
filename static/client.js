@@ -36,7 +36,7 @@ socket.on("gameInProgress", () => {
     lobby.gameInProgressError(bodyElement);
 })
 
-socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, isGameInProgress, roomCode) => {
+socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPlayer, isGameInProgress, roomCode) => {
     if (roomCode == "tutorial"){
         startTutorial(players, reconnectedPlayer.tutorialPhase)
     }
@@ -59,7 +59,7 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, isGameI
         populateGameSpace(players);
         addScorecardListeners(players.length);
         createStats(players);
-        updateStats(players);
+        updateStats(players, startPlayer);
         addCardDisplayListeners();
         displayCards(players[myPlayerNum], reconnectedPlayer.hand, "play", false);
         displayCards(players[myPlayerNum], shop, "buy", false);
@@ -236,8 +236,8 @@ socket.on("hijackRedirects", (playerID) => {
     }
 })
 
-socket.on("updateStats", (players) => {
-    updateStats(players);
+socket.on("updateStats", (players, startPlayer) => {
+    updateStats(players, startPlayer);
 })
 
 socket.on("updateCards", (players, shop, where, shouldDisplay, isTutorial) => {
@@ -314,7 +314,7 @@ function startTutorial(players, phase){
     hideElementsForTutorial()
     populateGameSpace(players);
     createStats(players);
-    updateStats(players);
+    updateStats(players, 0);
     addCardDisplayListeners();
     addScorecardListeners(3);
 
@@ -538,7 +538,7 @@ function tutorialPhase(phase){
             generateCard(pudgieCard, work);
             addTutorialProgressArrows([ "Played actions are resolved clockwise, starting with the underlined player.",
                                         "At the end of each round, the underline rotates clockwise, so your turn order will change over time.",
-                                        "One of the main ways your will earn coins is by working.",
+                                        "One of the main ways you will earn coins is by working.",
                                         "The value of each work changes each round based on the total number of workers.",
                                         "A greater number of workers will make each work action yield fewer coins.",
                                         "Hover over the blue scorecard in the bottom-left corner to see exactly how these values correlate with this many players."
@@ -1511,7 +1511,7 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
                 }
             }
             else if (!player.isReady && player.waitingOn == "buyCards"){
-                modifyCheckOutList(cardsToDisplay[i][0].name, cardsToDisplay[i][0].cost, false);
+                modifyCheckOutList(player.numCoins, cardsToDisplay[i][0].name, cardsToDisplay[i][0].cost, false);
             }
         })
 
@@ -1536,7 +1536,7 @@ function actionSelection(players, myPlayerNum, originalCard){
     myCard.style.opacity = "1";
     promptActionSelection(players[myPlayerNum], false);
 
-    // orients card to targeted player 
+    // orients card to target player 
     addPlayerTargeting(myCard, myPlayerNum, players.length)
 
     const confirm = document.createElement("button");
@@ -2028,7 +2028,14 @@ function createStats(players){
     }
 }
 
-function updateStats(players){
+function updateStats(players, startPlayer){
+    const previousStartPlayer = document.getElementById("startPlayer");
+    if (previousStartPlayer){
+        previousStartPlayer.id = "";
+    }
+    const newStartPlayer = document.querySelector(`#player${startPlayer} .playerName`);
+    newStartPlayer.id = "startPlayer";
+
     for (let i = 0; i < players.length; i++){
         const numCardsInHand = document.querySelector(`#player${i} .statsDisplay .handNum`);
         numCardsInHand.textContent = calculateNumCards(players[i].hand);

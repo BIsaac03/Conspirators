@@ -43,7 +43,7 @@ io.on("connection", (socket) => {
     const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == currentID));
     if (myGame) {
         const existingPlayer = myGame.getPlayers().find((player) => player.playerID == currentID);
-        socket.emit("reconnection", existingPlayer, myGame.getPlayers(), myGame.getGameDetails().shop, myGame.getGameDetails().roundPhase, myGame.getGameDetails().isGameInProgress, myGame.getGameDetails().roomCode);
+        socket.emit("reconnection", existingPlayer, myGame.getPlayers(), myGame.getGameDetails().shop, myGame.getGameDetails().gamePhase, myGame.getGameDetails().startPlayer, myGame.getGameDetails().isGameInProgress, myGame.getGameDetails().roomCode);
         socket.emit("displayExistingPlayers", myGame.getPlayers());
     }
     else{
@@ -60,15 +60,17 @@ io.on("connection", (socket) => {
         
         const me = new Player(myID, "Me", ['#00eeff', false], 0);
         me.createStartingHand([BA1, BA2]);
+        me.numCoins += 2;
         tutorialGame.addPlayer(me);
         const opp1 = new Player("testID2", "Grudgie", ['#ff0000', false], 1);
         opp1.createStartingHand([BA1, BA2]);
+        opp1.numCoins += 2;
         tutorialGame.addPlayer(opp1)
         const opp2 = new Player("testID3", "Pudgie", ['#ff0000', false], 2);
         opp2.createStartingHand([BA1, BA2]);
+        opp2.numCoins += 2;
         tutorialGame.addPlayer(opp2);
         tutorialGame.startGame();
-        roundStart(tutorialGame.getPlayers());
         socket.emit("startTutorial", tutorialGame.getPlayers());
     })
     socket.on("leaveTutorial", (ID) => {
@@ -176,13 +178,13 @@ io.on("connection", (socket) => {
 
         const keepWaiting = players.find((player) => !player.isReady)
         if (keepWaiting == undefined){
-            if (myGame.getGameDetails().roundPhase == "actionSelection"){
-                myGame.getGameDetails().roundPhase = "cardSwaps";
+            if (myGame.getGameDetails().gamePhase == "actionSelection"){
+                myGame.changeGamePhase("cardSwaps");
                 updatePlayerWaitingOn(players, "useCardSwap");
                 io.emit("cardSwapPhase", players);
             }
-            else if (myGame.getGameDetails().roundPhase == "cardSwaps"){
-                myGame.getGameDetails().roundPhase = "actionResolution";
+            else if (myGame.getGameDetails().gamePhase == "cardSwaps"){
+                myGame.changeGamePhase("actionResolution");
                 io.emit("revealActions", players);
                 setTimeout(() => {
                     resolveOrderedActions(players);
@@ -319,8 +321,10 @@ function createShop(type){
 
 function makeGame(code, actionShop){
     const roomCode = code;
-    const shop = actionShop;
     let gameHasStarted = false;
+    const shop = actionShop;
+    let gamePhase = undefined;
+    let startPlayer = -1;
     let players = [];
 
     const getPlayers = () => {
@@ -330,7 +334,8 @@ function makeGame(code, actionShop){
         return {
             roomCode,
             gameHasStarted,
-            roundPhase,
+            gamePhase,
+            startPlayer,
             shop
         }
     };
@@ -340,8 +345,14 @@ function makeGame(code, actionShop){
     const startGame = () => {
         gameHasStarted = true;
     }
+    const changeGamePhase = (newPhase) => {
+        gamePhase = newPhase;
+    }
+    const rotateStartPlayer = (numPlayers) => {
+        startPlayer = (startPlayer + 1) % numPlayers;
+    }
 
-    return {getPlayers, getGameDetails, addPlayer, startGame}
+    return {getPlayers, getGameDetails, addPlayer, startGame, changeGamePhase, rotateStartPlayer}
 }
 
 function establishWorkValue(players){
@@ -411,7 +422,11 @@ function checkShopPhase(players){
     if (!waitingOn){
         console.log("shopping");
         const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
-        myGame.getGameDetails().roundPhase == "buyCards";
+        myGame.changeGamePhase("buyCards");
+        players.forEach((player) => {
+            player.isReady = false;
+            player.waitingOn = "buyCards";
+        })
         io.emit("allowShopPurchases", myGame.getGameDetails().shop, players);
     }
 }
@@ -423,7 +438,8 @@ function roundStart(myGame){
         player.isReady = false;
         player.waitingOn = "selectAction";
     })
-    myGame.getGameDetails().roundPhase = "actionSelection";
+    myGame.changeGamePhase("actionSelection");
+    myGame.rotateStartPlayer(players.length);
     io.emit("selectAction", players);
 }
 
