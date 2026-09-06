@@ -115,12 +115,8 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
                     allowCardSwaps(players);
                     break;
 
-                case "redirectCards":
-                    break;
-
                 case "retrieveCards":
-                    // !!! should store number of retrieved cards
-                    retrieveCards(reconnectedPlayer, 2, false);
+                    retrieveCards(reconnectedPlayer, Math.floor(calculateNumCards("discard") / 2), false);
                     break;
 
                 case "donate":
@@ -1552,11 +1548,14 @@ function actionSelection(players, myPlayerNum, originalCard){
 
         if (actionToPlayName != undefined && targetPlayerNum != undefined){
             const actionToPlay = players[myPlayerNum].hand.find((action) => action[0].name == actionToPlayName);
-            socket.emit("chosenAction", myPlayerNum, actionToPlay[0], targetPlayerNum, Boolean(originalCard), myID);
-
-            // remove card-orienting event listeners
-            removeAllPlayerTageting(players.length);
-            confirm.remove();
+            if (!players[myPlayerNum].isBewitched || actionToPlay.isBasicAction){
+                socket.emit("chosenAction", myPlayerNum, actionToPlay[0], targetPlayerNum, Boolean(originalCard), myID);
+                removeAllPlayerTargeting(players.length);
+                confirm.remove();
+            }
+            else{
+                // !! inform user that they are bewitched
+            }
         }  
     })
     bodyElement.appendChild(confirm);
@@ -1600,14 +1599,14 @@ function addPlayerTargeting(card, playerNum, numPlayers){
                     }
                 }
                 else{
-                    removeAllPlayerTageting(numPlayers)
+                    removeAllPlayerTargeting(numPlayers)
                 }
             })
         }
     }
 }
 
-function removeAllPlayerTageting(numPlayers){
+function removeAllPlayerTargeting(numPlayers){
     for (let i = 0; i < numPlayers; i++){
         const oldPlayerIcon = document.querySelector(`#player${i} .playerIcon`);
         const newPlayerIcon = oldPlayerIcon.cloneNode(true);

@@ -184,10 +184,14 @@ io.on("connection", (socket) => {
                 io.emit("cardSwapPhase", players);
             }
             else if (myGame.getGameDetails().gamePhase == "cardSwaps"){
+                players.forEach(player => {
+                    player.isBewitched = false;
+                })
+
                 myGame.changeGamePhase("actionResolution");
                 io.emit("revealActions", players);
                 setTimeout(() => {
-                    resolveOrderedActions(players);
+                    determineResolutionOrder(players, myGame.getGameDetails().startPlayer);
                 }, 5000)
             }
             
@@ -233,7 +237,7 @@ io.on("connection", (socket) => {
         impersonator.playedCard = action;
         impersonator.isImpersonating = true;
         impersonator.isReady = true;
-        // !! resolve other ordered actions
+        determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, impersonator.playerNum);
     })
 
     socket.on("finishedRedirecting", (newTargets, myID) => {
@@ -390,30 +394,40 @@ function establishStealValue(target, players){
     return stealValue;
 }
 
-function resolveOrderedActions(players){
-    const workValue = establishWorkValue(players);
-
-    // !! adjust iterations to equal number of IN-GAME ordered cards-1
-    for (let i = 1; i < 8; i++){
-        players.forEach((player) => {
-            if (player.playedCard){
-                if (player.playedCard.priority == i) {
-                    eval(player.playedCard.effect);
-                }
-            } 
-        })
-    }
-    resolveUnorderedActions(players, workValue);
+function determineResolutionOrder(players, startPlayer, playerNumResolved){
+    const turnOrder = players.toSorted((a, b) => {
+        if (a.playerNum >= startPlayer && b.playerNum < startPlayer) return -1;
+        if (a.playerNum < startPlayer && b.playerNum >= startPlayer) return 1;
+        return a - b;
+    });
+    const priorityOrder = turnOrder.toSorted((a, b) => {
+        if (a.playedCard && !b.playedCard) return -1;
+        if (!b.playedCard && a.playedCard) return 1;
+        return a.playedCard.priority - b.playedCard.priority;
+    });
+    const playerOrder = priorityOrder.map((player) => player.playerNum);
+    console.log(playerOrder);
+    resolveActions(players, playerOrder, playerNumResolved);
 }
 
-function resolveUnorderedActions(players, workValue){
-    players.forEach((player) => {
+function resolveActions(players, playerOrder, playerNumResolved){
+    const workValue = establishWorkValue(players);
+
+    let numToResolve = 0
+    // determine how far already progressed in playerOrder 
+    if (playerNumResolved){
+        const numResolved = playerOrder.indexOf(playerNumResolved);
+        numToResolve = numResolved + 1;
+    }
+
+    // resolve actions until player input is required or all actions have been resolved
+    while (!players.find((player) => !player.isReady) && numToResolve < playerOrder.length){
+        const player = players[playerOrder[numToResolve]];
         if (player.playedCard){
-            if (player.playedCard.priority == 0) {
-                eval(player.playedCard.effect);
-            }
+            eval(player.playedCard.effect);
         }
-    })
+        numToResolve++;
+    }
     checkShopPhase(players)
 }
 
@@ -423,10 +437,7 @@ function checkShopPhase(players){
         console.log("shopping");
         const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
         myGame.changeGamePhase("buyCards");
-        players.forEach((player) => {
-            player.isReady = false;
-            player.waitingOn = "buyCards";
-        })
+        updatePlayerWaitingOn(players, "buyCards");
         io.emit("allowShopPurchases", myGame.getGameDetails().shop, players);
     }
 }
@@ -435,11 +446,10 @@ function roundStart(myGame){
     const players = myGame.getPlayers();
     players.forEach((player) => {
         player.numCoins += 2;
-        player.isReady = false;
-        player.waitingOn = "selectAction";
     })
     myGame.changeGamePhase("actionSelection");
     myGame.rotateStartPlayer(players.length);
+    updatePlayerWaitingOn(players, "selectAction");
     io.emit("selectAction", players);
 }
 
@@ -530,6 +540,5 @@ function roundEndCleanup(players){
         player.hasRecruited = false;
         player.isSabotaged = false;
         player.isImpersonating = false
-        // !! remove Bewitched status after playing a card while bewitched 
     })
 }
