@@ -72,15 +72,15 @@ button:hover{
 }
 #tutorial{
     position: absolute;
-    top: 70vh;
-    right: 3vw;
+    top: 72vh;
+    right: 4vw;
     height: 20vh;
     width: 25vw;
     display: grid;
     grid-template-rows: 1fr auto;
     justify-items: center;
     align-content: center;
-    padding: 10px;
+    padding: 1vh;
     text-align: center;
     font-size: 20px;
     background-color: antiquewhite;
@@ -104,7 +104,7 @@ button:hover{
 }
 #leaveTutorial{
     position: absolute;
-    right: 3vw;
+    right: 7vw;
     top: 3vw;
     height: fit-content;
     width: fit-content;
@@ -279,6 +279,10 @@ div[id^="player"] .playedCard{
 .playedCard img{
     grid-area: 1 / 1 / 5 / 4;
     width: 100%;
+}
+
+.redirectable{
+    border: 3px dashed cyan !important;
 }
 
 #cardSwapPopUp{

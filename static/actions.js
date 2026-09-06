@@ -67,7 +67,8 @@ export const allActions = [
         "isWork": false,
         "isSteal": false,
         "isTargetting": false,
-        "effect": `player.prepareToRetrieveCards(2, io)`, //!! change to reflect half of discard
+        "effect":   `const numToRetrieve = Math.floor(player.countCards("discard") / 2);
+                    player.prepareToRetrieveCards(numToRetrieve, io)`,
         "priority": 0,
         "cost": 0,
         "isBasicAction": true,
@@ -165,7 +166,7 @@ export const allActions = [
                         if (other.playerID != player.playerID){
                             other.isBewitched = true;
                         } 
-                    })`,
+                    })`, // !! prevent bewitched players from playing non-Basic actions
         "priority": 0,
         "cost": 4,
         "isBasicAction": false,
@@ -248,7 +249,9 @@ export const allActions = [
         "isWork": "",
         "isSteal": "",
         "isTargetting": "",
-        "effect": ``,   // !! select card to copy and update stats
+        "effect":   `player.isReady = false;
+                    player.waitingOn = "chooseImpersonate";
+                    io.emit("chooseImpersonate", players.length, player.playerID);`,
         "priority": 1,
         "cost": 6,
         "isBasicAction": false,
@@ -359,7 +362,8 @@ export const allActions = [
         "isWork": false,
         "isSteal": false,
         "isTargetting": false,
-        "effect":  ``, // !! discard hand, get coins
+        "effect":  `player.numCoins += player.countCards("hand");
+                    player.discardHand();`,
         "priority": 0,
         "cost": 4,
         "isBasicAction": false,

@@ -36,10 +36,8 @@ socket.on("gameInProgress", () => {
     lobby.gameInProgressError(bodyElement);
 })
 
-socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, roomCode) => {
+socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, isGameInProgress, roomCode) => {
     if (roomCode == "tutorial"){
-        // !! first create function to catch up on previous tutorial changes
-
         startTutorial(players, reconnectedPlayer.tutorialPhase)
     }
     else if (!reconnectedPlayer.isInGame){
@@ -66,27 +64,57 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, r
         displayCards(players[myPlayerNum], reconnectedPlayer.hand, "play", false);
         displayCards(players[myPlayerNum], shop, "buy", false);
 
+        // restore interrupted game state
+        switch (roundPhase){
+            case "actionSelection":
+                if (reconnectedPlayer.playedCard && reconnectedPlayer.currentTarget){
+                    const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
+                    generateCard(myPlayedCard, reconnectedPlayer.playedCard);
+                    orientCardToPlayer(myPlayerNum, reconnectedPlayer.currentTarget, players.length);
+                }
+                
+                players.forEach((player) => {
+                    if (player.isReady){
+                        lockInCard(player.playerNum);
+                    }
+                })
+                break;
+
+            case "cardSwaps":
+                const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
+                generateCard(myPlayedCard, reconnectedPlayer.playedCard);
+                orientCardToPlayer(myPlayerNum, reconnectedPlayer.currentTarget, players.length);
+
+                players.forEach(player => {
+                    lockInCard(player.playerNum);
+                    orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
+                })
+                break;
+
+            case "actionResolution":
+                players.forEach(player => {
+                    const playedCard = document.querySelector(`#player${player.playerNum} .playedCard`);
+                    lockInCard(player.playerNum);
+                    orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
+                    generateCard(playedCard, player.playedCard);
+                })
+                break;
+
+            case "buyCards":
+                break;
+        }
+
+        // prompt player action
         if (!reconnectedPlayer.isReady){
             switch (reconnectedPlayer.waitingOn){
-                // FIRST PHASE OF ROUND
                 case "selectAction":
                     actionSelection(players, myPlayerNum);
-                    players.forEach((player) => {
-                        if (player.isReady){
-                            lockInCard(player.playerNum);
-                        }
-                    })
                     break;
 
-                // SECOND PHASE OF ROUND
                 case "useCardSwap":
                     allowCardSwaps(players);
-                    players.forEach(player => {
-                        orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
-                    })
                     break;
 
-                // REVEALED ACTIONS
                 case "redirectCards":
                     break;
 
@@ -100,6 +128,10 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, r
                     promptDonation(reconnectedPlayer, receiver, 4, "How many coins will you return to "+receiver.name+" ?", false);
                     break;
 
+                case "chooseImpersonate":
+                    promptImpersonate(players.length);
+                    break;
+
                 case "whistleRedirects":
                     promptRedirects("whistle");
                     break;
@@ -108,21 +140,8 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, isGameInProgress, r
                     promptRedirects("whistle");
                     break;
                 
-                // ROUND END
                 case "buyCards":
                     break;
-            }
-        }
-
-        // PLAYER IS WAITING ON OTHERS
-        else{
-            if (reconnectedPlayer.waitingOn == "selectAction"){
-                const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
-                generateCard(myPlayedCard, reconnectedPlayer.playedCard);
-                orientCardToPlayer(myPlayerNum, reconnectedPlayer.currentTarget, players.length);
-                players.forEach(player => {if (player.isReady){
-                    lockInCard(player.playerNum);
-                }})
             }
         }
     } 
@@ -200,6 +219,11 @@ socket.on("donate", (giver, receiver, maxCoins, context) => {
         promptDonation(giver, receiver, maxCoins, context);
     }
     
+})
+socket.on("chooseImpersonate", (numPlayers, playerID) => {
+    if (playerID == myID){
+        promptImpersonate(numPlayers);
+    }
 })
 socket.on("whistleRedirects", (playerID) => {
     if (playerID == myID){
@@ -427,7 +451,7 @@ function tutorialPhase(phase){
             var clickedBefore = document.getElementById("confirmAction");
             if (!clickedBefore){
                 const myCard = document.querySelector(`#player0 .playedCard`);
-                addPlayerTargeting(myCard, 3);
+                addPlayerTargeting(myCard, myPlayerNum, 3);
 
                 const confirm = document.createElement("button");
                 confirm.id = "confirmAction";
@@ -468,7 +492,7 @@ function tutorialPhase(phase){
             }
             tutorialHighlight("numCardSwaps", true);
             addTutorialProgressArrows([ "After each player has confirmed their action, they may spend a Card Swap token to change it.",
-                                        "Each player starts the game with 1, and will earn more through card effects.",
+                                        "Each player starts the game with 1, and can earn more through card effects.",
                                         "Let's save ours for later. Click 'Carry On'."
                                         ], 7, tutorialDiv);
             break;
@@ -516,7 +540,7 @@ function tutorialPhase(phase){
                                         "At the end of each round, the underline rotates clockwise, so your turn order will change over time.",
                                         "One of the main ways your will earn coins is by working.",
                                         "The value of each work changes each round based on the total number of workers.",
-                                        "Fewer workers will make each work action yield fewer coins.",
+                                        "A greater number of workers will make each work action yield fewer coins.",
                                         "Hover over the blue scorecard in the bottom-left corner to see exactly how these values correlate with this many players."
                                         ], 9, tutorialDiv);
             break;
@@ -747,7 +771,7 @@ function tutorialPhase(phase){
                 const myCard = document.querySelector(`#player0 .playedCard`);
                 const prepare = allActions.find((action) => action.name == "Prepare");
                 generateCard(myCard, prepare)
-                addPlayerTargeting(myCard, 3);
+                addPlayerTargeting(myCard, myPlayerNum, 3);
 
                 const confirm = document.createElement("button");
                 confirm.id = "confirmAction";
@@ -805,7 +829,7 @@ function tutorialPhase(phase){
                 endRoundCleanUp(1);
 
                 const playedCard = document.querySelector(`#player0 .playedCard`);
-                addPlayerTargeting(playedCard, 3);
+                addPlayerTargeting(playedCard, myPlayerNum, 3);
                 socket.emit("tutorialRequest", "setWaitingOn", "clickRetaliate", myID);
                 socket.emit("getUpdatedCards", "hand", false, myID);
 
@@ -1513,7 +1537,7 @@ function actionSelection(players, myPlayerNum, originalCard){
     promptActionSelection(players[myPlayerNum], false);
 
     // orients card to targeted player 
-    addPlayerTargeting(myCard, players.length)
+    addPlayerTargeting(myCard, myPlayerNum, players.length)
 
     const confirm = document.createElement("button");
     confirm.id = "confirmAction";
@@ -1531,58 +1555,63 @@ function actionSelection(players, myPlayerNum, originalCard){
             socket.emit("chosenAction", myPlayerNum, actionToPlay[0], targetPlayerNum, Boolean(originalCard), myID);
 
             // remove card-orienting event listeners
-            for (let i = 0; i < players.length; i++){
-                if (i != myPlayerNum){
-                    const oldPlayerIcon = document.querySelector(`#player${i} .playerIcon`);
-                    var newPlayerIcon = oldPlayerIcon.cloneNode(true);
-                    oldPlayerIcon.parentNode.replaceChild(newPlayerIcon, oldPlayerIcon);
-                }
-            }
+            removeAllPlayerTageting(players.length);
             confirm.remove();
         }  
     })
     bodyElement.appendChild(confirm);
 }
 
-function addPlayerTargeting(myCard, numPlayers){
+function addPlayerTargeting(card, playerNum, numPlayers){
     for (let i = 0; i < numPlayers; i++){
-        if (i != myPlayerNum){
+        if (i != playerNum){
             const playerIcon = document.querySelector(`#player${i} .playerIcon`);
-
             playerIcon.addEventListener("mouseenter", () => {
                 let targetPlayerNum = undefined;
                 const previousSelection = document.getElementById("selectedPlayer");
                 if (previousSelection){
                     targetPlayerNum = previousSelection.parentElement.id.slice(6);
                 }
-
-                if (targetPlayerNum == undefined){
-                    orientCardToPlayer(myPlayerNum, i, numPlayers);
+                if (!targetPlayerNum || playerNum != myPlayerNum){
+                    orientCardToPlayer(playerNum, i, numPlayers);
                 }
             })
 
             playerIcon.addEventListener("click", () => {
-                let targetPlayerNum = undefined;
-                const previousSelection = document.getElementById("selectedPlayer");
-                if (previousSelection){
-                    targetPlayerNum = previousSelection.parentElement.id.slice(6);
-                }
+                if (playerNum == myPlayerNum){
+                    let targetPlayerNum = undefined;
+                    const previousSelection = document.getElementById("selectedPlayer");
+                    if (previousSelection){
+                        targetPlayerNum = previousSelection.parentElement.id.slice(6);
+                    }
 
-                if (targetPlayerNum == undefined){
-                    myCard.style.border = "3px solid black";
-                    playerIcon.id = "selectedPlayer";
-                }
-                else if (targetPlayerNum == i){
-                    myCard.style.border = "3px dashed cyan";
-                    playerIcon.id = "";
+                    if (targetPlayerNum == undefined){
+                        card.style.border = "3px solid black";
+                        playerIcon.id = "selectedPlayer";
+                    }
+                    else if (targetPlayerNum == i){
+                        card.style.border = "3px dashed cyan";
+                        playerIcon.id = "";
+                    }
+                    else{
+                        previousSelection.id = "";
+                        playerIcon.id = "selectedPlayer";
+                        orientCardToPlayer(playerNum, i, numPlayers);
+                    }
                 }
                 else{
-                    previousSelection.id = "";
-                    playerIcon.id = "selectedPlayer";
-                    orientCardToPlayer(myPlayerNum, i, numPlayers);
+                    removeAllPlayerTageting(numPlayers)
                 }
             })
         }
+    }
+}
+
+function removeAllPlayerTageting(numPlayers){
+    for (let i = 0; i < numPlayers; i++){
+        const oldPlayerIcon = document.querySelector(`#player${i} .playerIcon`);
+        const newPlayerIcon = oldPlayerIcon.cloneNode(true);
+        oldPlayerIcon.replaceWith(newPlayerIcon);
     }
 }
 
@@ -1826,25 +1855,73 @@ function promptDonation(giver, receiver, maxCoins, context, isTutorial){
     bodyElement.appendChild(donationScreen);
 }
 
+function promptImpersonate(numPlayers){
+    const impersonateDiv = document.createElement("div");
+    const instruction = document.createElement("p");
+    instruction.textContent = "Click on the card you want to Impersonate";
+
+    const confirm = document.createElement("button");
+    confirm.textContent = "Confirm";
+    confirm.disabled = true;
+    confirm.addEventListener("click", () => {
+        const myCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
+        socket.emit("impersonated", myCard.getAttribute("action"), myID);
+        impersonateDiv.remove();
+        const playedCards = document.querySelectorAll(`.playedCard`);
+        playedCards.forEach((card) => {
+            const clone = card.cloneNode(true);
+            card.replaceWith(clone);
+        })
+    })
+
+    impersonateDiv.appendChild(instruction);
+    impersonateDiv.appendChild(confirm);
+    bodyElement.appendChild(impersonateDiv);
+
+    for (let i = 0; i < 2; i++){
+        const neighborModification = i*2 - 1;
+        console.log(neighborModification)
+        const neighborNum = (myPlayerNum + neighborModification + numPlayers) % numPlayers;
+        console.log(neighborNum)
+        const neighborCard = document.querySelector(`#player${neighborNum} .playedCard`);
+        neighborCard.addEventListener("click", () => {
+            const myCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
+            const selectedAction = allActions.find((action) => action.name == neighborCard.getAttribute("action"));
+            generateCard(myCard, selectedAction);
+            myCard.setAttribute("action", selectedAction.name);
+            confirm.disabled = false;
+        })
+    }
+}
+
 function promptRedirects(type){
     const playedCards = document.querySelectorAll(`.playedCard`);
     switch(type){
         case "whistle":
             playedCards.forEach((card) => {
                 const target = card.getAttribute("targetNum");
-                if (target == myPlayerNum || target == (myPlayerNum + 1) % playedCards.length || target == (myPlayerNum - 1 + playedCards.length) % playedCards.length){
+                if ((target == myPlayerNum || 
+                target == (myPlayerNum + 1) % playedCards.length ||
+                target == (myPlayerNum - 1 + playedCards.length) % playedCards.length) &&
+                card.parentElement.id.slice(6) != myPlayerNum){
                     card.classList.add("redirectable");
                     // !! add highlighting to cards with "redirectable" class
                     card.setAttribute("originalTarget", target);
                     card.addEventListener("click", () => {
+                        // !! let user eaesilt switch from one neighbor to another
                         if (card.getAttribute("targetNum") != myPlayerNum){
                             orientCardToPlayer(card.parentElement.id.slice(6), myPlayerNum, playedCards.length);
                         }
                         else if (card.getAttribute("originalTarget") != myPlayerNum){
                             orientCardToPlayer(card.parentElement.id.slice(6), card.getAttribute("originalTarget"), playedCards.length);
                         }
+                        else if (card.parentElement.id.slice(6) == (myPlayerNum + 1) % playedCards.length){
+                            orientCardToPlayer(card.parentElement.id.slice(6), (myPlayerNum - 1 + playedCards.length) % playedCards.length, playedCards.length);   
+                        }
+                        else if (card.parentElement.id.slice(6) == (myPlayerNum - 1 + playedCards.length) % playedCards.length)
+                            orientCardToPlayer(card.parentElement.id.slice(6), (myPlayerNum + 1) % playedCards.length, playedCards.length);
                         else{
-                            // !! allow user to choose new target
+                            addPlayerTargeting(card, card.parentElement.id.slice(6), playedCards.length);
                         }
                     })
                 }

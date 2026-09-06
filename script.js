@@ -43,7 +43,7 @@ io.on("connection", (socket) => {
     const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == currentID));
     if (myGame) {
         const existingPlayer = myGame.getPlayers().find((player) => player.playerID == currentID);
-        socket.emit("reconnection", existingPlayer, myGame.getPlayers(), myGame.getGameDetails().shop, myGame.getGameDetails().isGameInProgress, myGame.getGameDetails().roomCode);
+        socket.emit("reconnection", existingPlayer, myGame.getPlayers(), myGame.getGameDetails().shop, myGame.getGameDetails().roundPhase, myGame.getGameDetails().isGameInProgress, myGame.getGameDetails().roomCode);
         socket.emit("displayExistingPlayers", myGame.getPlayers());
     }
     else{
@@ -158,13 +158,10 @@ io.on("connection", (socket) => {
         if (!myLobby.getGameDetails().isGameInProgress){
             myLobby.getPlayers().forEach((player) => {
                 player.isInGame = true;
-                player.waitingOn = "selectAction";
             })
-
             myLobby.getGameDetails().isGameInProgress = true;
-            roundStart(myLobby.getPlayers());
+            roundStart(myLobby);
             io.emit("sendToGame");
-            io.emit("selectAction", myLobby.getPlayers());
         }
     })
 
@@ -179,11 +176,13 @@ io.on("connection", (socket) => {
 
         const keepWaiting = players.find((player) => !player.isReady)
         if (keepWaiting == undefined){
-            if (players[0].waitingOn == "selectAction"){
+            if (myGame.getGameDetails().roundPhase == "actionSelection"){
+                myGame.getGameDetails().roundPhase = "cardSwaps";
                 updatePlayerWaitingOn(players, "useCardSwap");
                 io.emit("cardSwapPhase", players);
             }
-            else if (players[0].waitingOn == "useCardSwap"){
+            else if (myGame.getGameDetails().roundPhase == "cardSwaps"){
+                myGame.getGameDetails().roundPhase = "actionResolution";
                 io.emit("revealActions", players);
                 setTimeout(() => {
                     resolveOrderedActions(players);
@@ -223,6 +222,16 @@ io.on("connection", (socket) => {
         giver.numCoins -= coins;
         receiver.numCoins += coins;
         io.emit("notification", receiver.playerNum, giver.playerName+" gave you "+coins+" coins!");
+    })
+
+    socket.on("impersonated", (actionName, myID) => {
+        const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
+        const impersonator = myGame.find((player) => player.ID == myID);
+        const action = allActions.find((action) => action.name == actionName);
+        impersonator.playedCard = action;
+        impersonator.isImpersonating = true;
+        impersonator.isReady = true;
+        // !! resolve other ordered actions
     })
 
     socket.on("finishedRedirecting", (newTargets, myID) => {
@@ -321,6 +330,7 @@ function makeGame(code, actionShop){
         return {
             roomCode,
             gameHasStarted,
+            roundPhase,
             shop
         }
     };
@@ -401,14 +411,20 @@ function checkShopPhase(players){
     if (!waitingOn){
         console.log("shopping");
         const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
+        myGame.getGameDetails().roundPhase == "buyCards";
         io.emit("allowShopPurchases", myGame.getGameDetails().shop, players);
     }
 }
 
-function roundStart(players){
+function roundStart(myGame){
+    const players = myGame.getPlayers();
     players.forEach((player) => {
         player.numCoins += 2;
+        player.isReady = false;
+        player.waitingOn = "selectAction";
     })
+    myGame.getGameDetails().roundPhase = "actionSelection";
+    io.emit("selectAction", players);
 }
 
 function checkEndOfRound(players){
@@ -422,13 +438,8 @@ function checkEndOfRound(players){
         io.emit("updateCards", players, myGame.getGameDetails().shop, "shop", false);
 
         if (!checkGameEnd(players)){
-            players.forEach((player) => {
-                player.isReady = false;
-                player.waitingOn = "selectAction";
-            })
-            roundStart(players);
+            roundStart(myGame);
             io.emit("resetGameDisplay");
-            io.emit("selectAction", players);
         }
         else{
             // !! add end of game functionality & scoring
@@ -446,7 +457,9 @@ function checkGameEnd(players){
 }
 
 function work(worker, workValue, modification){
-    worker.numCoins += Math.max(0, (workValue + modification));
+    if (!worker.isSabotaged){
+        worker.numCoins += Math.max(0, (workValue + modification));
+    }
 }
 
 function steal(stealer, stealFrom, modification, players){
@@ -500,6 +513,7 @@ function roundEndCleanup(players){
         player.isImmune = false;
         player.hasRecruited = false;
         player.isSabotaged = false;
+        player.isImpersonating = false
         // !! remove Bewitched status after playing a card while bewitched 
     })
 }
