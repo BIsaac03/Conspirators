@@ -190,6 +190,11 @@ socket.on("allowShopPurchases", (shop, players) => {
     displayCards(players[myPlayerNum], shop, "buy", false);
 })
 socket.on("resetGameDisplay", () => {
+    const checkOutList = document.getElementById("checkOutList");
+    if (checkOutList){
+        checkOutList.remove();
+    }
+
     const selectedPlayerIcon = document.getElementById("selectedPlayer");
     selectedPlayerIcon.id = ""
     const playedCards = document.querySelectorAll(`.playedCard`);
@@ -1424,8 +1429,6 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
         generateCard(possibleAction, card)
         possibleAction.addEventListener("click", () => {
             if (isTutorial){
-                console.log(card.name)
-
                 if (player.waitingOn == "clickWork"){
                     if (card.name == "Work"){
                         const myPlayedCard = document.querySelector(`#player0 .playedCard`);
@@ -1664,8 +1667,10 @@ function revealActions(players){
 }
 
 function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
+    const shopAction = document.querySelector(`#shopDisplay [action = "${actionName}"]`)
+
     let checkOutList = document.getElementById("checkOutList");
-    if (!checkOutList){
+    if (!checkOutList && coinsToSpend >= actionCost){
         checkOutList = document.createElement("div");
         checkOutList.id  = "checkOutList";
         bodyElement.appendChild(checkOutList);
@@ -1685,14 +1690,14 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
                 const curse = allActions.find((action) => action.name == "Curse");
                 const bewitch = allActions.find((action) => action.name == "Bewitch!");
                 if ((actionsToBuy[0] == curse || actionsToBuy[0] == bewitch)&&(actionsToBuy[1] == curse || actionsToBuy[1] == bewitch)){
-                    socket.emit("attemptedPurchase", actionsToBuy, myID);
+                    socket.emit("logAttemtedPurchase", actionsToBuy, myID);
                     tutorialPhase(21);
                     openCloseShopDisplay();
                     checkOutList.remove();
                 }
             }
             else{ 
-                socket.emit("attemptedPurchase", actionsToBuy, myID);
+                socket.emit("logAttemptedPurchase", actionsToBuy, myID);
                 checkOutList.remove();
             }
         })
@@ -1736,6 +1741,8 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
               
     const existingEntry = checkOutList.querySelector(`[action = "${actionName}"]`)
     if (existingEntry){
+        shopAction.classList.remove("selected");
+
         if (checkOutList.childElementCount == 3){
             checkOutList.remove();
         }
@@ -1759,6 +1766,8 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
    else{
         const remainingCoins = checkOutList.querySelector(`.leftover`);
         if (Number(remainingCoins.textContent) >= actionCost){
+            shopAction.classList.add("selected");
+
             remainingCoins.textContent = Number(remainingCoins.textContent) - actionCost;
             const totalCost = checkOutList.querySelector(`.sum`);
             totalCost.textContent = Number(totalCost.textContent) - actionCost;

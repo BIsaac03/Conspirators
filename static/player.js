@@ -12,6 +12,7 @@ export class Player{
     discard = [];
     playedCard = undefined;
     currentTarget = undefined;
+    cardsToBuy = undefined;
     numCardSwaps = 1;
     numCoins = 0;
     isImmune = false;

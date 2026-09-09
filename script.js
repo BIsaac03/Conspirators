@@ -192,28 +192,19 @@ io.on("connection", (socket) => {
                 io.emit("revealActions", players);
                 setTimeout(() => {
                     determineResolutionOrder(players, myGame.getGameDetails().startPlayer);
-                }, 5000)
+                }, 2000)
             }
             
         }
     })
 
-    socket.on("attemptedPurchase", (cardsToBuy, myID) => {
+    socket.on("logAttemptedPurchase", (cardsToBuy, myID) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
         const buyer = myGame.getPlayers().find((player) => player.playerID == myID);
-        
-        let totalCost = 0;
-        cardsToBuy.forEach((card) => {
-            totalCost += card.cost;
-        })
-        if (totalCost > buyer.numCoins){
-            //!! insufficient coins
-        }
-        else{
-            buyer.buyCards(cardsToBuy, totalCost);
-            buyer.isReady = true;
-            checkEndOfRound(myGame.getPlayers());
-        }
+        buyer.cardsToBuy = cardsToBuy;
+        buyer.isReady = true;
+
+        attemptPurchase(myGame.getPlayers(), myGame.getGameDetails().startPlayer, myGame.getGameDetails().shop)
     })
 
     socket.on("returnCardsToHand", (playerNum, retrievedCards, myID) => {
@@ -221,7 +212,7 @@ io.on("connection", (socket) => {
         const players = myGame.getPlayers();
         players[playerNum].retrieveSelectedCards(retrievedCards);
         players[playerNum].isReady = true;
-        checkEndOfRound(players, myGame.getGameDetails().shop);
+        checkShopPhase(players);
     })
 
     socket.on("gaveDonation", (giver, receiver, coins) => {
@@ -407,10 +398,10 @@ function determineResolutionOrder(players, startPlayer, playerNumResolved){
     });
     const playerOrder = priorityOrder.map((player) => player.playerNum);
     console.log(playerOrder);
-    resolveActions(players, playerOrder, playerNumResolved);
+    resolveActions(players, playerOrder, playerNumResolved, startPlayer);
 }
 
-function resolveActions(players, playerOrder, playerNumResolved){
+function resolveActions(players, playerOrder, playerNumResolved, startPlayer){
     const workValue = establishWorkValue(players);
 
     let numToResolve = 0
@@ -425,6 +416,7 @@ function resolveActions(players, playerOrder, playerNumResolved){
         const player = players[playerOrder[numToResolve]];
         if (player.playedCard){
             eval(player.playedCard.effect);
+            io.emit("updateStats", players, startPlayer);
         }
         numToResolve++;
     }
@@ -442,6 +434,41 @@ function checkShopPhase(players){
     }
 }
 
+function attemptPurchase(players, startPlayer, shop){
+    // ensure purchases are resolved in player order in case of limited quantity
+    let currentBuyer = players[startPlayer];
+
+    while(currentBuyer.isReady){
+        if (currentBuyer.cardsToBuy){
+            let totalCost = 0;
+            currentBuyer.cardsToBuy.forEach((card) => {
+                const shopContainsAction = shop.find((action) => action[0].name == card.name)
+                if (!shopContainsAction){
+                    // !! send 'action out of stock' message
+                    currentBuyer.isReady = false;
+                    return;
+                }
+                totalCost += card.cost;
+            })
+
+            if (totalCost > currentBuyer.numCoins){
+                // send 'too few coins' message
+                currentBuyer.isReady = false;
+                return;
+            }
+            else{
+                currentBuyer.buyCards(currentBuyer.cardsToBuy, totalCost);
+                currentBuyer.cardsToBuy = undefined;
+                if (currentBuyer.playerNum == (startPlayer - 1 + players.length) % players.length){
+                    endOfRound(players);
+                    return;
+                } 
+            }
+        }
+        currentBuyer = players[(currentBuyer.playerNum + 1) % players.length];
+    }
+}
+
 function roundStart(myGame){
     const players = myGame.getPlayers();
     players.forEach((player) => {
@@ -453,23 +480,20 @@ function roundStart(myGame){
     io.emit("selectAction", players);
 }
 
-function checkEndOfRound(players){
-    const waitingOn = players.find((player) => !player.isReady);
-    if (!waitingOn){
-        const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
-        roundEndCleanup(players);
-        io.emit("updateStats", players);
-        io.emit("updateCards", players, [], "discard", false);
-        io.emit("updateCards", players, [], "hand", false);
-        io.emit("updateCards", players, myGame.getGameDetails().shop, "shop", false);
+function endOfRound(players){
+    const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
+    roundEndCleanup(players);
+    io.emit("updateStats", players, myGame.getGameDetails().startPlayer);
+    io.emit("updateCards", players, [], "discard", false);
+    io.emit("updateCards", players, [], "hand", false);
+    io.emit("updateCards", players, myGame.getGameDetails().shop, "shop", false);
 
-        if (!checkGameEnd(players)){
-            roundStart(myGame);
-            io.emit("resetGameDisplay");
-        }
-        else{
-            // !! add end of game functionality & scoring
-        }
+    if (!checkGameEnd(players)){
+        roundStart(myGame);
+        io.emit("resetGameDisplay");
+    }
+    else{
+        // !! add end of game functionality & scoring
     }
 }
 
