@@ -277,12 +277,13 @@ function createShop(type){
         const abduct = allActions.find((action) => action.name == "Abduct!");
         const proselytize = allActions.find((action) => action.name == "Proselytize");
 
-        forSale.push([ransack, 4]);
-        forSale.push([honor, 4]);
-        forSale.push([hijack, 4]);
-        forSale.push([recruit, 4]);
-        forSale.push([impersonate, 4]);
-        forSale.push([unionize, 4]);
+        // !! reduced for testing, should start with 4 copies of each
+        forSale.push([ransack, 1]);
+        forSale.push([honor, 1]);
+        forSale.push([hijack, 1]);
+        forSale.push([recruit, 1]);
+        forSale.push([impersonate, 1]);
+        forSale.push([unionize, 1]);
         forSale.push([whistle, 4]);
         forSale.push([communalize, 4]);
         forSale.push([curse, 4]);
@@ -426,7 +427,6 @@ function resolveActions(players, playerOrder, playerNumResolved, startPlayer){
 function checkShopPhase(players){
     const waitingOn = players.find((player) => !player.isReady);
     if (!waitingOn){
-        console.log("shopping");
         const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
         myGame.changeGamePhase("buyCards");
         updatePlayerWaitingOn(players, "buyCards");
@@ -441,24 +441,29 @@ function attemptPurchase(players, startPlayer, shop){
     while(currentBuyer.isReady){
         if (currentBuyer.cardsToBuy){
             let totalCost = 0;
-            currentBuyer.cardsToBuy.forEach((card) => {
-                const shopContainsAction = shop.find((action) => action[0].name == card.name)
+            for (let i = 0; i < currentBuyer.cardsToBuy.length; i++){
+                const shopContainsAction = shop.find((action) => action[0].name == currentBuyer.cardsToBuy[i].name)
                 if (!shopContainsAction){
-                    // !! send 'action out of stock' message
                     currentBuyer.isReady = false;
+                    io.emit("notification", currentBuyer.playerNum, "An action you wished to buy has been purchased by a player ahead of you in turn order. Please place a new order.", "error");
+                    io.emit("updateCards", players, shop, "shop", false);
                     return;
                 }
-                totalCost += card.cost;
-            })
+                totalCost += currentBuyer.cardsToBuy[i].cost;
+            }
 
             if (totalCost > currentBuyer.numCoins){
-                // send 'too few coins' message
                 currentBuyer.isReady = false;
+                io.emit("notification", currentBuyer.playerNum, "You do not have enough coins for the order you placed. Please place a new order.", "error");
+                io.emit("updateCards", players, shop, "shop", false);
                 return;
             }
             else{
+                removeBoughtCardsFromShop(currentBuyer.cardsToBuy, shop);
                 currentBuyer.buyCards(currentBuyer.cardsToBuy, totalCost);
                 currentBuyer.cardsToBuy = undefined;
+                io.emit("updateCards", players, shop, "shop", false);
+
                 if (currentBuyer.playerNum == (startPlayer - 1 + players.length) % players.length){
                     endOfRound(players);
                     return;
@@ -467,6 +472,18 @@ function attemptPurchase(players, startPlayer, shop){
         }
         currentBuyer = players[(currentBuyer.playerNum + 1) % players.length];
     }
+}
+
+function removeBoughtCardsFromShop(boughtCards, shop){
+    boughtCards.forEach((card) => {
+        const shopEntryIndex = shop.findIndex((entry) => entry[0].name == card.name);
+        if (shop[shopEntryIndex][1] == 1){
+            shop.splice(shopEntryIndex, 1);
+        }
+        else{
+            shop[shopEntryIndex][1]--;
+        }
+    })
 }
 
 function roundStart(myGame){

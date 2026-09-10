@@ -186,7 +186,8 @@ socket.on("revealActions", (players) => {
     revealActions(players);
 })
 socket.on("allowShopPurchases", (shop, players) => {
-    console.log("shopping");
+    displayNotification("SHOPPING TIME!", "reminder");
+    // !! add button for coninuting without buying cards
     displayCards(players[myPlayerNum], shop, "buy", false);
 })
 socket.on("resetGameDisplay", () => {
@@ -256,9 +257,9 @@ socket.on("updateCards", (players, shop, where, shouldDisplay, isTutorial) => {
     }
 })
 
-socket.on("notification", (playerNum, notification) => {
+socket.on("notification", (playerNum, notification, notificationType) => {
     if (playerNum == myPlayerNum){
-        displayNotification(notification);
+        displayNotification(notification, notificationType);
     }
 })
 
@@ -1557,7 +1558,7 @@ function actionSelection(players, myPlayerNum, originalCard){
                 confirm.remove();
             }
             else{
-                // !! inform user that they are bewitched
+                displayNotification("You are bewitched and can only play Basic Actions.", "error")
             }
         }  
     })
@@ -1794,7 +1795,7 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
             }
         }
         else{
-            // !! display not enough coins message
+            displayNotification("You do not have enough coins for this purchase.", "error")
         }
     }
 }
@@ -1913,7 +1914,6 @@ function promptRedirects(type){
                 target == (myPlayerNum - 1 + playedCards.length) % playedCards.length) &&
                 card.parentElement.id.slice(6) != myPlayerNum){
                     card.classList.add("redirectable");
-                    // !! add highlighting to cards with "redirectable" class
                     card.setAttribute("originalTarget", target);
                     card.addEventListener("click", () => {
                         // !! let user eaesilt switch from one neighbor to another
@@ -2056,7 +2056,8 @@ function updateStats(players, startPlayer){
     }
 }
 
-function displayNotification(notification){
+function displayNotification(notification, notificationType){
+    // !!   change notification style based on notificationType
     const notificationDiv = document.createElement("div");
     notificationDiv.classList.add("notificationDiv");
 
