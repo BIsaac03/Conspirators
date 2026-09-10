@@ -1379,11 +1379,11 @@ function openCloseShopDisplay(){
             openClosePlayerDisplay()
         }
 
-        shopDisplay.style.left = "calc(100vw - 120vh)";
+        shopDisplay.style.left = "calc(30vw)";
         sliderIcon.src = "/static/Images/Icons/rightArrows.svg";
     }
     else if (sliderIcon.src.includes("/static/Images/Icons/rightArrows.svg")){
-        shopDisplay.style.left = "calc(100vw - 5vh)";
+        shopDisplay.style.left = "calc(100vw - max(3vw, 40px))";
         sliderIcon.src = "/static/Images/Icons/leftArrows.svg";
     }
 }
@@ -1397,11 +1397,11 @@ function openClosePlayerDisplay(){
             openCloseShopDisplay()
         }
 
-        playerDisplay.style.right = "calc(100vw - 120vh)";
+        playerDisplay.style.right = "calc(30vw)";
         sliderIcon.src = "/static/Images/Icons/leftArrows.svg";
     }
     else if (sliderIcon.src.includes("/static/Images/Icons/leftArrows.svg")){
-        playerDisplay.style.right = "calc(100vw - 4vh)";
+        playerDisplay.style.right = "calc(100vw - max(3vw, 40px))";
         sliderIcon.src = "/static/Images/Icons/rightArrows.svg";
     }
 }
@@ -1802,7 +1802,8 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
             }
         }
         else{
-            displayNotification("You do not have enough coins for this purchase.", "error")
+            displayNotification("You do not have enough coins for this purchase.", "error");
+            openCloseShopDisplay();
         }
     }
 }
