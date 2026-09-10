@@ -20,6 +20,7 @@ export class Player{
     isSabotaged = false;
     isImpersonating = false
     hasRecruited = false;
+    cooperatingWith = undefined;
     isInGame = false;
     isReady = false;
     waitingOn = undefined;

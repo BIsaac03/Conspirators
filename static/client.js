@@ -119,9 +119,12 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
                     retrieveCards(reconnectedPlayer, Math.floor(calculateNumCards("discard") / 2), false);
                     break;
 
-                case "donate":
-                    // !! determine recipient of donations after reconnection
-                    promptDonation(reconnectedPlayer, receiver, 4, "How many coins will you return to "+receiver.name+" ?", false);
+                case "cooperate":
+                    promptDonation(reconnectedPlayer, players[reconnectedPlayer.cooperatingWith], "cooperate");
+                    break;
+
+                case "honor":
+                    promptDonation(reconnectedPlayer, players[reconnectedPlayer.currentTarget], "honor");
                     break;
 
                 case "chooseImpersonate":
@@ -210,21 +213,25 @@ socket.on("resetGameDisplay", () => {
         card.style.border = "3px dashed cyan";
     })
 })
+socket.on("chooseImpersonate", (numPlayers, playerID) => {
+    if (playerID == myID){
+        promptImpersonate(numPlayers);
+    }
+})
 socket.on("retrieveCards", (player, numCardsToRetrieve) => {
     console.log("attemptRetrieval")
     if (player.playerNum == myPlayerNum){
         retrieveCards(player, numCardsToRetrieve);
     }
 })
-socket.on("donate", (giver, receiver, maxCoins, context) => {
-    if (giver.playerID == myID){
-        promptDonation(giver, receiver, maxCoins, context);
+socket.on("cooperate", (target, cooperator) => {
+    if (target.playerNum == myPlayerNum){
+        promptDonation(target, cooperator, "cooperate");
     }
-    
 })
-socket.on("chooseImpersonate", (numPlayers, playerID) => {
-    if (playerID == myID){
-        promptImpersonate(numPlayers);
+socket.on("honor", (player, target) => {
+    if (player.playerNum == myPlayerNum){
+        promptDonation(player, target, "honor");
     }
 })
 socket.on("whistleRedirects", (playerID) => {
@@ -592,7 +599,7 @@ function tutorialPhase(phase){
         case 13:
             var clickedBefore = document.getElementById("donationScreen");
             if (!clickedBefore){
-                promptDonation("", "", 4, "How many coins will you return to Grudgie?", true)
+                promptDonation("", "", "tutorial")
             }
             break;
         
@@ -1830,13 +1837,12 @@ function retrieveCards(player, numCardsToRetrieve){
     bodyElement.appendChild(retrieveDiv);
 }
 
-function promptDonation(giver, receiver, maxCoins, context, isTutorial){
+function promptDonation(giver, receiver, donationType){
     const donationScreen = document.createElement("div");
     donationScreen.id = "donationScreen";
 
     const contextMessage = document.createElement("p");
     contextMessage.id = "donationContext";
-    contextMessage.textContent = context;
     donationScreen.appendChild(contextMessage);
 
     const donationEntry = document.createElement("input");
@@ -1844,20 +1850,38 @@ function promptDonation(giver, receiver, maxCoins, context, isTutorial){
     donationEntry.maxLength = 1;
     donationScreen.appendChild(donationEntry);
 
+    if (donationType == "cooperate" || donationType == "tutorial"){
+        contextMessage.textContent = "How many coins will you return to "+receiver.playerName+"?";
+    }
+    else if (donationType == "honor"){
+        contextMessage.textContent = "How many coins will you take?";
+        donationEntry.addEventListener("input", () => {
+            if (donationEntry.value >= 0 && donationEntry.value <= 4){
+                contextMessage.textContent = "You will take " + donationEntry.value + ", leaving " + receiver.playerName + " " + (4 - Number(donationEntry.value)) * 2 + " coins.";
+            }
+            else{
+                contextMessage.textContent = "Enter a number 0-4 to decide how many coins YOU will take"
+            }
+        })
+    }
+
     const submit = document.createElement("button");
     submit.id = "submit";
     submit.textContent = "Confirm";
     submit.addEventListener("click", () => {
-        if (donationEntry.value >= 0 && donationEntry.value <= maxCoins){
-            if (isTutorial){
+        if (donationEntry.value >= 0 && donationEntry.value <= 4){
+            donationScreen.remove();
+            if (donationType == "tutorial"){
                 if (donationEntry.value == 0){
-                    donationScreen.remove();
                     tutorialPhase(14);
                 }
             }
-            else{
-                socket.emit("gaveDonation", giver, receiver, donationEntry.value);
+            else if (donationType == "cooperate"){
+                socket.emit("returnedCooperation", giver.playerID, receiver.playerID, Number(donationEntry.value));
             } 
+            else if (donationType == "honor"){
+                socket.emit("honored", giver.playerID, receiver.playerID, Number(donationEntry.value));
+            }
         }
     })
     donationScreen.appendChild(submit);    

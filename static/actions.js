@@ -101,8 +101,9 @@ export const allActions = [
         "effect":  `work(player, workValue, -2); 
                     players[player.currentTarget].numCoins += 5; 
                     players[player.currentTarget].isReady = false;
-                    players[player.currentTarget].waitingOn = "donate";
-                    donate(players[player.currentTarget], player, 4);`,
+                    players[player.currentTarget].waitingOn = "cooperate";
+                    players[player.currentTarget].cooperatingWith = player.playerNum;
+                    io.emit("cooperate", players[player.currentTarget], player);`,
         "priority": 0,
         "cost": 0,
         "isBasicAction": true,
@@ -217,7 +218,7 @@ export const allActions = [
         "isWork": false,
         "isSteal": true,
         "isTargeting": true,
-        "effect":   `player.numCoins += 3;
+        "effect": ` player.numCoins += 3;
                     player.isReady = false;
                     player.waitingOn = "hijackRedirects";
                     io.emit("hijackRedirects", player.playerID);
@@ -232,10 +233,12 @@ export const allActions = [
         "name": "Honor",
         "background": "static/Images/Backgrounds/yellow_arrow.png",
         "text": "Take up to 4 coins.<br>For each coin you did not take, target player takes 2.",
-        "isWork": "fales",
+        "isWork": false,
         "isSteal": false,
         "isTargeting": true,
-        "effect": ``, //!! take up to 4, give target player 2* difference
+        "effect": ` player.isReady = false;
+                    player.waitingOn = "honor";
+                    io.emit("honor", player, players[player.currentTarget]);`,
         "priority": 0,
         "cost": 4,
         "isBasicAction": false,

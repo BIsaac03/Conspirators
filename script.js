@@ -212,22 +212,45 @@ io.on("connection", (socket) => {
         const players = myGame.getPlayers();
         players[playerNum].retrieveSelectedCards(retrievedCards);
         players[playerNum].isReady = true;
-        checkShopPhase(players);
+
+        const me = myGame.getPlayers().find((player) => player.playerID == myID);
+        determineResolutionOrder(players, myGame.getGameDetails().startPlayer, me.playerNum);
+    })
+    socket.on("returnedCooperation", (targetID, cooperatorID, coins) => {
+        const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == targetID));
+        const target = myGame.getPlayers().find((player) => player.playerID == targetID);
+        const cooperator = myGame.getPlayers().find((player) => player.playerID == cooperatorID);
+
+        target.isReady = true;
+        target.numCoins -= coins;
+        cooperator.numCoins += coins;
+        io.emit("notification", cooperator.playerNum, target.playerName+" gave you "+coins+" coins!");
+        
+        determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, cooperator.playerNum);
     })
 
-    socket.on("gaveDonation", (giver, receiver, coins) => {
-        giver.numCoins -= coins;
-        receiver.numCoins += coins;
-        io.emit("notification", receiver.playerNum, giver.playerName+" gave you "+coins+" coins!");
+    socket.on("honored", (giverID, receiverID, coins) => {
+        const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == giverID));
+        const giver = myGame.getPlayers().find((player) => player.playerID == giverID);
+        const receiver = myGame.getPlayers().find((player) => player.playerID == receiverID);
+        const honoredCoins = (4 - coins) * 2;
+
+        giver.isReady = true;
+        giver.numCoins += coins;
+        receiver.numCoins += honoredCoins
+        io.emit("notification", receiver.playerNum, giver.playerName+" gave you "+honoredCoins+" coins!");
+    
+        determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, giver.playerNum);
     })
 
     socket.on("impersonated", (actionName, myID) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
-        const impersonator = myGame.find((player) => player.ID == myID);
+        const impersonator = myGame.find((player) => player.playerID == myID);
         const action = allActions.find((action) => action.name == actionName);
         impersonator.playedCard = action;
         impersonator.isImpersonating = true;
         impersonator.isReady = true;
+
         determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, impersonator.playerNum);
     })
 
@@ -236,6 +259,9 @@ io.on("connection", (socket) => {
         for (let i = 0; i < myGame.getPlayers().length; i++){
             myGame.getPlayers()[i].currentTarget = newTargets[i];
         }
+
+        const me = myGame.getPlayers().find((player) => player.playerID == myID);
+        determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, me.playerNum);
     })
 
     socket.on("getUpdatedCards", (where, shouldDisplay, myID) => {
@@ -407,11 +433,10 @@ function resolveActions(players, playerOrder, playerNumResolved, startPlayer){
 
     let numToResolve = 0
     // determine how far already progressed in playerOrder 
-    if (playerNumResolved){
+    if (playerNumResolved != undefined){
         const numResolved = playerOrder.indexOf(playerNumResolved);
         numToResolve = numResolved + 1;
     }
-
     // resolve actions until player input is required or all actions have been resolved
     while (!players.find((player) => !player.isReady) && numToResolve < playerOrder.length){
         const player = players[playerOrder[numToResolve]];
@@ -538,12 +563,6 @@ function steal(stealer, stealFrom, modification, players){
     }
 }
 
-function donate(giver, receiver, maxCoins, context){
-    console.log("donation");
-    const realMaxCoins = Math.min(maxCoins, giver.numCoins);
-    io.emit("donate", giver, receiver, realMaxCoins, context)
-}
-
 function cursed(cursed){
     if (cursed.playedCard.isBasicAction){
         cursed.discardPlayedCard();
@@ -581,5 +600,6 @@ function roundEndCleanup(players){
         player.hasRecruited = false;
         player.isSabotaged = false;
         player.isImpersonating = false
+        player.cooperatingWith = undefined;
     })
 }
