@@ -287,20 +287,20 @@ function createShop(type){
     if (type == "basic"){
         // recommended set for first play-through
         const ransack = allActions.find((action) => action.name == "Ransack");
-        const bewitch = allActions.find((action) => action.name == "Bewitch!");
+        const bewitch = allActions.find((action) => action.name == "Bewitch");
         const communalize = allActions.find((action) => action.name == "Communalize");
         const curse = allActions.find((action) => action.name == "Curse");
         const hijack = allActions.find((action) => action.name == "Hijack");
         const honor = allActions.find((action) => action.name == "Honor");
         const impersonate = allActions.find((action) => action.name == "Impersonate");
-        const pillage = allActions.find((action) => action.name == "Pillage!");
+        const pillage = allActions.find((action) => action.name == "Pillage");
         const recruit = allActions.find((action) => action.name == "Recruit");
-        const sabotage = allActions.find((action) => action.name == "Sabotage!");
+        const sabotage = allActions.find((action) => action.name == "Sabotage");
         const unionize = allActions.find((action) => action.name == "Unionize");
         const whistle = allActions.find((action) => action.name == "Whistle");
         const sacrifice = allActions.find((action) => action.name == "Sacrifice");
         const accuse = allActions.find((action) => action.name == "Accuse");
-        const abduct = allActions.find((action) => action.name == "Abduct!");
+        const abduct = allActions.find((action) => action.name == "Abduct");
         const proselytize = allActions.find((action) => action.name == "Proselytize");
 
         // !! reduced for testing, should start with 4 copies of each
@@ -488,6 +488,7 @@ function attemptPurchase(players, startPlayer, shop){
                 currentBuyer.buyCards(currentBuyer.cardsToBuy, totalCost);
                 currentBuyer.cardsToBuy = undefined;
                 io.emit("updateCards", players, shop, "shop", false);
+                io.emit("updateStats", players, startPlayer);
 
                 if (currentBuyer.playerNum == (startPlayer - 1 + players.length) % players.length){
                     endOfRound(players);

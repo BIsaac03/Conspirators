@@ -156,7 +156,7 @@ export const allActions = [
         "isOneShot": false,
     },
     {
-        "name": "Bewitch!",
+        "name": "Bewitch",
         "background": "static/Images/Backgrounds/purple_blue.png",
         "text": "<b>Work +4</b>.<br>All other players become <i>Bewitched</i> (can only play Basic Actions next turn).",
         "isWork": true,
@@ -262,7 +262,7 @@ export const allActions = [
         "isOneShot": false,
     },
     {
-        "name": "Pillage!",
+        "name": "Pillage",
         "background": "static/Images/Backgrounds/red_arrow.png",
         "text": "<b>Steal +5</b>.<br>If you stole fewer<br>than 9 coins, take the difference from the bank.",
         "isWork": false,
@@ -293,7 +293,7 @@ export const allActions = [
         "isOneShot": false,
     },
     {
-        "name": "Sabotage!",
+        "name": "Sabotage",
         "background": "static/Images/Backgrounds/green_red_arrow.png",
         "text": "Workers receive no coins. If targeting a Worker, redirect clockwise until not.<br><b>Steal +2</b>.",
         "isWork": false,
@@ -391,7 +391,7 @@ export const allActions = [
         "isOneShot": false,
     },
     {
-        "name": "Abduct!",
+        "name": "Abduct",
         "background": "static/Images/Backgrounds/yellow.png",
         "text": "Take any card from<br>the Shop and add it<br>to your hand.",
         "isWork": false,
