@@ -13,6 +13,7 @@ export const allActions = [
         "isBasicAction": true,
         "isSecondaryBA": false,
         "isOneShot": false,
+        "FAQ": undefined
     },
     {
         "name": "Work",
@@ -27,6 +28,7 @@ export const allActions = [
         "isBasicAction": true,
         "isSecondaryBA": false,
         "isOneShot": false,
+        "FAQ": undefined
     },
     {
         "name": "Defend",
@@ -42,6 +44,7 @@ export const allActions = [
         "isBasicAction": true,
         "isSecondaryBA": false,
         "isOneShot": false,
+        "FAQ": undefined
     },
     {
         "name": "Retaliate",
@@ -59,6 +62,7 @@ export const allActions = [
         "isBasicAction": true,
         "isSecondaryBA": false,
         "isOneShot": false,
+        "FAQ": undefined
     },
     {
         "name": "Rest",
@@ -74,22 +78,7 @@ export const allActions = [
         "isBasicAction": true,
         "isSecondaryBA": false,
         "isOneShot": false,
-    },
-// VariableBasicActions
-    {
-        "name": "Bless",
-        "background": "static/Images/Backgrounds/yellow_arrow.png",
-        "text": "<b>Work Value</b>.<br>Return 2 discarded cards to your hand. Target player returns their played card to their hand instead of discarding.",
-        "isWork": false,
-        "isSteal": false,
-        "isTargeting": true,
-        "effect":  `player.numCoins += workValue; 
-                    player.rest(2);`, // !! target player returns played card to hand
-        "priority": 0,
-        "cost": 0,
-        "isBasicAction": true,
-        "isSecondaryBA": true,
-        "isOneShot": false,
+        "FAQ": ["This does NOT count as one of the cards in your discard for its calculation."]
     },
     {
         "name": "Cooperate",
@@ -109,21 +98,7 @@ export const allActions = [
         "isBasicAction": true,
         "isSecondaryBA": true,
         "isOneShot": false,
-    },
-    {
-        "name": "Help",
-        "background": "static/Images/Backgrounds/blue_arrow.png",
-        "text": "<b>Work +1</b>.<br>Target player takes a coin.",
-        "isWork": true,
-        "isSteal": true,
-        "isTargeting": true,
-        "effect":  `work(player, workValue, 1); 
-                    players[player.currentTarget].numCoins += 1;`,
-        "priority": 0,
-        "cost": 0,
-        "isBasicAction": true,
-        "isSecondaryBA": true,
-        "isOneShot": false,
+        "FAQ": undefined
     },
     {
         "name": "Prepare",
@@ -138,6 +113,7 @@ export const allActions = [
         "isBasicAction": true,
         "isSecondaryBA": true,
         "isOneShot": false,
+        "FAQ": undefined
     },
     {
         "name": "Ransack",
@@ -154,6 +130,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
+        "FAQ": ["Neighbors receive coins even if your <b>Steal</b> is blocked.", "If you are a neighbor, you take coins."]
     },
     {
         "name": "Bewitch",
@@ -167,12 +144,13 @@ export const allActions = [
                         if (other.playerID != player.playerID){
                             other.isBewitched = true;
                         } 
-                    })`, // !! prevent bewitched players from playing non-Basic actions
+                    })`,
         "priority": 0,
         "cost": 4,
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": true,
+        "FAQ": ["Basic Actions are any cards that started the game in your hand (they will not have a cost).", "If multiple Bewitches are played in a round everyone is still only <i>Bewitched</i> for a single round."]
     },
     {
         "name": "Communalize",
@@ -191,6 +169,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
+        "FAQ": ["If this card is redirected, the immunity from Thieves is redirected with it."]
     },
     {
         "name": "Curse",
@@ -210,6 +189,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
+        "FAQ": ["Players do not need to be <b>Stealing</b> from you, or even affecting you with their card to be Cursed."]
     },
     {
         "name": "Hijack",
@@ -228,6 +208,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
+        "FAQ": ["You may redirect this card as well, though you may NOT then redirect cards targetng your new target."]
     },
     {
         "name": "Honor",
@@ -244,6 +225,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
+        "FAQ": undefined
     },
     {
         "name": "Impersonate",
@@ -260,6 +242,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
+        "FAQ": ["You may Impersonate a card already Impersonating another card.", "If you Impersonate an Impersonate which has not yet Impersonated a card, this card does nothing."]
     },
     {
         "name": "Pillage",
@@ -276,6 +259,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": true,
+        "FAQ": undefined
     },
     {
         "name": "Recruit",
@@ -291,11 +275,12 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
+        "FAQ": undefined
     },
     {
         "name": "Sabotage",
         "background": "static/Images/Backgrounds/green_red_arrow.png",
-        "text": "Workers receive no coins. If targeting a Worker, redirect clockwise until not.<br><b>Steal +2</b>.",
+        "text": "Working yields no coins. If targeting a Worker, redirect clockwise until not.<br><b>Steal +2</b>.",
         "isWork": false,
         "isSteal": true,
         "isTargeting": true,
@@ -320,6 +305,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": true,
+        "FAQ": ["Any modification to the <b>Work</b> still results in 0 coins.", "You can never redirect to target yourself", "If you have redirected around all players, <b>Steal</b> from your original target."]
     },
     {
         "name": "Unionize",
@@ -339,6 +325,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
+        "FAQ": undefined
     },
     {
         "name": "Whistle",
@@ -357,6 +344,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
+        "FAQ": ["Cards targeting you may be redirected to either neighbor.", "Cards targeting one neighbor CANNOT be redirected to the other."]
     },
     {
         "name": "Sacrifice",
@@ -372,6 +360,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
+        "FAQ": ["Rest is only discarded once."]
     },
     {
         "name": "Accuse",
@@ -389,6 +378,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
+        "FAQ": ["If your target played Retaliate but has yet to be stolen from, they are not yet a Thief."]
     },
     {
         "name": "Abduct",
@@ -403,6 +393,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": true,
+        "FAQ": ["This does NOT count toward any rebate you may earn when buying cards"]
     },
     {
         "name": "Proselytize",
@@ -421,5 +412,6 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
+        "FAQ": ["Basic Actions are any cards that started the game in your hand (they will not have a cost)."]
     }
 ]
