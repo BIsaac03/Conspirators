@@ -673,8 +673,9 @@ function tutorialPhase(phase){
             socket.emit("tutorialRequest", "save", 20, myID);
             removePreviousElement(`.tutorialProgress`);
             addTutorialProgressArrows([ "You can buy up to 3 different cards each round.",
-                                        "If you buy more than 1 card, you'll get a rebate.",
+                                        "If you buy more than 1, you'll get a rebate.",
                                         "Buying 2 cards will earn you 1 coin, while buying 3 will earn you 3.",
+                                        "The coins are earned AFTER your purchase, so you cannot use them this round.",
                                         "Let's buy a Curse and a Bewitch. (You may need to scroll through the shop if you cannot find them.)"
                                         ], 21, tutorialDiv);
             break;
@@ -1338,6 +1339,21 @@ function blowUpAction(action, isInPlay){
     }
     bodyElement.appendChild(previewDisplay);
     generateCard(previewDisplay, action)
+
+    if (action.FAQ){
+        const actionFAQ = document.createElement("div");
+        actionFAQ.classList.add("FAQ");
+        action.FAQ.forEach((info) => {
+            const tip = document.createElement("p");
+            tip.innerHTML = info;
+            actionFAQ.appendChild(tip);
+            if (action.isOneShot){
+                tip.classList.add("oneShot");
+            }
+        })
+        previewDisplay.appendChild(actionFAQ);
+    }
+    
     return previewDisplay;
 }
 
@@ -1849,7 +1865,7 @@ function promptDonation(giver, receiver, donationType){
         contextMessage.textContent = "How many coins will you take?";
         donationEntry.addEventListener("input", () => {
             if (donationEntry.value >= 0 && donationEntry.value <= 4){
-                contextMessage.textContent = "You will take " + donationEntry.value + ", leaving " + receiver.playerName + " " + (4 - Number(donationEntry.value)) * 2 + " coins.";
+                contextMessage.textContent = "You will take " + donationEntry.value + ", leaving " + receiver.playerName + " " + (4 - Number(donationEntry.value)) * 3 + " coins.";
             }
             else{
                 contextMessage.textContent = "Enter a number 0-4 to decide how many coins YOU will take"

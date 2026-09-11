@@ -233,6 +233,23 @@ button:hover{
     border-radius: 10%;
     z-index: 5;
 }
+#blownUp .FAQ{
+    position: absolute;
+    left: 28vw;
+    width: 25vw;
+    display: grid;
+    gap: 10vh;
+}
+#blownUp .FAQ p{
+    padding: 15px;
+    background-color: rgb(255, 245, 230);
+    box-shadow: 0 0 10px 3px gray;
+    font-size: 24px;
+    text-align: center;
+}
+#blownUp .FAQ p.oneShot{
+    background-color: rgb(255, 220, 210);
+}
 
 #gameSpace{
     position: absolute;

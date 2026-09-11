@@ -150,7 +150,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": true,
-        "FAQ": ["Basic Actions are any cards that started the game in your hand (they will not have a cost).", "If multiple Bewitches are played in a round everyone is still only <i>Bewitched</i> for a single round."]
+        "FAQ": ["Basic Actions are any cards that started the game in your hand (they will not have a cost).", "If multiple 'Bewitches' are played in a round, everyone is still only <i>Bewitched</i> for a single round."]
     },
     {
         "name": "Communalize",
@@ -169,7 +169,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["If this card is redirected, the immunity from Thieves is redirected with it."]
+        "FAQ": ["Redirecting this card AFTER it has resolved does not change players' immunity from Thieves."]
     },
     {
         "name": "Curse",
@@ -189,7 +189,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["Players do not need to be <b>Stealing</b> from you, or even affecting you with their card to be Cursed."]
+        "FAQ": ["Players do not need to <b>Steal</b> from you, or even affect you with their card to be <i>Cursed</i>."]
     },
     {
         "name": "Hijack",
@@ -208,12 +208,12 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["You may redirect this card as well, though you may NOT then redirect cards targetng your new target."]
+        "FAQ": ["You may redirect THIS card as well, though you may NOT then redirect cards targeting your new target."]
     },
     {
         "name": "Honor",
         "background": "static/Images/Backgrounds/yellow_arrow.png",
-        "text": "Take up to 4 coins.<br>For each coin you did not take, target player takes 2.",
+        "text": "Take up to 4 coins.<br>For each coin you did not take, target player takes 3.",
         "isWork": false,
         "isSteal": false,
         "isTargeting": true,
@@ -221,7 +221,7 @@ export const allActions = [
                     player.waitingOn = "honor";
                     io.emit("honor", player, players[player.currentTarget]);`,
         "priority": 0,
-        "cost": 4,
+        "cost": 5,
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
@@ -242,7 +242,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["You may Impersonate a card already Impersonating another card.", "If you Impersonate an Impersonate which has not yet Impersonated a card, this card does nothing."]
+        "FAQ": ["Do not resolve the action you Impersonate until its place in turn order.", "You may Impersonate a card already Impersonating another card.", "If you Impersonate an 'Impersonate' which has not yet Impersonated a card, this card does nothing."]
     },
     {
         "name": "Pillage",
@@ -305,7 +305,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": true,
-        "FAQ": ["Any modification to the <b>Work</b> still results in 0 coins.", "You can never redirect to target yourself", "If you have redirected around all players, <b>Steal</b> from your original target."]
+        "FAQ": ["Any modification to the <b>Work</b> still results in 0 coins.", "You can never redirect to target yourself.", "If you have redirected around all players, <b>Steal</b> from your original target."]
     },
     {
         "name": "Unionize",
@@ -360,7 +360,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["Rest is only discarded once."]
+        "FAQ": ["'Rest' is only discarded once."]
     },
     {
         "name": "Accuse",
@@ -378,7 +378,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["If your target played Retaliate but has yet to be stolen from, they are not yet a Thief."]
+        "FAQ": ["If your target played 'Retaliate' but has yet to be stolen from, they are not yet a Thief."]
     },
     {
         "name": "Abduct",
@@ -393,7 +393,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": true,
-        "FAQ": ["This does NOT count toward any rebate you may earn when buying cards"]
+        "FAQ": ["This does NOT count toward any rebate you may earn when buying cards."]
     },
     {
         "name": "Proselytize",
