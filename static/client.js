@@ -68,6 +68,7 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
         // restore interrupted game state
         switch (roundPhase){
             case "actionSelection":
+                populateCardBacks(players.length);
                 if (reconnectedPlayer.playedCard && reconnectedPlayer.currentTarget){
                     const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
                     generateCard(myPlayedCard, reconnectedPlayer.playedCard);
@@ -82,6 +83,7 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
                 break;
 
             case "cardSwaps":
+                populateCardBacks(players.length);
                 const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
                 generateCard(myPlayedCard, reconnectedPlayer.playedCard);
                 orientCardToPlayer(myPlayerNum, reconnectedPlayer.currentTarget, players.length);
@@ -178,6 +180,7 @@ socket.on("sendToGame", () => {
     window.location.href = "gameSpace.html"
 })
 socket.on("selectAction", (players) => {
+    populateCardBacks(players.length);
     actionSelection(players, myPlayerNum);
 })
 socket.on("opponentActionChosen", (playerNum) => {
@@ -190,26 +193,14 @@ socket.on("revealActions", (players) => {
     revealActions(players);
 })
 socket.on("allowShopPurchases", (shop, players) => {
+    actionPhaseCleanUp(players.length);
     displayNotification("SHOPPING TIME!", "reminder");
     // !! add button for coninuting without buying cards
     displayCards(players[myPlayerNum], shop, "buy", false);
 })
 socket.on("resetGameDisplay", () => {
     removePreviousElement(`#checkOutList`);
-
-    const selectedPlayerIcon = document.getElementById("selectedPlayer");
-    selectedPlayerIcon.id = ""
-    const playedCards = document.querySelectorAll(`.playedCard`);
-    playedCards.forEach(card => {
-        card.classList.remove("card");
-        card.innerHTML = "";
-        const actionBack = document.createElement("img");
-        actionBack.src = "/static/Images/Misc/back.png";
-        card.appendChild(actionBack);
-        card.style.opacity = "0.5";
-        card.style.transform = 'rotate(-90deg)';
-        card.style.border = "3px dashed cyan";
-    })
+    populateCardBacks();
 })
 socket.on("chooseImpersonate", (numPlayers, playerID) => {
     if (playerID == myID){
@@ -333,6 +324,7 @@ function startTutorial(players, phase){
     bodyElement.appendChild(tutorialDiv);
 
     if (phase != 1){
+        console.log(players[0]);
         loadPreviousTutorialSteps(phase, players[0].currentTarget);
     }
     tutorialPhase(phase);
@@ -441,14 +433,7 @@ function tutorialPhase(phase){
                                         "For some cards, this will matter, but the choice here is arbitrary.",
                                         "Click on a player (the gray circles) to target them, then confirm your play."
                                         ], 5, tutorialDiv);
-
-            for (let i = 1; i < 3; i++){
-                const playedCard = document.querySelector(`#player${i} .playedCard`);
-                const actionBack = document.createElement("img");
-                actionBack.src = "/static/Images/Misc/back.png";
-                playedCard.appendChild(actionBack);
-                playedCard.style.opacity = "0.5";
-            }
+            populateCardBacks(3);
             break;
 
         case 5:
@@ -511,7 +496,8 @@ function tutorialPhase(phase){
                 const keepActionAsIs = document.createElement("button");
                 keepActionAsIs.textContent = "Carry On";
                 keepActionAsIs.addEventListener("click", () => {
-                    socket.emit("tutorialRequest", "confirmCard", ["Work", 1, true], myID);
+                    const currentTarget = document.querySelector(`#player0 .playedCard`).getAttribute("targetNum");
+                    socket.emit("tutorialRequest", "confirmCard", ["Work", currentTarget, true], myID);
                     cardSwapPopUp.remove();
                     tutorialPhase(8);
                 })
@@ -595,7 +581,7 @@ function tutorialPhase(phase){
             removePreviousElement(`.tutorialProgress`);
             tutorialHighlight("numCoins", false);
             socket.emit("tutorialRequest", "discardCard", "", myID);
-            endRoundCleanUp(3);
+            actionPhaseCleanUp(3);
             document.querySelector(`#player0 .discardNum`).textContent = "1";
             document.querySelector(`#player1 .discardNum`).textContent = "1";
             document.querySelector(`#player2 .discardNum`).textContent = "1";
@@ -735,13 +721,7 @@ function tutorialPhase(phase){
                                         "Then, players choose their action.",
                                         "Let's 'Prepare' so we can have more flexibility on future rounds."
                                         ], 27, tutorialDiv);
-            for (let i = 1; i < 3; i++){
-                const playedCard = document.querySelector(`#player${i} .playedCard`);
-                const actionBack = document.createElement("img");
-                actionBack.src = "/static/Images/Misc/back.png";
-                playedCard.appendChild(actionBack);
-                playedCard.style.opacity = "0.5";
-            }
+            populateCardBacks(3);
             break;
 
         case 27: 
@@ -806,7 +786,7 @@ function tutorialPhase(phase){
             useCardSwap.addEventListener("click", () => {
                 document.querySelector(`#player0 .numCardSwaps`).textContent = "0";
                 cardSwapPopUp.remove();
-                endRoundCleanUp(1);
+                actionPhaseCleanUp(1);
 
                 const playedCard = document.querySelector(`#player0 .playedCard`);
                 addPlayerTargeting(playedCard, myPlayerNum, 3);
@@ -979,6 +959,7 @@ function tutorialHighlight(className, makeColorful){
 }
 function loadPreviousTutorialSteps(phase, target){
     console.log(phase);
+    console.log(target);
     socket.emit("tutorialRequestion", "setWaitingOn", "", myID);
 
     // reveal hidden elements
@@ -1032,13 +1013,7 @@ function loadPreviousTutorialSteps(phase, target){
 
     // update opponent cards
     if (phase == 6 || phase == 26 || phase == 29){
-        for (let i = 1; i < 3; i++){
-            const playedCard = document.querySelector(`#player${i} .playedCard`);
-            const actionBack = document.createElement("img");
-            actionBack.src = "/static/Images/Misc/back.png";
-            playedCard.appendChild(actionBack);
-            playedCard.style.opacity = "0.5";
-        }
+        populateCardBacks(3);
     }
     else if (phase == 10 || phase == 12){
         const work = allActions.find((action) => action.name == "Work");
@@ -1287,42 +1262,42 @@ function blowUpScorecard(numPlayers, scoreCardType){
     bodyElement.appendChild(blownUpScorecard);
 }
 
-function generateCard(div, card){
-    div.innerHTML = "";
+function generateCard(div, action){
+    div.classList.remove("back");
     div.classList.add("card");
-    if (card.isOneShot){
+    if (action.isOneShot){
         div.classList.add("oneShot");
     }
 
     const name = document.createElement("p");
-    name.innerHTML = card.name;
-    if (card.isOneShot){
+    name.innerHTML = action.name;
+    if (action.isOneShot){
         name.innerHTML += "!";
     }
     name.classList.add("name")
     const text = document.createElement("p");
-    text.innerHTML = card.text;
+    text.innerHTML = action.text;
     text.classList.add("text");
         
     const cost = document.createElement("p");
     cost.classList.add("cost");
-    cost.textContent = card.cost;
+    cost.textContent = action.cost;
 
     const priority = document.createElement("p");
     priority.classList.add("priority");
-    priority.textContent = card.priority;
+    priority.textContent = action.priority;
 
     const background = document.createElement("img");
     background.classList.add("background");
-    background.src = card.background;
+    background.src = action.background;
 
     div.appendChild(name);
-    div.setAttribute('action', card.name);
+    div.setAttribute('action', action.name);
     div.appendChild(text);
-    if (card.cost != 0){
+    if (action.cost != 0){
         div.appendChild(cost);
     }
-    if (card.priority != 0){
+    if (action.priority != 0){
         div.appendChild(priority);
     }
         
@@ -2230,8 +2205,18 @@ function displayNotification(notification, notificationType){
     setTimeout(() => {notificationDiv.remove()}, 60000);
 }
 
-// !! add function to regular game
-function endRoundCleanUp(numPlayers){
+function populateCardBacks(numPlayers){
+    for (let i = 0; i < numPlayers; i++){
+        if (i != myPlayerNum){
+            const playedCard = document.querySelector(`#player${i} .playedCard`);
+            playedCard.classList.remove("card");
+            playedCard.innerHTML = "";
+            playedCard.classList.add("back");
+        }
+    }
+}
+
+function actionPhaseCleanUp(numPlayers){
     for (let i = 0; i < numPlayers; i++){
         const playedCard = document.querySelector(`#player${i} .playedCard`);
             playedCard.innerHTML = "";
