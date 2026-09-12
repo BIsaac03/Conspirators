@@ -18,6 +18,7 @@ export class Player{
     isImmune = false;
     isBewitched = false;
     isSabotaged = false;
+    isAbducted = false;
     isImpersonating = false
     hasRecruited = false;
     cooperatingWith = undefined;
@@ -93,7 +94,9 @@ export class Player{
         }
     }
     discardPlayedCard(){
-        if (this.playedCard){
+        if (this.playedCard && !this.isAbducted){
+            const returnToShop = this.playedCard.isOneShot;
+
             if (this.isImpersonating){
                 this.playedCard = allActions.find((action) => action.name == "Impersonate");
             }
@@ -101,6 +104,16 @@ export class Player{
             // return Rest to hand
             if (this.playedCard.name === "Rest"){
                 this.hand.push([this.playedCard, 1]);
+            }
+            // return OneShots to shop
+            else if (returnToShop){
+                const actionInShop = this.shop.find((entry) => entry[0].name == this.playedCard.name);
+                if (!actionInShop){
+                    this.shop.push([this.playedCard, 1])
+                }
+                else{
+                    actionInShop[1]++;
+                }
             }
             // discard other played cards
             else{
@@ -116,9 +129,9 @@ export class Player{
             this.currentTarget = undefined;
         }
     }
-    buyCards(boughtCards, cost){
+    buyCards(boughtCards, cost, addToHand){
         boughtCards.forEach((card)=> {
-            if (!this.hasRecruited){
+            if (!addToHand){
                 const actionInDiscard = this.discard.find((entry) => entry[0].name == card.name);
                 if (!actionInDiscard){
                     this.discard.push([card, 1])

@@ -205,8 +205,6 @@ io.on("connection", (socket) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
         const buyer = myGame.getPlayers().find((player) => player.playerID == myID);
         buyer.cardsToBuy = cardsToBuy;
-        console.log(cardsToBuy);
-        console.log(buyer);
         buyer.isReady = true;
 
         attemptPurchase(myGame.getPlayers(), myGame.getGameDetails().startPlayer, myGame.getGameDetails().shop)
@@ -501,7 +499,7 @@ function attemptPurchase(players, startPlayer, shop){
                 }
                 else{
                     removeBoughtCardsFromShop(currentBuyer.cardsToBuy, shop);
-                    currentBuyer.buyCards(currentBuyer.cardsToBuy, totalCost);
+                    currentBuyer.buyCards(currentBuyer.cardsToBuy, totalCost, currentBuyer.hasRecruited);
                     currentBuyer.cardsToBuy = undefined;
                     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
                     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", players, startPlayer);
@@ -619,6 +617,7 @@ function roundEndCleanup(players){
         player.isImmune = false;
         player.hasRecruited = false;
         player.isSabotaged = false;
+        player.isAbducted = false;
         player.isImpersonating = false
         player.cooperatingWith = undefined;
     })

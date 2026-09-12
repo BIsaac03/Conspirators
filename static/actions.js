@@ -243,7 +243,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["Do not resolve the action you Impersonate until its place in turn order.", "You may Impersonate a card already Impersonating another card.", "If you Impersonate an 'Impersonate' which has not yet Impersonated a card, this card does nothing."]
+        "FAQ": ["Resolve the action you Impersonate in turn order.", "You may Impersonate an 'Impersonate' only if it is already Impersonating another card. Otherwise, it does nothing."]
     },
     {
         "name": "Pillage",
@@ -383,18 +383,29 @@ export const allActions = [
     },
     {
         "name": "Abduct",
-        "background": "static/Images/Backgrounds/yellow.png",
-        "text": "Take any card from<br>the Shop and add it<br>to your hand.",
+        "background": "static/Images/Backgrounds/yellow_arrow.png",
+        "text": "Target player's card is discarded to your hand. If it is a Basic Action, take 3 coins.",
         "isWork": false,
         "isSteal": false,
         "isTargeting": false,
-        "effect":  ``, // !! take action from shop
+        "effect":  `players[player.currentTarget].isAbducted = true;
+                    if (players[player.currentTarget].isImpersonating){
+                        const impersonate = allActions.find((action) => action.name == "Impersonate);
+                        player.buyCards([impersonate], 0, true);
+                    }
+                    else{
+                        const abductedCard = allActions.find((action) => action.name == players[player.currentTarget].playedCard.name);
+                        player.buyCards([abductedCard], 0, true);
+                        }
+                    if (players[player.currentTarget].playedCard.isBasicAction){
+                        player.numCoins +=3;
+                    }`,
         "priority": 0,
         "cost": 3,
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": true,
-        "FAQ": ["This does NOT count toward any rebate you may earn when buying cards."]
+        "FAQ": ["The action still resolves as normal.", "'Rest' will always return to the original owner's hand.", "If multiple 'Abducts' are played against the same target, both get copies."]
     },
     {
         "name": "Proselytize",
