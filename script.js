@@ -72,6 +72,7 @@ io.on("connection", (socket) => {
         opp2.numCoins += 2;
         tutorialGame.addPlayer(opp2);
         tutorialGame.startGame();
+        socket.join("tutorial");
         socket.emit("startTutorial", tutorialGame.getPlayers());
     })
     socket.on("leaveTutorial", (ID) => {
@@ -204,6 +205,8 @@ io.on("connection", (socket) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
         const buyer = myGame.getPlayers().find((player) => player.playerID == myID);
         buyer.cardsToBuy = cardsToBuy;
+        console.log(cardsToBuy);
+        console.log(buyer);
         buyer.isReady = true;
 
         attemptPurchase(myGame.getPlayers(), myGame.getGameDetails().startPlayer, myGame.getGameDetails().shop)
@@ -464,44 +467,55 @@ function checkShopPhase(players){
 
 function attemptPurchase(players, startPlayer, shop){
     const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
-    // ensure purchases are resolved in player order in case of limited quantity
     let currentBuyer = players[startPlayer];
 
-    while(currentBuyer.isReady){
-        if (currentBuyer.cardsToBuy){
-            let totalCost = 0;
-            for (let i = 0; i < currentBuyer.cardsToBuy.length; i++){
-                const shopContainsAction = shop.find((action) => action[0].name == currentBuyer.cardsToBuy[i].name)
-                if (!shopContainsAction){
+    // ensure purchases are resolved in player order in case of limited quantity
+    if (myGame.getGameDetails().roomCode == "tutorial"){
+        const proselytize = allActions.find((action) => action.name == "Proselytize");
+        removeBoughtCardsFromShop([proselytize], shop);
+        removeBoughtCardsFromShop(players[0].cardsToBuy, shop);
+        players[0].buyCards(players[0].cardsToBuy, 9);
+        players[0].cardsToBuy = undefined;
+        io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
+    }
+    else{
+        while(currentBuyer.isReady){
+            if (currentBuyer.cardsToBuy){
+                let totalCost = 0;
+                for (let i = 0; i < currentBuyer.cardsToBuy.length; i++){
+                    const shopContainsAction = shop.find((action) => action[0].name == currentBuyer.cardsToBuy[i].name)
+                    if (!shopContainsAction){
+                        currentBuyer.isReady = false;
+                        io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", currentBuyer.playerNum, "An action you wished to buy has been purchased by a player ahead of you in turn order. Please place a new order.", "error");
+                        io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
+                        return;
+                    }
+                    totalCost += currentBuyer.cardsToBuy[i].cost;
+                }
+
+                if (totalCost > currentBuyer.numCoins){
                     currentBuyer.isReady = false;
-                    io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", currentBuyer.playerNum, "An action you wished to buy has been purchased by a player ahead of you in turn order. Please place a new order.", "error");
+                    io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", currentBuyer.playerNum, "You do not have enough coins for the order you placed. Please place a new order.", "error");
                     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
                     return;
                 }
-                totalCost += currentBuyer.cardsToBuy[i].cost;
-            }
+                else{
+                    removeBoughtCardsFromShop(currentBuyer.cardsToBuy, shop);
+                    currentBuyer.buyCards(currentBuyer.cardsToBuy, totalCost);
+                    currentBuyer.cardsToBuy = undefined;
+                    io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
+                    io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", players, startPlayer);
 
-            if (totalCost > currentBuyer.numCoins){
-                currentBuyer.isReady = false;
-                io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", currentBuyer.playerNum, "You do not have enough coins for the order you placed. Please place a new order.", "error");
-                io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
-                return;
+                    if (currentBuyer.playerNum == (startPlayer - 1 + players.length) % players.length){
+                        endOfRound(players);
+                        return;
+                    } 
+                }
             }
-            else{
-                removeBoughtCardsFromShop(currentBuyer.cardsToBuy, shop);
-                currentBuyer.buyCards(currentBuyer.cardsToBuy, totalCost);
-                currentBuyer.cardsToBuy = undefined;
-                io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
-                io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", players, startPlayer);
-
-                if (currentBuyer.playerNum == (startPlayer - 1 + players.length) % players.length){
-                    endOfRound(players);
-                    return;
-                } 
-            }
+            currentBuyer = players[(currentBuyer.playerNum + 1) % players.length];
         }
-        currentBuyer = players[(currentBuyer.playerNum + 1) % players.length];
     }
+ 
 }
 
 function removeBoughtCardsFromShop(boughtCards, shop){

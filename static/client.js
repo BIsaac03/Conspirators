@@ -958,8 +958,6 @@ function tutorialHighlight(className, makeColorful){
     })
 }
 function loadPreviousTutorialSteps(phase, target){
-    console.log(phase);
-    console.log(target);
     socket.emit("tutorialRequestion", "setWaitingOn", "", myID);
 
     // reveal hidden elements
@@ -1680,7 +1678,7 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
                 const curse = allActions.find((action) => action.name == "Curse");
                 const bewitch = allActions.find((action) => action.name == "Bewitch");
                 if ((actionsToBuy[0] == curse || actionsToBuy[0] == bewitch)&&(actionsToBuy[1] == curse || actionsToBuy[1] == bewitch)){
-                    socket.emit("logAttemtedPurchase", actionsToBuy, myID);
+                    socket.emit("logAttemptedPurchase", actionsToBuy, myID);
                     tutorialPhase(22);
                     openCloseShopDisplay();
                     checkOutList.remove();
