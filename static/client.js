@@ -209,7 +209,7 @@ socket.on("chooseImpersonate", (numPlayers, playerID) => {
 })
 socket.on("retrieveCards", (player, numCardsToRetrieve) => {
     console.log("attemptRetrieval")
-    if (player.playerNum == myPlayerNum){
+    if (player.playerID == myID){
         retrieveCards(player, numCardsToRetrieve);
     }
 })

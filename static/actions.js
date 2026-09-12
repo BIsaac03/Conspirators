@@ -71,8 +71,9 @@ export const allActions = [
         "isWork": false,
         "isSteal": false,
         "isTargeting": false,
-        "effect":   `const numToRetrieve = Math.floor(player.countCards("discard") / 2);
-                    player.prepareToRetrieveCards(numToRetrieve, io)`,
+        "effect":  `player.isReady = false;
+                    player.waitingOn = "retrieveCards";
+                    io.to(myGame.getGameDetails().roomCode).emit("retrieveCards", player, Math.floor(player.countCards("discard") / 2));`,
         "priority": 0,
         "cost": 0,
         "isBasicAction": true,
@@ -92,7 +93,7 @@ export const allActions = [
                     players[player.currentTarget].isReady = false;
                     players[player.currentTarget].waitingOn = "cooperate";
                     players[player.currentTarget].cooperatingWith = player.playerNum;
-                    io.emit("cooperate", players[player.currentTarget], player);`,
+                    io.to(myGame.getGameDetails().roomCode).emit("cooperate", players[player.currentTarget], player);`,
         "priority": 0,
         "cost": 0,
         "isBasicAction": true,
@@ -201,7 +202,7 @@ export const allActions = [
         "effect": ` player.numCoins += 3;
                     player.isReady = false;
                     player.waitingOn = "hijackRedirects";
-                    io.emit("hijackRedirects", player.playerID);
+                    io.to(myGame.getGameDetails().roomCode}).emit("hijackRedirects", player.playerID);
                     steal(player, players[player.currentTarget], -2, players);`, // !! steal after redirects RESOLVED
         "priority": 6,
         "cost": 6,
@@ -219,7 +220,7 @@ export const allActions = [
         "isTargeting": true,
         "effect": ` player.isReady = false;
                     player.waitingOn = "honor";
-                    io.emit("honor", player, players[player.currentTarget]);`,
+                    io.to(myGame.getGameDetails().roomCode).emit("honor", player, players[player.currentTarget]);`,
         "priority": 0,
         "cost": 5,
         "isBasicAction": false,
@@ -236,7 +237,7 @@ export const allActions = [
         "isTargeting": "",
         "effect":   `player.isReady = false;
                     player.waitingOn = "chooseImpersonate";
-                    io.emit("chooseImpersonate", players.length, player.playerID);`,
+                    io.to(myGame.getGameDetails().roomCode).emit("chooseImpersonate", players.length, player.playerID);`,
         "priority": 1,
         "cost": 6,
         "isBasicAction": false,
@@ -338,7 +339,7 @@ export const allActions = [
                     player.numCardSwaps++;
                     player.isReady = false;
                     player.waitingOn = "whistleRedirects";
-                    io.emit("whistleRedirects", player.playerID);`,
+                    io.to(myGame.getGameDetails().roomCode).emit("whistleRedirects", player.playerID);`,
         "priority": 3,
         "cost": 5,
         "isBasicAction": false,

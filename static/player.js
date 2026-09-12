@@ -146,11 +146,6 @@ export class Player{
         }
     }
 
-    prepareToRetrieveCards(numCardsToRetrieve, io){
-        this.isReady = false;
-        this.waitingOn = "retrieveCards";
-        io.emit("retrieveCards", this.playerID, numCardsToRetrieve);
-    }
     retrieveSelectedCards(cards){
         cards.forEach((entry) => {
             const actionInDiscard = this.discard.find((action) => action.name === entry[0]);
