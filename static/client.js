@@ -2099,14 +2099,21 @@ function addActionSearchListeners(isTutorial){
         autocompleteSuggestions.innerHTML = "";
         let actionToDisplay = undefined;
         allActions.forEach((action) => {
-            if (searchInput.value != "" && action.name.startsWith(searchInput.value)){
+            if (searchInput.value != "" && action.name.startsWith(searchInput.value) && action.name != searchInput.value){
                 const suggestion = document.createElement("p");
                 suggestion.textContent = action.name;
                 suggestion.addEventListener("click", () => {
                     setTimeout(() => {
                         searchInput.value = action.name;
-                        searchInput.dispatchEvent(new Event('input'));
+                        searchInput.dispatchEvent(new Event("input"));
                     }, 50);
+                })
+                suggestion.addEventListener("mouseover", () => {
+                    const alreadyHighlighted = actionSearch.querySelector(`.highlighted`)
+                    if (alreadyHighlighted){
+                        alreadyHighlighted.classList.remove("highlighted");
+                    }
+                    suggestion.classList.add("highlighted");
                 })
                 autocompleteSuggestions.appendChild(suggestion);
             }
@@ -2127,6 +2134,53 @@ function addActionSearchListeners(isTutorial){
             }
         }
         
+    })
+    searchInput.addEventListener("keydown", (e) => {
+        const alreadyHighlighted = actionSearch.querySelector(`.highlighted`)
+        const autocompleteSuggestions = actionSearch.querySelector(`div`);
+        switch (e.key){
+            case "ArrowDown":
+                e.preventDefault(); 
+                if (alreadyHighlighted){
+                    alreadyHighlighted.classList.remove("highlighted");
+                    if (alreadyHighlighted.nextSibling){
+                        alreadyHighlighted.nextSibling.classList.add("highlighted");
+                    }
+                    else{
+                        autocompleteSuggestions.firstChild.classList.add("highlighted");
+                    }
+                }
+                else if (autocompleteSuggestions && autocompleteSuggestions.firstChild){
+                    autocompleteSuggestions.firstChild.classList.add("highlighted");
+                }
+                break;
+
+            case "ArrowUp":
+                e.preventDefault(); 
+                if (alreadyHighlighted){
+                    alreadyHighlighted.classList.remove("highlighted");
+                    if (alreadyHighlighted.previousSibling){
+                        alreadyHighlighted.previousSibling.classList.add("highlighted");
+                    }
+                    else{
+                        autocompleteSuggestions.lastChild.classList.add("highlighted");
+                    }
+                }
+                else if (autocompleteSuggestions && autocompleteSuggestions.firstChild){
+                    autocompleteSuggestions.lastChild.classList.add("highlighted");
+                }
+                break;
+
+            case "Enter":
+                e.preventDefault(); 
+                if (alreadyHighlighted){
+                    setTimeout(() => {
+                        searchInput.value = alreadyHighlighted.textContent;
+                        searchInput.dispatchEvent(new Event("input"));
+                    }, 50);
+                }
+                break;
+        }
     })
 
     if (!isTutorial){
