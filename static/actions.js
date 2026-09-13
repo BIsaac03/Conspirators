@@ -145,7 +145,8 @@ export const allActions = [
                         if (other.playerID != player.playerID){
                             other.isBewitched = true;
                         } 
-                    })`,
+                    })
+                    io.to(myGame.getGameDetails().roomCode}).emit("bewitchIcons", players)`,
         "priority": 0,
         "cost": 4,
         "isBasicAction": false,
@@ -170,7 +171,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["Redirecting this card AFTER it has resolved does not change players' immunity from Thieves."]
+        "FAQ": ["Redirecting this card AFTER it has resolved does not change players' immunity from Thieves.", "Since this is resolved before 'Sabotage', it cannot affect you."]
     },
     {
         "name": "Curse",
@@ -179,10 +180,10 @@ export const allActions = [
         "isWork": false,
         "isSteal": false,
         "isTargeting": false,
-        "effect":   `player.numCoins += 3;
+        "effect":  `player.numCoins += 3;
                     players.forEach((other) => {
                         if (other.currentTarget == player.playerNum){
-                            cursed(other);
+                            cursed(other, shop);
                         }
                     })`,
         "priority": 2,
@@ -243,7 +244,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["Resolve the action you Impersonate in turn order.", "You may Impersonate an 'Impersonate' only if it is already Impersonating another card. Otherwise, it does nothing."]
+        "FAQ": ["Resolve the action you <i>Impersonate</i> in turn order.", "You may <i>Impersonate</i> an 'Impersonate' only if it is already <i>Impersonating</i> another card. Otherwise, it does nothing."]
     },
     {
         "name": "Pillage",

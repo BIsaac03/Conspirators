@@ -433,6 +433,7 @@ function determineResolutionOrder(players, startPlayer, playerNumResolved){
 
 function resolveActions(players, playerOrder, playerNumResolved, startPlayer){
     const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
+    const shop = myGame.getGameDetails().shop;
     const workValue = establishWorkValue(players);
 
     let numToResolve = 0
@@ -505,7 +506,7 @@ function attemptPurchase(players, startPlayer, shop){
                     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", players, startPlayer);
 
                     if (currentBuyer.playerNum == (startPlayer - 1 + players.length) % players.length){
-                        endOfRound(players);
+                        endOfRound(players, shop);
                         return;
                     } 
                 }
@@ -540,9 +541,9 @@ function roundStart(myGame){
     io.to(`${myGame.getGameDetails().roomCode}`).emit("selectAction", players);
 }
 
-function endOfRound(players){
+function endOfRound(players, shop){
     const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
-    roundEndCleanup(players);
+    roundEndCleanup(players, shop);
     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", players, myGame.getGameDetails().startPlayer);
     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, [], "discard", false);
     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, [], "hand", false);
@@ -583,7 +584,7 @@ function steal(stealer, stealFrom, modification, players){
 
 function cursed(cursed){
     if (cursed.playedCard.isBasicAction){
-        cursed.discardPlayedCard();
+        cursed.discardPlayedCard(shop);
     }
     else{
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == cursed.playerID));
@@ -611,7 +612,7 @@ function updatePlayerWaitingOn(players, newWaitingOn){
     })
 }
 
-function roundEndCleanup(players){
+function roundEndCleanup(players, shop){
     players.forEach(player => {
         player.discardPlayedCard();
         player.isImmune = false;

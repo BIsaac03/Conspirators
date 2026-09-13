@@ -64,6 +64,7 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
         addCardDisplayListeners();
         displayCards(players[myPlayerNum], reconnectedPlayer.hand, "play", false);
         displayCards(players[myPlayerNum], shop, "buy", false);
+        modifyBewitchedIcons(players);
 
         // restore interrupted game state
         switch (roundPhase){
@@ -191,6 +192,7 @@ socket.on("cardSwapPhase", (players) => {
 })
 socket.on("revealActions", (players) => {
     revealActions(players);
+    modifyBewitchedIcons(players);
 })
 socket.on("allowShopPurchases", (shop, players) => {
     actionPhaseCleanUp(players.length);
@@ -201,6 +203,9 @@ socket.on("allowShopPurchases", (shop, players) => {
 socket.on("resetGameDisplay", () => {
     removePreviousElement(`#checkOutList`);
     populateCardBacks();
+})
+socket.on("bewitchPlayers", (players) => {
+    modifyBewitchedIcons(players);
 })
 socket.on("chooseImpersonate", (numPlayers, playerID) => {
     if (playerID == myID){
@@ -312,7 +317,13 @@ function startTutorial(players, phase){
     hideElementsForTutorial()
     populateGameSpace(players);
     createStats(players);
-    updateStats(players, 0);
+    if (phase < 26){
+        updateStats(players, 0);
+    }
+    else{
+        updateStats(players, 1);
+    }
+    
     addCardDisplayListeners();
     addScorecardListeners(3);
 
@@ -431,7 +442,7 @@ function tutorialPhase(phase){
             removePreviousElement(`.tutorialProgress`);
             addTutorialProgressArrows([ "Whenever you play an action, you must choose ANOTHER player to target.",
                                         "For some cards, this will matter, but the choice here is arbitrary.",
-                                        "Click on a player (the gray circles) to target them, then confirm your play."
+                                        "Click on a player (the colored circles) to target them, then confirm your play."
                                         ], 5, tutorialDiv);
             populateCardBacks(3);
             break;
@@ -615,7 +626,7 @@ function tutorialPhase(phase){
                                         "The color of a card has no MECHANICAL impact, but can help identify a card's ability at a glance.",
                                         "Cards with an arrow affect the player it targets. (All cards still 'target' someone, even if they don't have an arrow.)",
                                         "Blue cards Work, making players who played one 'Workers'.",
-                                        "Red cards Steal.",
+                                        "Red cards Steal, making players who played one 'Thieves'.",
                                         "Purple cards (like Bewitch) have a special effect that lasts beyond the normal action phase.",
                                         "Yellow cards have none of these defining features.",
                                         "Some cards are also green, but that will be explained in a later section.",
@@ -662,6 +673,7 @@ function tutorialPhase(phase){
                                         "If you buy more than 1, you'll get a rebate.",
                                         "Buying 2 cards will earn you 1 coin, while buying 3 will earn you 3.",
                                         "The coins are earned AFTER your purchase, so you cannot use them this round.",
+                                        "If you ever want to view clarifying details about a card in the shop, you can RIGHT-click it instead of searching for it.",
                                         "Let's buy a Curse and a Bewitch. (You may need to scroll through the shop if you cannot find them.)"
                                         ], 21, tutorialDiv);
             break;
@@ -713,6 +725,10 @@ function tutorialPhase(phase){
         case 26:
             socket.emit("tutorialRequest", "save", 26, myID);
             removePreviousElement(`.tutorialProgress`);
+
+            document.getElementById("startPlayer").id = "";
+            document.querySelector(`#player1 .playerName`).id = "startPlayer";
+            
             tutorialHighlight("handNum", false);
             document.querySelector(`#player0 .numCoins`).textContent = "3";
             document.querySelector(`#player1 .numCoins`).textContent = "4";
@@ -996,7 +1012,7 @@ function loadPreviousTutorialSteps(phase, target){
     }
     else if (phase == 16){
         const bewitch = allActions.find((action) => action.name == "Bewitch");
-        blowUpAction(bewitch, false);
+        blowUpAction(bewitch, false, false);
     }
     else if (phase == 29){
         const prepare = allActions.find((action) => action.name == "Prepare");
@@ -1124,6 +1140,8 @@ function populateGameSpace(players){
 
         const playerIcon = document.createElement("div");
         playerIcon.classList.add("playerIcon");
+        playerIcon.style.transform = "rotate("+(-2*Math.PI * i/players.length - radianOffset)+"rad)";
+        playerIcon.style.boxShadow = `0 0 10vh 10px ${players[i].playerColor[0]} inset`;
 
         const playedCard = document.createElement("div");
         playedCard.classList.add("card");
@@ -1142,7 +1160,7 @@ function populateGameSpace(players){
                 setTimeout(() => {
                     if (playedCard.matches(":hover") && !document.getElementById("blownUp")){
                         const action = allActions.find((card) => card.name == playedCard.getAttribute("action"));
-                        const blownUpAction = blowUpAction(action, true);
+                        const blownUpAction = blowUpAction(action, true, false);
 
                         if (i == myPlayerNum){
                             blownUpAction.addEventListener("click", () => {
@@ -1173,6 +1191,20 @@ function populateGameSpace(players){
         gameSpace.appendChild(playerSpace);
     }
     bodyElement.appendChild(gameSpace);
+}
+
+function modifyBewitchedIcons(players){
+    for (let i = 0; i < players.length; i++){
+        const playerIcon = document.querySelector(`#player${i} .playerIcon`);
+        if (!players[i].isBewitched){
+            const randNum = Math.floor(Math.random()*3);
+            playerIcon.style.backgroundImage = `url(/static/Images/Misc/bewitched${randNum}.jpg)`;
+
+        }
+        else{
+            playerIcon.style.backgroundImage = "";
+        }
+    }
 }
 
 function addScorecardListeners(numPlayers){
@@ -1261,6 +1293,7 @@ function blowUpScorecard(numPlayers, scoreCardType){
 }
 
 function generateCard(div, action){
+    div.innerHTML = "";
     div.classList.remove("back");
     div.classList.add("card");
     if (action.isOneShot){
@@ -1302,7 +1335,7 @@ function generateCard(div, action){
     div.appendChild(background);
 }
 
-function blowUpAction(action, isInPlay){
+function blowUpAction(action, isInPlay, FAQOnly){
     removePreviousElement(`#blownUp`);
 
     const previewDisplay = document.createElement("div");
@@ -1311,7 +1344,13 @@ function blowUpAction(action, isInPlay){
         previewDisplay.classList.add("inPlay");
     }
     bodyElement.appendChild(previewDisplay);
-    generateCard(previewDisplay, action)
+
+    if (!FAQOnly){
+         generateCard(previewDisplay, action)
+    }
+    else{
+        previewDisplay.classList.add("FAQOnly");
+    }
 
     if (action.FAQ){
         const actionFAQ = document.createElement("div");
@@ -1499,6 +1538,13 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
             }
             else if (!player.isReady && player.waitingOn == "buyCards"){
                 modifyCheckOutList(player.numCoins, cardsToDisplay[i][0].name, cardsToDisplay[i][0].cost, false);
+            }
+        })
+        possibleAction.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+            if (why == "buy"){
+                blowUpAction(card, false, true);
+                console.log("test");
             }
         })
 
@@ -2098,12 +2144,12 @@ function addActionSearchListeners(isTutorial){
         if (!isTutorial){
             removePreviousElement(`#blownUp`);
             if (actionToDisplay){
-                blowUpAction(actionToDisplay, false);
+                blowUpAction(actionToDisplay, false, false);
             }
         }
         else{
             if (actionToDisplay && actionToDisplay.name == "Bewitch" && !document.getElementById("blownUp")){
-                blowUpAction(actionToDisplay, false);
+                blowUpAction(actionToDisplay, false, false);
             }
         }
         
