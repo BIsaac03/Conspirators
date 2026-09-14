@@ -163,6 +163,8 @@ io.on("connection", (socket) => {
         if (!myLobby.getGameDetails().isGameInProgress){
             myLobby.getPlayers().forEach((player) => {
                 player.isInGame = true;
+                // !! REST TESTING,REMOVE AFTERWARD
+                player.discardHand();
             })
             myLobby.getGameDetails().isGameInProgress = true;
             roundStart(myLobby);

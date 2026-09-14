@@ -43,6 +43,7 @@ export class Player{
         this.hand.push([selectedBAs[1], 1])
 
         ////// TESTING
+        /*
         const ransack = allActions.find((action) => action.name == "Ransack");
         const bewitch = allActions.find((action) => action.name == "Bewitch");
         const communalize = allActions.find((action) => action.name == "Communalize");
@@ -59,7 +60,7 @@ export class Player{
         const accuse = allActions.find((action) => action.name == "Accuse");
         const abduct = allActions.find((action) => action.name == "Abduct");
         const proselytize = allActions.find((action) => action.name == "Proselytize");
-
+        
         this.hand.push([ransack, 4]);
         this.hand.push([honor, 4]);
         this.hand.push([hijack, 4]);
@@ -76,6 +77,7 @@ export class Player{
         this.hand.push([accuse, 4]);
         this.hand.push([abduct, 4]);
         this.hand.push([proselytize, 4]);
+        */
         //////
     }
 
@@ -160,23 +162,23 @@ export class Player{
     }
 
     retrieveSelectedCards(cards){
-        cards.forEach((entry) => {
-            const actionInDiscard = this.discard.find((action) => action.name === entry[0]);
-            const actionInHand = this.hand.find((action) => action.name == entry[0]);
+        cards.forEach((returnEntry) => {
+            const actionInDiscard = this.discard.find((discardEntry) => discardEntry[0].name == returnEntry[0].name);
+            const actionInHand = this.hand.find((handEntry) => handEntry[0].name == returnEntry[0].name);
             // remove card from discard
-            if (actionInDiscard[1] === entry[1]){
+            if (actionInDiscard[1] === returnEntry[1]){
                 const index = this.discard.indexOf(actionInDiscard);
                 this.discard.splice(index, 1);
             }
             else{
-                actionInDiscard[1] -= entry[1];
+                actionInDiscard[1] -= returnEntry[1];
             }
             // add card to hand
             if (!actionInHand){
-                this.hand.push([entry])
+                this.hand.push(returnEntry)
             }
             else{
-                actionInHand[1] += entry[1];
+                actionInHand[1] += returnEntry[1];
             }
         })
     }

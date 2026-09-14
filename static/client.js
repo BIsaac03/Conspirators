@@ -120,7 +120,8 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
                     break;
 
                 case "retrieveCards":
-                    retrieveCards(reconnectedPlayer, Math.floor(calculateNumCards("discard") / 2), false);
+                    retrieveCards(reconnectedPlayer, Math.floor(calculateNumCards(reconnectedPlayer.discard) / 2), false);
+                    console.log("retrieve");
                     break;
 
                 case "cooperate":
@@ -1524,15 +1525,22 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
                     actionDiv.appendChild(retrieveIcon);
                     numDuplicateRetrievals.textContent = 1;
                     remainingRetrievals.textContent = Number(remainingRetrievals.textContent) - 1;
+                    if (remainingRetrievals.textContent == "0"){
+                        document.getElementById("confirmRetrieve").disabled = false;
+                    }
                 }
                 else if (numDuplicateRetrievals != undefined){
                     if (cardsToDisplay[i][1] > numDuplicateRetrievals.textContent && remainingRetrievals.textContent > 0){
                         numDuplicateRetrievals.textContent = Number(numDuplicateRetrievals.textContent) + 1;
                         remainingRetrievals.textContent = Number(remainingRetrievals.textContent) - 1;
+                        if (remainingRetrievals.textContent == "0"){
+                            document.getElementById("confirmRetrieve").disabled = false;
+                        }
                     }
                     else{
                         remainingRetrievals.textContent = Number(remainingRetrievals.textContent) + Number(numDuplicateRetrievals.textContent);
                         numDuplicateRetrievals.parentNode.remove();
+                        document.getElementById("confirmRetrieve").disabled = true;
                     } 
                 }
             }
@@ -1544,7 +1552,6 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
             e.preventDefault();
             if (why == "buy"){
                 blowUpAction(card, false, true);
-                console.log("test");
             }
         })
 
@@ -1840,25 +1847,41 @@ function retrieveCards(player, numCardsToRetrieve){
     const retrieveDiv = document.createElement("div");
     retrieveDiv.id = "retrieveDiv";
 
+    const remainingRetrievalTitle = document.createElement("p");
+    remainingRetrievalTitle.textContent = "Remaining Cards to Return";
     const remainingRetrievals = document.createElement("p");
     remainingRetrievals.id = "remainingRetrievals"
     remainingRetrievals.textContent = numCardsToRetrieve;
 
     const confirm = document.createElement("button");
+    confirm.textContent = "Confirm";
     confirm.id = "confirmRetrieve";
+    confirm.disabled = true;
     confirm.addEventListener("click", () => {
-        const retrievedActions = document.querySelectorAll(".retrieveIcon p");
-        const totalRetrievedCards = [];
-        retrievedActions.forEach(action => {
-            for (let i = 0; i < action.textContent; i++){
-                const returnedAction = player.discard.find((card) => card[0].background.includes(`${action.parentElement.parentElement.src}`));
-                totalRetrievedCards.push(returnedCard);
+        const retrievedActionNums = document.querySelectorAll(".retrieveIcon p");
+        const allRetrievedCards = [];
+        let numTotalRetrievals = 0;
+        retrievedActionNums.forEach(actionNum => {
+            const actionName = actionNum.parentElement.parentElement.firstChild.getAttribute("action");
+            const returnedAction = player.discard.find((card) => card[0].name == actionName);
+            const numToReturn = Number(actionNum.textContent);
+            if (returnedAction[1] >= numToReturn){
+                allRetrievedCards.push([returnedAction[0], numToReturn]);
+                numTotalRetrievals += numToReturn
             }
         })
-        if (totalRetrievedCards.length == numCardsToRetrieve){
-            socket.emit("returnCardsToHand", myPlayerNum, totalRetrievedCards, myID);
-        }
+        console.log(numTotalRetrievals);
+        console.log(allRetrievedCards);
+
+        if (numTotalRetrievals == numCardsToRetrieve){
+            socket.emit("returnCardsToHand", myPlayerNum, allRetrievedCards, myID);
+            socket.emit("getUpdatedCards", "discard", false, myID);
+            retrieveDiv.remove();
+            openClosePlayerDisplay();
+        }        
     })
+
+    retrieveDiv.appendChild(remainingRetrievalTitle);
     retrieveDiv.appendChild(remainingRetrievals);
     retrieveDiv.appendChild(confirm);
     bodyElement.appendChild(retrieveDiv);

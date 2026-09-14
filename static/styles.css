@@ -491,17 +491,30 @@ div[id^="player"] #handIcon{
 
 #retrieveDiv{
     position: absolute;
+    left: 80vw;
+    top: 30vh;
+    width: 10vw;
     display: grid;
+    justify-items: center;
+    text-align: center;
 }
+#remainingRetrievals{
+    font-size: 5vw;
+}
+
 .retrieveIcon{
     position: relative;
-    display: block;
-    top: -31vh;
-    left: 8vh;
-    width: 5vh;
-    height: 5vh;
+    display: grid;
+    place-content: center;
+    top: -20vw;
+    left: 5.6vw;
+    width: 3vw;
+    height: 3vw;
+    font-size: 2vw;
+    margin-bottom: -3vw;
     border-radius: 50%;
     background-color: limegreen;
+    box-shadow: 0 0 0 1px gray;
 }
 
 #workValueScorecard{
