@@ -631,7 +631,7 @@ div[id^="player"] #handIcon{
     scrollbar-gutter: stable;
     scrollbar-width: thin;
 }
-#notificationCenter .notificationDiv{
+.notificationDiv{
     width: 20vw;
     padding: 5px;
     min-height: 70px;
@@ -641,12 +641,20 @@ div[id^="player"] #handIcon{
     gap: 5px;
     align-items: center;
     text-align: center;
-    background-color: aquamarine;
 }
-#notificationCenter .notificationDiv img{
+.notificationDiv.info{
+    background-color: rgba(255, 248, 220, 0.5);
+}
+.notificationDiv.error{
+    background-color: rgba(255, 100, 90, 0.5);
+}
+.notificationDiv.warning{
+    background-color: rgba(255, 170, 160, 0.5);
+}
+.notificationDiv img{
     width: 20px;
 }
-#notificationCenter .notificationDiv button{
+.notificationDiv button{
     width: 25px;
     height: 25px;
     border-radius: 50%;

@@ -144,9 +144,10 @@ export const allActions = [
                     players.forEach((other) => {
                         if (other.playerID != player.playerID){
                             other.isBewitched = true;
+                            io.to(myGame.getGameDetails().roomCode).emit("notification", "You have been <i>Bewitched</i>", "warning", other.playerNum);
                         } 
                     })
-                    io.to(myGame.getGameDetails().roomCode}).emit("bewitchIcons", players)`,
+                    io.to(myGame.getGameDetails().roomCode).emit("bewitchIcons", players)`,
         "priority": 0,
         "cost": 4,
         "isBasicAction": false,
@@ -203,7 +204,7 @@ export const allActions = [
         "effect": ` player.numCoins += 3;
                     player.isReady = false;
                     player.waitingOn = "hijackRedirects";
-                    io.to(myGame.getGameDetails().roomCode}).emit("hijackRedirects", player.playerID);
+                    io.to(myGame.getGameDetails().roomCode).emit("hijackRedirects", player.playerID);
                     steal(player, players[player.currentTarget], -2, players);`, // !! steal after redirects RESOLVED
         "priority": 6,
         "cost": 6,

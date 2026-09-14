@@ -154,7 +154,7 @@ io.on("connection", (socket) => {
             myLobby.getPlayers()[0].numCoins = data;
         }
         if (what == "discardCard"){
-            myLobby.getPlayers()[0].discardPlayedCard();
+            myLobby.getPlayers()[0].discardPlayedCard(myLobby.getGameDetails().shop);
         }
     })
 
@@ -163,8 +163,6 @@ io.on("connection", (socket) => {
         if (!myLobby.getGameDetails().isGameInProgress){
             myLobby.getPlayers().forEach((player) => {
                 player.isInGame = true;
-                // !! REST TESTING,REMOVE AFTERWARD
-                player.discardHand();
             })
             myLobby.getGameDetails().isGameInProgress = true;
             roundStart(myLobby);
@@ -229,7 +227,7 @@ io.on("connection", (socket) => {
         target.isReady = true;
         target.numCoins -= coins;
         cooperator.numCoins += coins;
-        io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", cooperator.playerNum, target.playerName+" gave you "+coins+" coins!");
+        io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", `<b style = "color:${target.playerColor[0]}">${target.playerName}</b> gave you ${coins} coins!`, "info", cooperator.playerNum);
         
         determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, cooperator.playerNum);
     })
@@ -243,7 +241,7 @@ io.on("connection", (socket) => {
         giver.isReady = true;
         giver.numCoins += coins;
         receiver.numCoins += honoredCoins
-        io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", receiver.playerNum, giver.playerName+" gave you "+honoredCoins+" coins!");
+        io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", `<b style = "color: ${giver.playerColor[0]}">${giver.playerName}</b> gave you ${honoredCoins} coins!`, "info", receiver.playerNum);
     
         determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, giver.playerNum);
     })
@@ -461,6 +459,9 @@ function checkShopPhase(players){
     if (!waitingOn){
         const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
         myGame.changeGamePhase("buyCards");
+        players.forEach((player) => {
+            player.discardPlayedCard(myGame.getGameDetails().shop);
+        })
         updatePlayerWaitingOn(players, "buyCards");
         io.to(`${myGame.getGameDetails().roomCode}`).emit("allowShopPurchases", myGame.getGameDetails().shop, players);
     }
@@ -487,7 +488,7 @@ function attemptPurchase(players, startPlayer, shop){
                     const shopContainsAction = shop.find((action) => action[0].name == currentBuyer.cardsToBuy[i].name)
                     if (!shopContainsAction){
                         currentBuyer.isReady = false;
-                        io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", currentBuyer.playerNum, "An action you wished to buy has been purchased by a player ahead of you in turn order. Please place a new order.", "error");
+                        io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", "An action you wished to buy has been purchased by a player ahead of you in turn order. Please place a new order.", "error", currentBuyer.playerNum);
                         io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
                         return;
                     }
@@ -496,16 +497,38 @@ function attemptPurchase(players, startPlayer, shop){
 
                 if (totalCost > currentBuyer.numCoins){
                     currentBuyer.isReady = false;
-                    io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", currentBuyer.playerNum, "You do not have enough coins for the order you placed. Please place a new order.", "error");
+                    io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", "You do not have enough coins for the order you placed. Please place a new order.", "error", currentBuyer.playerNum);
                     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
                     return;
                 }
                 else{
                     removeBoughtCardsFromShop(currentBuyer.cardsToBuy, shop);
                     currentBuyer.buyCards(currentBuyer.cardsToBuy, totalCost, currentBuyer.hasRecruited);
-                    currentBuyer.cardsToBuy = undefined;
+                    
+                    const numCardsBought = currentBuyer.cardsToBuy.length;
+                    let boughtCardsString = "";
+                    if (numCardsBought == 0){
+                        boughtCardsString += ("no new Actions")
+                    }
+                    currentBuyer.cardsToBuy.forEach((card, index) => {
+                        if (numCardsBought == 3 && index > 0){
+                            boughtCardsString += (",");
+                        }
+                        if (numCardsBought > 1 && index == numCardsBought - 1){
+                            boughtCardsString += (" and ");
+                        }
+                        if(["A", "I", "Ho"].some((vowel) => card.name.startsWith(vowel))){
+                            boughtCardsString += (" an " + card.name);
+                        }
+                        else{
+                            boughtCardsString += (" a " + card.name);
+                        }
+                    })
+
+                    io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", `<b style="color: ${currentBuyer.playerColor[0]}">${currentBuyer.playerName}</b> bought ${boughtCardsString}.`, "info");
                     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
                     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", players, startPlayer);
+                    currentBuyer.cardsToBuy = undefined;
 
                     if (currentBuyer.playerNum == (startPlayer - 1 + players.length) % players.length){
                         endOfRound(players, shop);
@@ -545,7 +568,7 @@ function roundStart(myGame){
 
 function endOfRound(players, shop){
     const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
-    roundEndCleanup(players, shop);
+    roundEndCleanup(players);
     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", players, myGame.getGameDetails().startPlayer);
     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, [], "discard", false);
     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, [], "hand", false);
@@ -585,14 +608,14 @@ function steal(stealer, stealFrom, modification, players){
 }
 
 function cursed(cursed){
+    const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == cursed.playerID));
     if (cursed.playedCard.isBasicAction){
-        cursed.discardPlayedCard(shop);
+        cursed.discardPlayedCard(myGame.getGameDetails().shop);
     }
     else{
-        const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == cursed.playerID));
         returnToShop(cursed.playedCard, myGame.getGameDetails().shop);
-        cursed.playedCard = undefined;
     }
+    cursed.playedCard = undefined;
 
     // !! update display
 }
@@ -614,9 +637,8 @@ function updatePlayerWaitingOn(players, newWaitingOn){
     })
 }
 
-function roundEndCleanup(players, shop){
+function roundEndCleanup(players){
     players.forEach(player => {
-        player.discardPlayedCard();
         player.isImmune = false;
         player.hasRecruited = false;
         player.isSabotaged = false;

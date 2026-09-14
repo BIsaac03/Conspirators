@@ -43,7 +43,6 @@ export class Player{
         this.hand.push([selectedBAs[1], 1])
 
         ////// TESTING
-        /*
         const ransack = allActions.find((action) => action.name == "Ransack");
         const bewitch = allActions.find((action) => action.name == "Bewitch");
         const communalize = allActions.find((action) => action.name == "Communalize");
@@ -77,7 +76,6 @@ export class Player{
         this.hand.push([accuse, 4]);
         this.hand.push([abduct, 4]);
         this.hand.push([proselytize, 4]);
-        */
         //////
     }
 
@@ -95,41 +93,43 @@ export class Player{
             }
         }
     }
-    discardPlayedCard(){
-        if (this.playedCard && !this.isAbducted){
-            const returnToShop = this.playedCard.isOneShot;
-
-            if (this.isImpersonating){
-                this.playedCard = allActions.find((action) => action.name == "Impersonate");
-            }
-
+    discardPlayedCard(shop){
+        if (this.playedCard){
             // return Rest to hand
             if (this.playedCard.name === "Rest"){
                 this.hand.push([this.playedCard, 1]);
             }
-            // return OneShots to shop
-            else if (returnToShop){
-                const actionInShop = this.shop.find((entry) => entry[0].name == this.playedCard.name);
-                if (!actionInShop){
-                    this.shop.push([this.playedCard, 1])
+            if (!this.isAbducted){
+                const returnToShop = this.playedCard.isOneShot;
+                if (this.isImpersonating){
+                    this.playedCard = allActions.find((action) => action.name == "Impersonate");
                 }
+
+                // return OneShots to shop
+                else if (returnToShop){
+                    const actionInShop = shop.find((shopEntry) => shopEntry[0].name == this.playedCard.name);
+                    if (!actionInShop){
+                        shop.push([this.playedCard, 1])
+                    }
+                    else{
+                        actionInShop[1]++;
+                    }
+                }
+
+                // discard other played cards
                 else{
-                    actionInShop[1]++;
+                    const actionInDiscard = this.discard.find((entry) => entry[0].name == this.playedCard.name);
+                    if (!actionInDiscard){
+                        this.discard.push([this.playedCard, 1])
+                    }
+                    else{
+                        actionInDiscard[1]++;
+                    }
                 }
             }
-            // discard other played cards
-            else{
-                const actionInDiscard = this.discard.find((entry) => entry[0].name == this.playedCard.name);
-                if (!actionInDiscard){
-                    this.discard.push([this.playedCard, 1])
-                }
-                else{
-                    actionInDiscard[1]++;
-                }
-            }
-            this.playedCard = undefined;
-            this.currentTarget = undefined;
         }
+        this.playedCard = undefined;
+        this.currentTarget = undefined;
     }
     buyCards(boughtCards, cost, addToHand){
         boughtCards.forEach((card)=> {

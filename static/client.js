@@ -197,7 +197,7 @@ socket.on("revealActions", (players) => {
 })
 socket.on("allowShopPurchases", (shop, players) => {
     actionPhaseCleanUp(players.length);
-    displayNotification("SHOPPING TIME!", "reminder");
+    displayNotification("SHOPPING TIME!", "info");
     // !! add button for coninuting without buying cards
     displayCards(players[myPlayerNum], shop, "buy", false);
 })
@@ -205,7 +205,7 @@ socket.on("resetGameDisplay", () => {
     removePreviousElement(`#checkOutList`);
     populateCardBacks();
 })
-socket.on("bewitchPlayers", (players) => {
+socket.on("bewitchIcons", (players) => {
     modifyBewitchedIcons(players);
 })
 socket.on("chooseImpersonate", (numPlayers, playerID) => {
@@ -259,8 +259,8 @@ socket.on("updateCards", (players, shop, where, shouldDisplay, isTutorial) => {
     }
 })
 
-socket.on("notification", (playerNum, notification, notificationType) => {
-    if (playerNum == myPlayerNum){
+socket.on("notification", (notification, notificationType, playerNum) => {
+    if (!playerNum || playerNum == myPlayerNum){
         displayNotification(notification, notificationType);
     }
 })
@@ -674,6 +674,8 @@ function tutorialPhase(phase){
                                         "If you buy more than 1, you'll get a rebate.",
                                         "Buying 2 cards will earn you 1 coin, while buying 3 will earn you 3.",
                                         "The coins are earned AFTER your purchase, so you cannot use them this round.",
+                                        "While all players can place their orders simultaneously, the orders will be resolved in turn-order.",
+                                        "If you tried to place an order for an action that is now unavaiable, you will be prompted to place a new order.",
                                         "If you ever want to view clarifying details about a card in the shop, you can RIGHT-click it instead of searching for it.",
                                         "Let's buy a Curse and a Bewitch. (You may need to scroll through the shop if you cannot find them.)"
                                         ], 21, tutorialDiv);
@@ -1145,9 +1147,8 @@ function populateGameSpace(players){
         playerIcon.style.boxShadow = `0 0 10vh 10px ${players[i].playerColor[0]} inset`;
 
         const playedCard = document.createElement("div");
-        playedCard.classList.add("card");
         playedCard.classList.add("playedCard");
-        playedCard.style.transform = 'translateX(5vh) rotate(-90deg)';
+        playedCard.style.transform = "translateX(5vh) rotate(-90deg)";
 
         if (i == myPlayerNum){
             playedCard.addEventListener("click", () => {
@@ -1168,17 +1169,17 @@ function populateGameSpace(players){
                                 promptActionSelection(players[i], false);
                             })
                         }
-                        playedCard.style.opacity = 0.3;
+                        playedCard.style.opacity = "0.3";
                         playedCard.addEventListener("mouseleave", () => {
                             const blownUpAction = document.querySelector(`#blownUp.inPlay`)
                             if (blownUpAction && !blownUpAction.matches(":hover")){
-                                playedCard.style.opacity = 1.0;
+                                playedCard.style.opacity = "1.0";
                                 blownUpAction.remove();
                             }
                         })
                         blownUpAction.addEventListener("mouseleave", () => {
                             if (!playedCard.matches(":hover")){
-                                playedCard.style.opacity = 1.0;
+                                playedCard.style.opacity = "1.0";
                                 blownUpAction.remove();
                             }
                         })
@@ -1197,7 +1198,7 @@ function populateGameSpace(players){
 function modifyBewitchedIcons(players){
     for (let i = 0; i < players.length; i++){
         const playerIcon = document.querySelector(`#player${i} .playerIcon`);
-        if (!players[i].isBewitched){
+        if (players[i].isBewitched){
             const randNum = Math.floor(Math.random()*3);
             playerIcon.style.backgroundImage = `url(/static/Images/Misc/bewitched${randNum}.jpg)`;
 
@@ -1375,13 +1376,13 @@ function addCardDisplayListeners(){
     playerDisplayVisibilityToggle.addEventListener("click", openClosePlayerDisplay);
 
     const discardToggle = document.getElementById("discardToggle");
-    discardToggle.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
+    discardToggle.style.backgroundColor = "rgba(110, 110, 110, 0.83)";
     discardToggle.addEventListener("click", () => {
         socket.emit("getUpdatedCards", "discard", true, myID);
     })
 
     const handToggle = document.getElementById("handToggle");
-    handToggle.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
+    handToggle.style.backgroundColor = "rgba(0, 0, 0, 0.83)";
     handToggle.addEventListener("click", () => {
         socket.emit("getUpdatedCards", "hand", true, myID);
     })
@@ -1431,13 +1432,13 @@ function openRelevantPlayerDisplay(player, where, isTutorial){
     const handToggle = document.getElementById("handToggle");
     const sliderIcon = document.querySelector(`#playerDisplay .sliderIcon`);
     if (where == "hand"){
-        handToggle.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
-        discardToggle.style.backgroundColor ="rgba(110, 110, 110, 0.83)";     
+        handToggle.style.backgroundColor = "rgba(0, 0, 0, 0.83)";
+        discardToggle.style.backgroundColor = "rgba(110, 110, 110, 0.83)";     
         displayCards(player, player.hand, "play", isTutorial);
     }
     else if (where == "discard"){
-        handToggle.style.backgroundColor ="rgba(110, 110, 110, 0.83)";
-        discardToggle.style.backgroundColor ="rgba(0, 0, 0, 0.83)";
+        handToggle.style.backgroundColor = "rgba(110, 110, 110, 0.83)";
+        discardToggle.style.backgroundColor = "rgba(0, 0, 0, 0.83)";
         displayCards(player, player.discard, "play", isTutorial);
     }
     if (sliderIcon.src.includes("/static/Images/Icons/rightArrows.svg")){
@@ -1460,7 +1461,7 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
                 if (player.waitingOn == "clickWork"){
                     if (card.name == "Work"){
                         const myPlayedCard = document.querySelector(`#player0 .playedCard`);
-                        myPlayedCard.style.opacity = 1;
+                        myPlayedCard.style.opacity = "1";
                         generateCard(myPlayedCard, card);
                         openClosePlayerDisplay();
                         tutorialPhase(4);
@@ -1591,8 +1592,8 @@ function actionSelection(players, myPlayerNum, originalCard){
                 }
 
         if (actionToPlayName != undefined && targetPlayerNum != undefined){
-            const actionToPlay = players[myPlayerNum].hand.find((action) => action[0].name == actionToPlayName);
-            if (!players[myPlayerNum].isBewitched || actionToPlay.isBasicAction){
+            const actionToPlay = players[myPlayerNum].hand.find((action) => actionToPlayName.startsWith(action[0].name));
+            if (!players[myPlayerNum].isBewitched || actionToPlay[0].isBasicAction){
                 socket.emit("chosenAction", myPlayerNum, actionToPlay[0], targetPlayerNum, Boolean(originalCard), myID);
                 removeAllPlayerTargeting(players.length);
                 confirm.remove();
@@ -2083,7 +2084,7 @@ function createStats(players){
         const discardDiv = document.createElement("div");
         const discardIcon = document.createElement("img");
         discardIcon.src = "static/Images/Icons/discard.svg";
-        discardIcon.style.transform = 'rotate(90deg)';
+        discardIcon.style.transform = "rotate(90deg)";
         const numCardsInDiscard = document.createElement("p");
         numCardsInDiscard.classList.add("discardNum");
         discardDiv.appendChild(discardIcon);
@@ -2237,16 +2238,26 @@ function addActionSearchListeners(isTutorial){
 }
 
 function displayNotification(notification, notificationType){
-    // !!   change notification style based on notificationType
     const notificationDiv = document.createElement("div");
     notificationDiv.classList.add("notificationDiv");
 
     const notificationIcon = document.createElement("img");
-    notificationIcon.src = "static/Images/Icons/notification.svg"
+    if (notificationType == "info"){
+        notificationIcon.src = "static/Images/Icons/notification_info.svg";
+        notificationDiv.classList.add("info");
+    }
+    else if (notificationType == "error"){
+        notificationIcon.src = "static/Images/Icons/notification_error.svg";
+        notificationDiv.classList.add("error");
+    }
+    else if (notificationType == "warning"){
+        notificationIcon.src = "static/Images/Icons/notification_warning.svg";
+        notificationDiv.classList.add("warning");
+    }
 
     const notificationContent = document.createElement("p");
     notificationContent.id = "notification";
-    notificationContent.textContent = notification;
+    notificationContent.innerHTML = notification;
 
     const closeNotifiction = document.createElement("button");
     closeNotifiction.id = "closeNotification";
@@ -2288,7 +2299,9 @@ function actionPhaseCleanUp(numPlayers){
         const playedCard = document.querySelector(`#player${i} .playedCard`);
             playedCard.innerHTML = "";
             playedCard.removeAttribute("action");
+            playedCard.classList.remove("card");
             playedCard.style.border = "3px dashed cyan";
+            playedCard.style.opacity = "0.3";
             playedCard.style.transform = "translateX(5vh) rotate(-90deg)";
         }
     const selectedPlayer = document.getElementById("selectedPlayer");
