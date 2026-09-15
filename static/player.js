@@ -15,13 +15,14 @@ export class Player{
     cardsToBuy = undefined;
     numCardSwaps = 1;
     numCoins = 0;
+    cooperatingWith = undefined;
+    retaliatingAgainst = undefined
     isImmune = false;
     isBewitched = false;
     isSabotaged = false;
     isAbducted = false;
     isImpersonating = false
     hasRecruited = false;
-    cooperatingWith = undefined;
     isInGame = false;
     isReady = false;
     waitingOn = undefined;

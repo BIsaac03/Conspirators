@@ -562,8 +562,10 @@ function roundStart(myGame){
     myGame.changeGamePhase("actionSelection");
     myGame.rotateStartPlayer(players.length);
     updatePlayerWaitingOn(players, "selectAction");
-    io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", myGame.getGameDetails().startPlayer);
-    io.to(`${myGame.getGameDetails().roomCode}`).emit("selectAction", players);
+    setTimeout(() => {
+        io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", myGame.getGameDetails().startPlayer);
+        io.to(`${myGame.getGameDetails().roomCode}`).emit("selectAction", players);  
+    }, 50);
 }
 
 function endOfRound(players, shop){
@@ -601,7 +603,10 @@ function work(worker, workValue, modification){
 function steal(stealer, stealFrom, modification, players){
     const stealValue = establishStealValue(stealFrom, players);
     const coinsToSteal = Math.min(stealValue + modification, stealFrom.numCoins);
-    if (!stealFrom.isImmune){
+    if (stealFrom.retaliatingAgainst == stealer.playerNum){
+        steal(stealFrom, stealer, 0, players);
+    }
+    else if (!stealFrom.isImmune){
         stealer.numCoins += coinsToSteal;
         stealFrom.numCoins -= coinsToSteal;
     }
@@ -639,11 +644,13 @@ function updatePlayerWaitingOn(players, newWaitingOn){
 
 function roundEndCleanup(players){
     players.forEach(player => {
+        player.cooperatingWith = undefined;
+        player.retaliatingAgainst = undefined;
         player.isImmune = false;
         player.hasRecruited = false;
         player.isSabotaged = false;
         player.isAbducted = false;
         player.isImpersonating = false
-        player.cooperatingWith = undefined;
+
     })
 }

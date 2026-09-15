@@ -182,6 +182,7 @@ socket.on("sendToGame", () => {
     window.location.href = "gameSpace.html"
 })
 socket.on("selectAction", (players) => {
+    displayCards(players[myPlayerNum], reconnectedPlayer.hand, "play", false);
     populateCardBacks(players.length);
     actionSelection(players, myPlayerNum);
 })
@@ -1712,73 +1713,80 @@ function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
     const shopAction = document.querySelector(`#shopDisplay [action = "${actionName}"]`)
 
     let checkOutList = document.getElementById("checkOutList");
-    if (!checkOutList && coinsToSpend >= actionCost){
-        checkOutList = document.createElement("div");
-        checkOutList.id  = "checkOutList";
-        bodyElement.appendChild(checkOutList);
-        const bottomRow = document.createElement("div");
+    if (!checkOutList){
+        if (coinsToSpend >= actionCost){
+            checkOutList = document.createElement("div");
+            checkOutList.id  = "checkOutList";
+            bodyElement.appendChild(checkOutList);
+            const bottomRow = document.createElement("div");
 
-        const finalizePurchase = document.createElement("button");
-        finalizePurchase.textContent = "BUY";
-        finalizePurchase.addEventListener("click", () => {
-            const actionsToBuy = [];
-            const namesOfActions = checkOutList.querySelectorAll(`.name`);
-            namesOfActions.forEach((entry) => {
-                const action = allActions.find((action) => action.name == entry.textContent);
-                actionsToBuy.push(action);
-            })
+            const finalizePurchase = document.createElement("button");
+            finalizePurchase.textContent = "BUY";
+            finalizePurchase.addEventListener("click", () => {
+                const actionsToBuy = [];
+                const namesOfActions = checkOutList.querySelectorAll(`.name`);
+                namesOfActions.forEach((entry) => {
+                    const action = allActions.find((action) => action.name == entry.textContent);
+                    actionsToBuy.push(action);
+                })
 
-            if (isTutorial){
-                const curse = allActions.find((action) => action.name == "Curse");
-                const bewitch = allActions.find((action) => action.name == "Bewitch");
-                if ((actionsToBuy[0] == curse || actionsToBuy[0] == bewitch)&&(actionsToBuy[1] == curse || actionsToBuy[1] == bewitch)){
+                if (isTutorial){
+                    const curse = allActions.find((action) => action.name == "Curse");
+                    const bewitch = allActions.find((action) => action.name == "Bewitch");
+                    if ((actionsToBuy[0] == curse || actionsToBuy[0] == bewitch)&&(actionsToBuy[1] == curse || actionsToBuy[1] == bewitch)){
+                        socket.emit("logAttemptedPurchase", actionsToBuy, myID);
+                        tutorialPhase(22);
+                        openCloseShopDisplay();
+                        checkOutList.remove();
+                    }
+                }
+                else{ 
                     socket.emit("logAttemptedPurchase", actionsToBuy, myID);
-                    tutorialPhase(22);
-                    openCloseShopDisplay();
                     checkOutList.remove();
                 }
-            }
-            else{ 
-                socket.emit("logAttemptedPurchase", actionsToBuy, myID);
-                checkOutList.remove();
-            }
-        })
-        const coinIcon = document.createElement("img");
-        coinIcon.src = "static/Images/Icons/coins.svg";
+            })
+            const coinIcon = document.createElement("img");
+            coinIcon.src = "static/Images/Icons/coins.svg";
 
-        const remainingCoins = document.createElement("div");
-        remainingCoins.classList.add("coinDiv");
-        const numRemainingCoins = document.createElement("p");
-        numRemainingCoins.classList.add("leftover");
-        numRemainingCoins.textContent = coinsToSpend;
-        remainingCoins.appendChild(coinIcon);
-        remainingCoins.appendChild(numRemainingCoins);
+            const remainingCoins = document.createElement("div");
+            remainingCoins.classList.add("coinDiv");
+            const numRemainingCoins = document.createElement("p");
+            numRemainingCoins.classList.add("leftover");
+            numRemainingCoins.textContent = coinsToSpend;
+            remainingCoins.appendChild(coinIcon);
+            remainingCoins.appendChild(numRemainingCoins);
 
-        const rebate = document.createElement("p");
-        rebate.classList.add("rebate");
-        rebate.textContent = "+0";
+            const rebate = document.createElement("p");
+            rebate.classList.add("rebate");
+            rebate.textContent = "+0";
 
-        bottomRow.appendChild(finalizePurchase);
-        bottomRow.appendChild(remainingCoins);
-        bottomRow.appendChild(rebate);
-        checkOutList.appendChild(bottomRow);
+            bottomRow.appendChild(finalizePurchase);
+            bottomRow.appendChild(remainingCoins);
+            bottomRow.appendChild(rebate);
+            checkOutList.appendChild(bottomRow);
 
-        const coinRow = document.createElement("div");
-        const myCoins = document.createElement("div");
-        myCoins.classList.add("coinDiv");
-        const numMyCoins = document.createElement("p");
-        numMyCoins.classList.add("myCoins");
-        numMyCoins.textContent = coinsToSpend;
-        const clonedIcon = coinIcon.cloneNode(true);
-        myCoins.appendChild(clonedIcon);
-        myCoins.appendChild(numMyCoins);
+            const coinRow = document.createElement("div");
+            const myCoins = document.createElement("div");
+            myCoins.classList.add("coinDiv");
+            const numMyCoins = document.createElement("p");
+            numMyCoins.classList.add("myCoins");
+            numMyCoins.textContent = coinsToSpend;
+            const clonedIcon = coinIcon.cloneNode(true);
+            myCoins.appendChild(clonedIcon);
+            myCoins.appendChild(numMyCoins);
 
-        const totalCost = document.createElement("p");
-        totalCost.classList.add("sum");
+            const totalCost = document.createElement("p");
+            totalCost.classList.add("sum");
 
-        coinRow.appendChild(myCoins);
-        coinRow.appendChild(totalCost);
-        checkOutList.appendChild(coinRow);
+            coinRow.appendChild(myCoins);
+            coinRow.appendChild(totalCost);
+            checkOutList.appendChild(coinRow);
+        }
+
+        else{
+            displayNotification("You do not have enough coins for this purchase.", "error");
+            openCloseShopDisplay();
+        }
     }
               
     const existingEntry = checkOutList.querySelector(`[action = "${actionName}"]`)
