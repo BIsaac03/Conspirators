@@ -72,7 +72,7 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
                 populateCardBacks(players.length);
                 if (reconnectedPlayer.playedCard && reconnectedPlayer.currentTarget){
                     const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
-                    generateCard(myPlayedCard, reconnectedPlayer.playedCard);
+                    generateCard(myPlayedCard, reconnectedPlayer.playedCard, false);
                     orientCardToPlayer(myPlayerNum, reconnectedPlayer.currentTarget, players.length);
                 }
                 
@@ -86,7 +86,7 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
             case "cardSwaps":
                 populateCardBacks(players.length);
                 const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
-                generateCard(myPlayedCard, reconnectedPlayer.playedCard);
+                generateCard(myPlayedCard, reconnectedPlayer.playedCard, false);
                 orientCardToPlayer(myPlayerNum, reconnectedPlayer.currentTarget, players.length);
 
                 players.forEach(player => {
@@ -100,7 +100,7 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
                     const playedCard = document.querySelector(`#player${player.playerNum} .playedCard`);
                     lockInCard(player.playerNum);
                     orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
-                    generateCard(playedCard, player.playedCard);
+                    generateCard(playedCard, player.playedCard, player.isImpersonating);
                 })
                 break;
 
@@ -261,7 +261,7 @@ socket.on("updateCards", (players, shop, where, shouldDisplay, isTutorial) => {
 })
 
 socket.on("notification", (notification, notificationType, playerNum) => {
-    if (!playerNum || playerNum == myPlayerNum){
+    if (playerNum == "ALL" || playerNum == myPlayerNum){
         displayNotification(notification, notificationType);
     }
 })
@@ -532,9 +532,9 @@ function tutorialPhase(phase){
             const cooperate = allActions.find((action) => action.name == "Cooperate");
 
             var grudgieCard = document.querySelector(`#player1 .playedCard`);
-            generateCard(grudgieCard, cooperate);
+            generateCard(grudgieCard, cooperate, false);
             var pudgieCard = document.querySelector(`#player2 .playedCard`);
-            generateCard(pudgieCard, work);
+            generateCard(pudgieCard, work, false);
             addTutorialProgressArrows([ "Played actions are resolved clockwise, starting with the underlined player.",
                                         "At the end of each round, the underline rotates clockwise, so your turn order will change over time.",
                                         "One of the main ways you will earn coins is by working.",
@@ -755,7 +755,7 @@ function tutorialPhase(phase){
             if (!clickedBefore){
                 const myCard = document.querySelector(`#player0 .playedCard`);
                 const prepare = allActions.find((action) => action.name == "Prepare");
-                generateCard(myCard, prepare)
+                generateCard(myCard, prepare, false)
                 addPlayerTargeting(myCard, myPlayerNum, 3);
 
                 const confirm = document.createElement("button");
@@ -852,7 +852,7 @@ function tutorialPhase(phase){
         case 31:
             const playedCard = document.querySelector(`#player0 .playedCard`);
             const retaliate = allActions.find((action) => action.name == "Retaliate");
-            generateCard(playedCard, retaliate);
+            generateCard(playedCard, retaliate, false);
             break;
 
         case 32:
@@ -862,7 +862,7 @@ function tutorialPhase(phase){
             var grudgieCard = document.querySelector(`#player1 .playedCard`);
             generateCard(grudgieCard, steal);
             var pudgieCard = document.querySelector(`#player2 .playedCard`);
-            generateCard(pudgieCard, prepare);
+            generateCard(pudgieCard, prepare, false);
             tutorialPhase(33);
             break;
 
@@ -1013,7 +1013,7 @@ function loadPreviousTutorialSteps(phase, target){
     if (4 <= phase && phase <= 12){
         const work = allActions.find((action) => action.name == "Work");
         const myPlayedCard = document.querySelector(`#player0 .playedCard`);
-        generateCard(myPlayedCard, work);
+        generateCard(myPlayedCard, work, false);
     }
     else if (phase == 16){
         const bewitch = allActions.find((action) => action.name == "Bewitch");
@@ -1022,12 +1022,12 @@ function loadPreviousTutorialSteps(phase, target){
     else if (phase == 29){
         const prepare = allActions.find((action) => action.name == "Prepare");
         const myPlayedCard = document.querySelector(`#player0 .playedCard`);
-        generateCard(myPlayedCard, prepare);
+        generateCard(myPlayedCard, prepare, false);
     }
     else if (phase >= 33){
         const retaliate = allActions.find((action) => action.name == "Retaliate");
         const myPlayedCard = document.querySelector(`#player0 .playedCard`);
-        generateCard(myPlayedCard, retaliate);
+        generateCard(myPlayedCard, retaliate, false);
     }
 
     // update opponent cards
@@ -1039,9 +1039,9 @@ function loadPreviousTutorialSteps(phase, target){
         const cooperate = allActions.find((action) => action.name == "Cooperate");
 
         const grudgieCard = document.querySelector(`#player1 .playedCard`);
-        generateCard(grudgieCard, cooperate);
+        generateCard(grudgieCard, cooperate, false);
         const pudgieCard = document.querySelector(`#player2 .playedCard`);
-        generateCard(pudgieCard, work);
+        generateCard(pudgieCard, work, false);
     }
 
     else if (phase >= 33){
@@ -1049,9 +1049,9 @@ function loadPreviousTutorialSteps(phase, target){
         const prepare = allActions.find((action) => action.name == "Prepare");
 
         const grudgieCard = document.querySelector(`#player1 .playedCard`);
-        generateCard(grudgieCard, steal);
+        generateCard(grudgieCard, steal, false);
         const pudgieCard = document.querySelector(`#player2 .playedCard`);
-        generateCard(pudgieCard, prepare);
+        generateCard(pudgieCard, prepare, false);
     }
 
     // orient cards
@@ -1296,7 +1296,7 @@ function blowUpScorecard(numPlayers, scoreCardType){
     bodyElement.appendChild(blownUpScorecard);
 }
 
-function generateCard(div, action){
+function generateCard(div, action, isImpersonated){
     div.innerHTML = "";
 
     if (action){
@@ -1339,6 +1339,13 @@ function generateCard(div, action){
         }
             
         div.appendChild(background);
+
+        if (isImpersonated){
+            const mustache = document.createElement("img");
+            mustache.src = "/static/Images/Misc/mustache.svg";
+            mustache.classList.add("mustache");
+            div.appendChild(mustache);
+        }
     }
 }
 
@@ -1353,7 +1360,7 @@ function blowUpAction(action, isInPlay, FAQOnly){
     bodyElement.appendChild(previewDisplay);
 
     if (!FAQOnly){
-         generateCard(previewDisplay, action)
+        generateCard(previewDisplay, action, false)
     }
     else{
         previewDisplay.classList.add("FAQOnly");
@@ -1460,14 +1467,14 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
         const possibleAction = document.createElement("div");
         
         const card = allActions.find((card) => card.name == cardsToDisplay[i][0].name)
-        generateCard(possibleAction, card)
+        generateCard(possibleAction, card, false)
         possibleAction.addEventListener("click", () => {
             if (isTutorial){
                 if (player.waitingOn == "clickWork"){
                     if (card.name == "Work"){
                         const myPlayedCard = document.querySelector(`#player0 .playedCard`);
                         myPlayedCard.style.opacity = "1";
-                        generateCard(myPlayedCard, card);
+                        generateCard(myPlayedCard, card, false);
                         openClosePlayerDisplay();
                         tutorialPhase(4);
                     }
@@ -1515,7 +1522,7 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
                 actionDiv.id = "selectedCard";
 
                 const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
-                generateCard(myPlayedCard, cardsToDisplay[i][0]);
+                generateCard(myPlayedCard, cardsToDisplay[i][0], false);
                 openClosePlayerDisplay();
             }
             else if (JSON.stringify(cardsToDisplay) == JSON.stringify(player.discard) && !player.isReady && player.waitingOn == "retrieveCards"){
@@ -1708,7 +1715,7 @@ function allowCardSwaps(players){
 function revealActions(players){
     players.forEach((player) => {
         const playedCard = document.querySelector(`#player${player.playerNum} .playedCard`);
-        generateCard(playedCard, player.playedCard);
+        generateCard(playedCard, player.playedCard, player.isImpersonating);
         orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
     })
 }
@@ -1982,7 +1989,7 @@ function promptImpersonate(numPlayers){
         neighborCard.addEventListener("click", () => {
             const myCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
             const selectedAction = allActions.find((action) => action.name == neighborCard.getAttribute("action"));
-            generateCard(myCard, selectedAction);
+            generateCard(myCard, selectedAction, true);
             myCard.setAttribute("action", selectedAction.name);
             confirm.disabled = false;
         })

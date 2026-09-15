@@ -314,6 +314,11 @@ div[id^="player"] .playedCard{
     background-position: center;
 }
 
+.mustache{
+    position: relative;
+    top: -15%;
+}
+
 .redirectable{
     border: 3px dashed cyan !important;
 }
