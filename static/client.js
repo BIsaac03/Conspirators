@@ -121,7 +121,6 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
 
                 case "retrieveCards":
                     retrieveCards(reconnectedPlayer, Math.floor(calculateNumCards(reconnectedPlayer.discard) / 2), false);
-                    console.log("retrieve");
                     break;
 
                 case "cooperate":
@@ -145,6 +144,7 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
                     break;
                 
                 case "buyCards":
+                    createCheckOutList(reconnectedPlayer.numCoins, false);
                     break;
             }
         }
@@ -182,7 +182,7 @@ socket.on("sendToGame", () => {
     window.location.href = "gameSpace.html"
 })
 socket.on("selectAction", (players) => {
-    displayCards(players[myPlayerNum], reconnectedPlayer.hand, "play", false);
+    displayCards(players[myPlayerNum], players[myPlayerNum].hand, "play", false);
     populateCardBacks(players.length);
     actionSelection(players, myPlayerNum);
 })
@@ -199,8 +199,8 @@ socket.on("revealActions", (players) => {
 socket.on("allowShopPurchases", (shop, players) => {
     actionPhaseCleanUp(players.length);
     displayNotification("SHOPPING TIME!", "info");
-    // !! add button for coninuting without buying cards
     displayCards(players[myPlayerNum], shop, "buy", false);
+    createCheckOutList(players[myPlayerNum].numCoins, false);
 })
 socket.on("resetGameDisplay", () => {
     removePreviousElement(`#checkOutList`);
@@ -215,7 +215,6 @@ socket.on("chooseImpersonate", (numPlayers, playerID) => {
     }
 })
 socket.on("retrieveCards", (player, numCardsToRetrieve) => {
-    console.log("attemptRetrieval")
     if (player.playerID == myID){
         retrieveCards(player, numCardsToRetrieve);
     }
@@ -243,6 +242,7 @@ socket.on("hijackRedirects", (playerID) => {
 
 socket.on("updateStats", (players, startPlayer) => {
     updateStats(players, startPlayer);
+    console.log(startPlayer);
 })
 
 socket.on("updateCards", (players, shop, where, shouldDisplay, isTutorial) => {
@@ -684,6 +684,7 @@ function tutorialPhase(phase){
     
         case 21:
             removePreviousElement(`#checkOutList`);
+            createCheckOutList(9, true);
             socket.emit("tutorialRequest", "setWaitingOn", "buyCards", myID);
             socket.emit("getUpdatedCards", "shop", false, myID);
             break;
@@ -1297,45 +1298,48 @@ function blowUpScorecard(numPlayers, scoreCardType){
 
 function generateCard(div, action){
     div.innerHTML = "";
-    div.classList.remove("back");
-    div.classList.add("card");
-    if (action.isOneShot){
-        div.classList.add("oneShot");
-    }
 
-    const name = document.createElement("p");
-    name.innerHTML = action.name;
-    if (action.isOneShot){
-        name.innerHTML += "!";
-    }
-    name.classList.add("name")
-    const text = document.createElement("p");
-    text.innerHTML = action.text;
-    text.classList.add("text");
-        
-    const cost = document.createElement("p");
-    cost.classList.add("cost");
-    cost.textContent = action.cost;
+    if (action){
+        div.classList.remove("back");
+        div.classList.add("card");
+        if (action.isOneShot){
+            div.classList.add("oneShot");
+        }
 
-    const priority = document.createElement("p");
-    priority.classList.add("priority");
-    priority.textContent = action.priority;
+        const name = document.createElement("p");
+        name.innerHTML = action.name;
+        if (action.isOneShot){
+            name.innerHTML += "!";
+        }
+        name.classList.add("name")
+        const text = document.createElement("p");
+        text.innerHTML = action.text;
+        text.classList.add("text");
+            
+        const cost = document.createElement("p");
+        cost.classList.add("cost");
+        cost.textContent = action.cost;
 
-    const background = document.createElement("img");
-    background.classList.add("background");
-    background.src = action.background;
+        const priority = document.createElement("p");
+        priority.classList.add("priority");
+        priority.textContent = action.priority;
 
-    div.appendChild(name);
-    div.setAttribute('action', action.name);
-    div.appendChild(text);
-    if (action.cost != 0){
-        div.appendChild(cost);
+        const background = document.createElement("img");
+        background.classList.add("background");
+        background.src = action.background;
+
+        div.appendChild(name);
+        div.setAttribute('action', action.name);
+        div.appendChild(text);
+        if (action.cost){
+            div.appendChild(cost);
+        }
+        if (action.priority){
+            div.appendChild(priority);
+        }
+            
+        div.appendChild(background);
     }
-    if (action.priority != 0){
-        div.appendChild(priority);
-    }
-        
-    div.appendChild(background);
 }
 
 function blowUpAction(action, isInPlay, FAQOnly){
@@ -1476,7 +1480,7 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
                         else {
                             possibleAction.classList.add("selected");
                         }
-                        modifyCheckOutList(9, cardsToDisplay[i][0].name, cardsToDisplay[i][0].cost, true)
+                        modifyCheckOutList(cardsToDisplay[i][0].name, cardsToDisplay[i][0].cost, true)
                     }   
 
                 }
@@ -1547,7 +1551,7 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
                 }
             }
             else if (!player.isReady && player.waitingOn == "buyCards"){
-                modifyCheckOutList(player.numCoins, cardsToDisplay[i][0].name, cardsToDisplay[i][0].cost, false);
+                modifyCheckOutList(cardsToDisplay[i][0].name, cardsToDisplay[i][0].cost, false);
             }
         })
         possibleAction.addEventListener("contextmenu", (e) => {
@@ -1709,143 +1713,142 @@ function revealActions(players){
     })
 }
 
-function modifyCheckOutList(coinsToSpend, actionName, actionCost, isTutorial){
+function createCheckOutList(coinsToSpend, isTutorial){
+    const checkOutList = document.createElement("div");
+    checkOutList.id  = "checkOutList";
+    bodyElement.appendChild(checkOutList);
+    const bottomRow = document.createElement("div");
+
+    const finalizePurchase = document.createElement("button");
+    finalizePurchase.textContent = "BUY";
+    finalizePurchase.addEventListener("click", () => {
+        const actionsToBuy = [];
+        const namesOfActions = checkOutList.querySelectorAll(`.name`);
+        namesOfActions.forEach((entry) => {
+            const action = allActions.find((action) => action.name == entry.textContent);
+            actionsToBuy.push(action);
+        })
+
+        if (isTutorial){
+            const curse = allActions.find((action) => action.name == "Curse");
+            const bewitch = allActions.find((action) => action.name == "Bewitch");
+            if ((actionsToBuy[0] == curse || actionsToBuy[0] == bewitch)&&(actionsToBuy[1] == curse || actionsToBuy[1] == bewitch)){
+                socket.emit("logAttemptedPurchase", actionsToBuy, myID);
+                tutorialPhase(22);
+                openCloseShopDisplay();
+                const selectedActions = document.querySelectorAll(`#shopDisplay .selected`);
+                selectedActions.forEach((action) => action.classList.remove("selected"));
+                checkOutList.remove();
+            }
+        }
+        else{ 
+            socket.emit("logAttemptedPurchase", actionsToBuy, myID);
+            const selectedActions = document.querySelectorAll(`#shopDisplay .selected`);
+            selectedActions.forEach((action) => action.classList.remove("selected"));
+            checkOutList.remove();
+        }
+    })
+    const coinIcon = document.createElement("img");
+    coinIcon.src = "static/Images/Icons/coins.svg";
+
+    const remainingCoins = document.createElement("div");
+    remainingCoins.classList.add("coinDiv");
+    const numRemainingCoins = document.createElement("p");
+    numRemainingCoins.classList.add("leftover");
+    numRemainingCoins.textContent = coinsToSpend;
+    remainingCoins.appendChild(coinIcon);
+    remainingCoins.appendChild(numRemainingCoins);
+
+    const rebate = document.createElement("p");
+    rebate.classList.add("rebate");
+    rebate.textContent = "+0";
+
+    bottomRow.appendChild(finalizePurchase);
+    bottomRow.appendChild(remainingCoins);
+    bottomRow.appendChild(rebate);
+    checkOutList.appendChild(bottomRow);
+
+    const coinRow = document.createElement("div");
+    const myCoins = document.createElement("div");
+    myCoins.classList.add("coinDiv");
+    const numMyCoins = document.createElement("p");
+    numMyCoins.classList.add("myCoins");
+    numMyCoins.textContent = coinsToSpend;
+    const clonedIcon = coinIcon.cloneNode(true);
+    myCoins.appendChild(clonedIcon);
+    myCoins.appendChild(numMyCoins);
+
+    const totalCost = document.createElement("p");
+    totalCost.classList.add("sum");
+    totalCost.textContent = "-0";
+
+    coinRow.appendChild(myCoins);
+    coinRow.appendChild(totalCost);
+    checkOutList.appendChild(coinRow);
+}
+
+function modifyCheckOutList(actionName, actionCost){
+    const checkOutList = document.getElementById("checkOutList");
     const shopAction = document.querySelector(`#shopDisplay [action = "${actionName}"]`)
-
-    let checkOutList = document.getElementById("checkOutList");
-    if (!checkOutList){
-        if (coinsToSpend >= actionCost){
-            checkOutList = document.createElement("div");
-            checkOutList.id  = "checkOutList";
-            bodyElement.appendChild(checkOutList);
-            const bottomRow = document.createElement("div");
-
-            const finalizePurchase = document.createElement("button");
-            finalizePurchase.textContent = "BUY";
-            finalizePurchase.addEventListener("click", () => {
-                const actionsToBuy = [];
-                const namesOfActions = checkOutList.querySelectorAll(`.name`);
-                namesOfActions.forEach((entry) => {
-                    const action = allActions.find((action) => action.name == entry.textContent);
-                    actionsToBuy.push(action);
-                })
-
-                if (isTutorial){
-                    const curse = allActions.find((action) => action.name == "Curse");
-                    const bewitch = allActions.find((action) => action.name == "Bewitch");
-                    if ((actionsToBuy[0] == curse || actionsToBuy[0] == bewitch)&&(actionsToBuy[1] == curse || actionsToBuy[1] == bewitch)){
-                        socket.emit("logAttemptedPurchase", actionsToBuy, myID);
-                        tutorialPhase(22);
-                        openCloseShopDisplay();
-                        checkOutList.remove();
-                    }
-                }
-                else{ 
-                    socket.emit("logAttemptedPurchase", actionsToBuy, myID);
-                    checkOutList.remove();
-                }
-            })
-            const coinIcon = document.createElement("img");
-            coinIcon.src = "static/Images/Icons/coins.svg";
-
-            const remainingCoins = document.createElement("div");
-            remainingCoins.classList.add("coinDiv");
-            const numRemainingCoins = document.createElement("p");
-            numRemainingCoins.classList.add("leftover");
-            numRemainingCoins.textContent = coinsToSpend;
-            remainingCoins.appendChild(coinIcon);
-            remainingCoins.appendChild(numRemainingCoins);
-
-            const rebate = document.createElement("p");
-            rebate.classList.add("rebate");
-            rebate.textContent = "+0";
-
-            bottomRow.appendChild(finalizePurchase);
-            bottomRow.appendChild(remainingCoins);
-            bottomRow.appendChild(rebate);
-            checkOutList.appendChild(bottomRow);
-
-            const coinRow = document.createElement("div");
-            const myCoins = document.createElement("div");
-            myCoins.classList.add("coinDiv");
-            const numMyCoins = document.createElement("p");
-            numMyCoins.classList.add("myCoins");
-            numMyCoins.textContent = coinsToSpend;
-            const clonedIcon = coinIcon.cloneNode(true);
-            myCoins.appendChild(clonedIcon);
-            myCoins.appendChild(numMyCoins);
-
-            const totalCost = document.createElement("p");
-            totalCost.classList.add("sum");
-
-            coinRow.appendChild(myCoins);
-            coinRow.appendChild(totalCost);
-            checkOutList.appendChild(coinRow);
-        }
-
-        else{
-            displayNotification("You do not have enough coins for this purchase.", "error");
-            openCloseShopDisplay();
-        }
-    }
-              
     const existingEntry = checkOutList.querySelector(`[action = "${actionName}"]`)
     if (existingEntry){
         shopAction.classList.remove("selected");
+        existingEntry.remove()
 
-        if (checkOutList.childElementCount == 3){
-            checkOutList.remove();
+        const totalCost = checkOutList.querySelector(`.sum`);
+        totalCost.textContent = Number(totalCost.textContent) + actionCost;
+        if (totalCost.textContent == "0"){
+            totalCost.textContent = "-0";
         }
-        else{
-            existingEntry.remove()
-            const totalCost = checkOutList.querySelector(`.sum`);
-            totalCost.textContent = Number(totalCost.textContent) + actionCost;
-            const remainingCoins = checkOutList.querySelector(`.leftover`);
-            remainingCoins.textContent = Number(remainingCoins.textContent) + actionCost
+        const remainingCoins = checkOutList.querySelector(`.leftover`);
+        remainingCoins.textContent = Number(remainingCoins.textContent) + actionCost
 
-            const rebate = checkOutList.querySelector(`.rebate`);
-            if (rebate.textContent == "+1"){
-                rebate.textContent = "+0";
-            }
-            else{
-                rebate.textContent = "+1";
-            }
+        const rebate = checkOutList.querySelector(`.rebate`);
+        if (rebate.textContent == "+1"){
+            rebate.textContent = "+0";
+        }
+        else if (rebate.textContent == "+3"){
+            rebate.textContent = "+1";
         }
     }
 
    else{
         const remainingCoins = checkOutList.querySelector(`.leftover`);
-        if (Number(remainingCoins.textContent) >= actionCost){
-            shopAction.classList.add("selected");
+        console.log(checkOutList.childElementCount)
+        if (checkOutList.childElementCount < 5){
+            if (Number(remainingCoins.textContent) >= actionCost){
+                shopAction.classList.add("selected");
 
-            remainingCoins.textContent = Number(remainingCoins.textContent) - actionCost;
-            const totalCost = checkOutList.querySelector(`.sum`);
-            totalCost.textContent = Number(totalCost.textContent) - actionCost;
+                remainingCoins.textContent = Number(remainingCoins.textContent) - actionCost;
+                const totalCost = checkOutList.querySelector(`.sum`);
+                totalCost.textContent = Number(totalCost.textContent) - actionCost;
 
-            const newEntry = document.createElement("div");
-            newEntry.setAttribute("action", actionName);
-            const name = document.createElement("p")
-            name.classList.add("name");
-            name.textContent = actionName;
-            const cost = document.createElement("p");
-            cost.classList.add("cost");
-            cost.textContent = actionCost;
+                const newEntry = document.createElement("div");
+                newEntry.setAttribute("action", actionName);
+                const name = document.createElement("p")
+                name.classList.add("name");
+                name.textContent = actionName;
+                const cost = document.createElement("p");
+                cost.classList.add("cost");
+                cost.textContent = actionCost;
 
-            newEntry.appendChild(name);
-            newEntry.appendChild(cost);
-            checkOutList.appendChild(newEntry);
+                newEntry.appendChild(name);
+                newEntry.appendChild(cost);
+                checkOutList.appendChild(newEntry);
 
-            const rebate = checkOutList.querySelector(`.rebate`);
-            if (checkOutList.childElementCount == 4){
-                rebate.textContent = "+1";
+                const rebate = checkOutList.querySelector(`.rebate`);
+                if (checkOutList.childElementCount == 4){
+                    rebate.textContent = "+1";
+                }
+                else if (checkOutList.childElementCount == 5){
+                    rebate.textContent = "+3"
+                }
             }
-            else if (checkOutList.childElementCount == 5){
-                rebate.textContent = "+3"
+
+            else{
+                displayNotification("You do not have enough coins for this purchase.", "error");
+                openCloseShopDisplay();
             }
-        }
-        else{
-            displayNotification("You do not have enough coins for this purchase.", "error");
-            openCloseShopDisplay();
         }
     }
 }
@@ -2124,6 +2127,7 @@ function updateStats(players, startPlayer){
     if (previousStartPlayer){
         previousStartPlayer.id = "";
     }
+    console.log(startPlayer);
     const newStartPlayer = document.querySelector(`#player${startPlayer} .playerName`);
     newStartPlayer.id = "startPlayer";
 
@@ -2253,14 +2257,17 @@ function displayNotification(notification, notificationType){
     if (notificationType == "info"){
         notificationIcon.src = "static/Images/Icons/notification_info.svg";
         notificationDiv.classList.add("info");
+        setTimeout(() => {notificationDiv.remove()}, 40000);
     }
     else if (notificationType == "error"){
         notificationIcon.src = "static/Images/Icons/notification_error.svg";
         notificationDiv.classList.add("error");
+        setTimeout(() => {notificationDiv.remove()}, 10000);
     }
     else if (notificationType == "warning"){
         notificationIcon.src = "static/Images/Icons/notification_warning.svg";
         notificationDiv.classList.add("warning");
+        setTimeout(() => {notificationDiv.remove()}, 20000);
     }
 
     const notificationContent = document.createElement("p");
@@ -2287,8 +2294,6 @@ function displayNotification(notification, notificationType){
     if (!keepScrollPosition){
         notificationCenter.scrollTop = -1*notificationCenter.scrollHeight;
     }
-
-    setTimeout(() => {notificationDiv.remove()}, 60000);
 }
 
 function populateCardBacks(numPlayers){

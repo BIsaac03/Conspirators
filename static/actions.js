@@ -38,7 +38,7 @@ export const allActions = [
         "isSteal": false,
         "isTargeting": false,
         "effect":  `player.numCoins += 2; 
-                    player.isImmune = true`,
+                    player.isImmune = true;`,
         "priority": 4,
         "cost": 0,
         "isBasicAction": true,
@@ -71,7 +71,9 @@ export const allActions = [
         "isTargeting": false,
         "effect":  `player.isReady = false;
                     player.waitingOn = "retrieveCards";
-                    io.to(myGame.getGameDetails().roomCode).emit("retrieveCards", player, Math.floor(player.countCards("discard") / 2));`,
+                    if (player.countCards("discard") >= 2){
+                        io.to(myGame.getGameDetails().roomCode).emit("retrieveCards", player, Math.floor(player.countCards("discard") / 2));
+                    }`,
         "priority": 0,
         "cost": 0,
         "isBasicAction": true,
@@ -103,7 +105,7 @@ export const allActions = [
         "name": "Prepare",
         "background": "static/Images/Backgrounds/yellow.png",
         "text": "Take 3 Card Swap tokens.",
-        "isWork": true,
+        "isWork": false,
         "isSteal": false,
         "isTargeting": false,
         "effect":  `player.numCardSwaps += 3;`,
@@ -182,6 +184,7 @@ export const allActions = [
         "effect":  `player.numCoins += 3;
                     players.forEach((other) => {
                         if (other.currentTarget == player.playerNum){
+                            io.to(myGame.getGameDetails().roomCode).emit("notification", "You have been <i>Cursed</i>", "warning", other.playerNum);
                             cursed(other, shop);
                         }
                     })`,

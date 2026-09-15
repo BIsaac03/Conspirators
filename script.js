@@ -213,10 +213,12 @@ io.on("connection", (socket) => {
     socket.on("returnCardsToHand", (playerNum, retrievedCards, myID) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
         const players = myGame.getPlayers();
+        const me = players.find((player) => player.playerID == myID);
+
         players[playerNum].retrieveSelectedCards(retrievedCards);
         players[playerNum].isReady = true;
 
-        const me = myGame.getPlayers().find((player) => player.playerID == myID);
+        io.to(myGame.getGameDetails().roomCode).emit("notification", `<b style = color:${me.playerColor[0]}">${me.playerName}</b> returned ${retrievedCards}.`, "info");
         determineResolutionOrder(players, myGame.getGameDetails().startPlayer, me.playerNum);
     })
     socket.on("returnedCooperation", (targetID, cooperatorID, coins) => {
@@ -422,8 +424,10 @@ function determineResolutionOrder(players, startPlayer, playerNumResolved){
         return a - b;
     });
     const priorityOrder = turnOrder.toSorted((a, b) => {
-        if (a.playedCard && !b.playedCard) return -1;
-        if (!b.playedCard && a.playedCard) return 1;
+        if (!b.playedCard) return -1;
+        if (!a.playedCard) return 1;
+        if (a.playedCard.priority && !b.playedCard.priority) return -1;
+        if (!a.playedCard.priority && b.playedCard.priority) return 1;
         return a.playedCard.priority - b.playedCard.priority;
     });
     const playerOrder = priorityOrder.map((player) => player.playerNum);
@@ -562,10 +566,8 @@ function roundStart(myGame){
     myGame.changeGamePhase("actionSelection");
     myGame.rotateStartPlayer(players.length);
     updatePlayerWaitingOn(players, "selectAction");
-    setTimeout(() => {
-        io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", myGame.getGameDetails().startPlayer);
+        io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", players, myGame.getGameDetails().startPlayer);
         io.to(`${myGame.getGameDetails().roomCode}`).emit("selectAction", players);  
-    }, 50);
 }
 
 function endOfRound(players, shop){
@@ -609,20 +611,25 @@ function steal(stealer, stealFrom, modification, players){
     else if (!stealFrom.isImmune){
         stealer.numCoins += coinsToSteal;
         stealFrom.numCoins -= coinsToSteal;
+        io.to(myGame.getGameDetails().roomCode).emit("notification", `<b style = "color: ${stealer.playerColor[0]}">${stealer.playerName}</b> just stole ${coinsToSteal} coins from you!`, "warning", stealFrom.playerNum);
     }
 }
 
 function cursed(cursed){
     const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == cursed.playerID));
+    const actionName = cursed.playedCard.name;
+    let where = "";
     if (cursed.playedCard.isBasicAction){
         cursed.discardPlayedCard(myGame.getGameDetails().shop);
+        where += "discarded";
     }
     else{
         returnToShop(cursed.playedCard, myGame.getGameDetails().shop);
+        where += "returned to the shop";
     }
+    io.to(myGame.getGameDetails().roomCode).emit("notification", `You have been <i>Cursed</i>! Your '${actionName}' has been ${where} without effect.`, "warning", cursed.playerNum);
     cursed.playedCard = undefined;
-
-    // !! update display
+    io.to(myGame.getGameDetails().roomCode).emit("revealActions", myGame.getPlayers());
 }
 
 function returnToShop(action, shop){
