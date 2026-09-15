@@ -657,6 +657,9 @@ div[id^="player"] #handIcon{
     align-items: center;
     text-align: center;
 }
+.notificationDiv span{
+    font-weight: bold;
+}
 .notificationDiv.info{
     background-color: rgba(255, 248, 220, 0.5);
 }

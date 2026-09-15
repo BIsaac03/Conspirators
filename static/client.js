@@ -247,7 +247,6 @@ socket.on("displayWorkValue", (workValue) => {
 
 socket.on("updateStats", (players, startPlayer) => {
     updateStats(players, startPlayer);
-    console.log(startPlayer);
 })
 
 socket.on("updateCards", (players, shop, where, shouldDisplay, isTutorial) => {
@@ -2161,7 +2160,6 @@ function updateStats(players, startPlayer){
     if (previousStartPlayer){
         previousStartPlayer.id = "";
     }
-    console.log(startPlayer);
     const newStartPlayer = document.querySelector(`#player${startPlayer} .playerName`);
     newStartPlayer.id = "startPlayer";
 
@@ -2307,6 +2305,40 @@ function displayNotification(notification, notificationType){
     const notificationContent = document.createElement("p");
     notificationContent.id = "notification";
     notificationContent.innerHTML = notification;
+    
+    const namedActions = notificationContent.querySelectorAll(`span`);
+    namedActions.forEach((action) => {
+        const actionToBlowUp = allActions.find((toBlowUp) => toBlowUp.name == action.textContent);
+        switch (actionToBlowUp.definingColor){
+            case ("red"):
+                action.style.color = "#BA0000";
+                break;
+
+            case ("blue"):
+                action.style.color = "#41A7BF";
+                break;
+
+            case ("green"):
+                action.style.color = "#24BC82";
+                break;
+
+            case ("purple"):
+                action.style.color = "#9470DC";
+                break;
+
+            case ("yellow"):
+                action.style.color = "#FFE166";
+                break;
+
+        }
+
+        action.addEventListener("mouseenter", () => {
+            blowUpAction(actionToBlowUp, false, false);
+        })
+        action.addEventListener("mouseleave", () => {
+            removePreviousElement(`#blownUp`);
+        })
+    })
 
     const closeNotifiction = document.createElement("button");
     closeNotifiction.id = "closeNotification";
