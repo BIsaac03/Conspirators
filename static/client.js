@@ -240,6 +240,11 @@ socket.on("hijackRedirects", (playerID) => {
     }
 })
 
+socket.on("displayWorkValue", (workValue) => {
+    const workValueDisplay = document.querySelector(`#workValueScorecard p`);
+    workValueDisplay.textContent = workValue;
+})
+
 socket.on("updateStats", (players, startPlayer) => {
     updateStats(players, startPlayer);
     console.log(startPlayer);
@@ -550,7 +555,6 @@ function tutorialPhase(phase){
                 workValueScorecard.style.visibility = "visible";
                 workValueScorecard.addEventListener("mouseenter", tutorialHoveredWorkScorecard);
             }
-            
             break;
 
         case 10:
@@ -559,7 +563,10 @@ function tutorialPhase(phase){
             tutorialHighlight("numCoins", true);
             document.querySelector(`#player0 .numCoins`).textContent = "4";
             document.querySelector(`#player2 .numCoins`).textContent = "4";
+            var currentWorkValue = document.querySelector(`#workValueScorecard p`);
+            currentWorkValue.textContent = "2";
             addTutorialProgressArrows([ "Since all 3 players are workers this round, each work will only give 2 coins.",
+                                        "You can see the current work value displayed on the scorecard.",
                                         "Grudgie's card modifies their work value by -2, so they won't receive any coins!",
                                         "That's not the only thing their card does, however.",
                                         "If the size/angle of a played card makes it difficult to read, you can enlarge it. Hover over Grudgie's card."
@@ -598,6 +605,8 @@ function tutorialPhase(phase){
             document.querySelector(`#player0 .discardNum`).textContent = "1";
             document.querySelector(`#player1 .discardNum`).textContent = "1";
             document.querySelector(`#player2 .discardNum`).textContent = "1";
+            var currentWorkValue = document.querySelector(`#workValueScorecard p`);
+            currentWorkValue.textContent = "";
 
             addTutorialProgressArrows([ "Actions you play are sent to your personal discard at the end of the round.",
                                         "Then, players can spend their coins to buy new cards from the Shop.",
@@ -731,8 +740,10 @@ function tutorialPhase(phase){
             socket.emit("tutorialRequest", "save", 26, myID);
             removePreviousElement(`.tutorialProgress`);
 
-            document.getElementById("startPlayer").id = "";
-            document.querySelector(`#player1 .playerName`).id = "startPlayer";
+            const oldStartPlayer = document.getElementById("startPlayer");
+            oldStartPlayer.id = "";
+            const newStartPlayer = document.querySelector(`#player1 .playerName`);
+            newStartPlayer.id = "startPlayer";
             
             tutorialHighlight("handNum", false);
             document.querySelector(`#player0 .numCoins`).textContent = "3";
@@ -864,6 +875,9 @@ function tutorialPhase(phase){
             var pudgieCard = document.querySelector(`#player2 .playedCard`);
             generateCard(pudgieCard, prepare, false);
             tutorialPhase(33);
+
+            var currentWorkValue = document.querySelector(`#workValueScorecard p`);
+            currentWorkValue.textContent = "0";
             break;
 
         case 33:
@@ -872,7 +886,7 @@ function tutorialPhase(phase){
             document.querySelector(`#player1 .handNum`).textContent = "10";
             document.querySelector(`#player2 .handNum`).textContent = "10";
             addTutorialProgressArrows([ "Even though Grudgie goes before us in turn order, our Retaliate will block their Steal.",
-                                        "Green cards are always performed, in full, before ANY non-green cards, regardless of turn order.",
+                                        "Green cards are always resolved before ANY non-green cards, regardless of turn order.",
                                         "If multiple green cards are played in the same round, the lowest numbered one takes priority.",
                                         "In the event that multiple players play the same green action, regular turn order determines which is resolved first.",
                                         ""
@@ -885,7 +899,7 @@ function tutorialPhase(phase){
             addTutorialProgressArrows([ "The number of coins taken on a Steal action is determined by how many players are stealing from your target.",
                                         "The more thieves focused on a single player, the fewer coins each thief steals.",
                                         "The value of the Steal is resolved before any player performs their Steals.",
-                                        "Hover over the red scorecard in the bottom-left corner to see exactly how many coins doubled-up thieves steal."
+                                        "Hover over the red scorecard in the bottom-left to see exactly how many coins doubled-up thieves steal."
                                         ], 35, tutorialDiv);
             break;
 
@@ -1065,41 +1079,64 @@ function loadPreviousTutorialSteps(phase, target){
     }
     
     // update stats
-    if (phase >= 10){
+    // handNum
+    if (phase >= 34){
+        document.querySelector(`#player0 .handNum`).textContent = "10";
+        document.querySelector(`#player1 .handNum`).textContent = "10";
+        document.querySelector(`#player2 .handNum`).textContent = "10";
+    }
+    else if (phase >= 10){
         document.querySelector(`#player0 .handNum`).textContent = "11";
         document.querySelector(`#player1 .handNum`).textContent = "11";
         document.querySelector(`#player2 .handNum`).textContent = "11";
     }
+
+    // discardNum
+    if (16 <= phase && phase <= 20){
+        document.querySelector(`#player0 .discardNum`).textContent = "1";
+        document.querySelector(`#player1 .discardNum`).textContent = "1";
+        document.querySelector(`#player2 .discardNum`).textContent = "1";
+    }
+    else if (phase >= 24){
+        document.querySelector(`#player0 .discardNum`).textContent = "3";
+        document.querySelector(`#player1 .discardNum`).textContent = "1";
+        document.querySelector(`#player2 .discardNum`).textContent = "2";
+    }
+
+    //numCoins
     if (10 <= phase && phase <= 20){
         document.querySelector(`#player2 .numCoins`).textContent = "4";
     }
     if (14 <= phase && phase <= 20){
         document.querySelector(`#player0 .numCoins`).textContent = "9";
     }
-    if (16 <= phase && phase <= 20){
-        document.querySelector(`#player0 .discardNum`).textContent = "1";
-        document.querySelector(`#player1 .discardNum`).textContent = "1";
-        document.querySelector(`#player2 .discardNum`).textContent = "1";
-    }
-    if (phase >= 24){
-        document.querySelector(`#player0 .discardNum`).textContent = "3";
-        document.querySelector(`#player1 .discardNum`).textContent = "1";
-        document.querySelector(`#player2 .discardNum`).textContent = "2";
-    }
-    if (phase == 24){
+    else if (phase == 24){
         document.querySelector(`#player0 .numCoins`).textContent = "1";
         document.querySelector(`#player1 .numCoins`).textContent = "2";
         document.querySelector(`#player2 .numCoins`).textContent = "0";
     }
-    if (phase >= 29){
+    else if (phase >= 29){
         document.querySelector(`#player0 .numCoins`).textContent = "3";
         document.querySelector(`#player1 .numCoins`).textContent = "4";
         document.querySelector(`#player2 .numCoins`).textContent = "2";
     } 
-    if (phase >= 34){
-        document.querySelector(`#player0 .handNum`).textContent = "10";
-        document.querySelector(`#player1 .handNum`).textContent = "10";
-        document.querySelector(`#player2 .handNum`).textContent = "10";
+
+    // startPlayer
+    if (phase > 26){
+        const oldStartPlayer = document.getElementById("startPlayer");
+        oldStartPlayer.id = "";
+        const newStartPlayer = document.querySelector(`#player1 .playerName`);
+        newStartPlayer.id = "startPlayer";
+    }
+
+    // workValue
+    if (phase == 12){
+        const currentWorkValue = document.querySelector(`#workValueScorecard p`);
+        currentWorkValue.textContent = "2";
+    }
+    else if (phase >= 33){
+        const currentWorkValue = document.querySelector(`#workValueScorecard p`);
+        currentWorkValue.textContent = "0";
     }
 }
 
@@ -1166,24 +1203,10 @@ function populateGameSpace(players){
                         const action = allActions.find((card) => card.name == playedCard.getAttribute("action"));
                         const blownUpAction = blowUpAction(action, true, false);
 
-                        if (i == myPlayerNum){
-                            blownUpAction.addEventListener("click", () => {
-                                promptActionSelection(players[i], false);
-                            })
-                        }
                         playedCard.style.opacity = "0.3";
                         playedCard.addEventListener("mouseleave", () => {
-                            const blownUpAction = document.querySelector(`#blownUp.inPlay`)
-                            if (blownUpAction && !blownUpAction.matches(":hover")){
-                                playedCard.style.opacity = "1.0";
-                                blownUpAction.remove();
-                            }
-                        })
-                        blownUpAction.addEventListener("mouseleave", () => {
-                            if (!playedCard.matches(":hover")){
-                                playedCard.style.opacity = "1.0";
-                                blownUpAction.remove();
-                            }
+                            removePreviousElement(`#blownUp.inPlay`)
+                            playedCard.style.opacity = "1.0";
                         })
                     }
                 }, 250)
@@ -1557,7 +1580,7 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
                     } 
                 }
             }
-            else if (!player.isReady && player.waitingOn == "buyCards"){
+            else if (why == "buy" && !player.isReady && player.waitingOn == "buyCards"){
                 modifyCheckOutList(cardsToDisplay[i][0].name, cardsToDisplay[i][0].cost, false);
             }
         })
@@ -1856,6 +1879,10 @@ function modifyCheckOutList(actionName, actionCost){
                 displayNotification("You do not have enough coins for this purchase.", "error");
                 openCloseShopDisplay();
             }
+        }
+        else{
+            displayNotification("You can only buy 3 cards each round.", "error");
+            openCloseShopDisplay();
         }
     }
 }
@@ -2245,15 +2272,15 @@ function addActionSearchListeners(isTutorial){
         }
     })
 
-    if (!isTutorial){
-        document.addEventListener("click", (e) => {
-            if (!actionSearch.contains(e.target)){
+    document.addEventListener("click", (e) => {
+        if (!actionSearch.contains(e.target)){
+            if (!(isTutorial && searchInput.value == "Bewitch")){
                 removePreviousElement(`#blownUp`);
                 autocompleteSuggestions.innerHTML = "";
-                searchInput.value = "";            
-            }
-        })
-    }
+                searchInput.value = ""; 
+            }           
+        }
+    })
 }
 
 function displayNotification(notification, notificationType){
@@ -2264,7 +2291,7 @@ function displayNotification(notification, notificationType){
     if (notificationType == "info"){
         notificationIcon.src = "static/Images/Icons/notification_info.svg";
         notificationDiv.classList.add("info");
-        setTimeout(() => {notificationDiv.remove()}, 40000);
+        setTimeout(() => {notificationDiv.remove()}, 60000);
     }
     else if (notificationType == "error"){
         notificationIcon.src = "static/Images/Icons/notification_error.svg";
@@ -2274,7 +2301,7 @@ function displayNotification(notification, notificationType){
     else if (notificationType == "warning"){
         notificationIcon.src = "static/Images/Icons/notification_warning.svg";
         notificationDiv.classList.add("warning");
-        setTimeout(() => {notificationDiv.remove()}, 20000);
+        setTimeout(() => {notificationDiv.remove()}, 30000);
     }
 
     const notificationContent = document.createElement("p");
@@ -2317,13 +2344,17 @@ function populateCardBacks(numPlayers){
 function actionPhaseCleanUp(numPlayers){
     for (let i = 0; i < numPlayers; i++){
         const playedCard = document.querySelector(`#player${i} .playedCard`);
-            playedCard.innerHTML = "";
-            playedCard.removeAttribute("action");
-            playedCard.classList.remove("card");
-            playedCard.style.border = "3px dashed cyan";
-            playedCard.style.opacity = "0.3";
-            playedCard.style.transform = "translateX(5vh) rotate(-90deg)";
-        }
+        playedCard.innerHTML = "";
+        playedCard.removeAttribute("action");
+        playedCard.classList.remove("card");
+        playedCard.style.border = "3px dashed cyan";
+        playedCard.style.opacity = "0.3";
+        playedCard.style.transform = "translateX(5vh) rotate(-90deg)";
+    }
+    
+    const workValueDisplay = document.querySelector(`#workValueScorecard p`);
+    workValueDisplay.textContent = "";
+
     const selectedPlayer = document.getElementById("selectedPlayer");
     if (selectedPlayer){
         selectedPlayer.id = "";

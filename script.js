@@ -220,7 +220,30 @@ io.on("connection", (socket) => {
         players[playerNum].retrieveSelectedCards(retrievedCards);
         players[playerNum].isReady = true;
 
-        io.to(myGame.getGameDetails().roomCode).emit("notification", `<b style = color:${me.playerColor[0]}">${me.playerName}</b> returned ${retrievedCards}.`, "info", "ALL");
+        const totalCardsRetrieved = retrievedCards.length;
+        let retrievedCardsString = "";
+        retrievedCards.forEach((card, index) => {
+            const numRetrieved = card[1];
+            if (totalCardsRetrieved > 2 && index > 0){
+                retrievedCardsString += ",";
+            }
+            if (totalCardsRetrieved > 1 && index == totalCardsRetrieved - 1){
+                retrievedCardsString += " and ";
+            }
+            if (numRetrieved == 1){
+                retrievedCardsString += `1 '${card[0].name}'`; 
+            }
+            else{
+                if (card[0].name == "Bewitch"){
+                    retrievedCardsString += `${numRetrieved} '${card[0].name}es'`;
+                }
+                else{
+                    retrievedCardsString += `${numRetrieved} '${card[0].name}s'`;
+                }
+            }
+        })
+
+        io.to(myGame.getGameDetails().roomCode).emit("notification", `<b style = "color:${me.playerColor[0]}">${me.playerName}</b> returned ${retrievedCardsString}.`, "info", "ALL");
         determineResolutionOrder(players, myGame.getGameDetails().startPlayer, me.playerNum);
     })
     socket.on("returnedCooperation", (targetID, cooperatorID, coins) => {
@@ -442,6 +465,7 @@ function resolveActions(players, playerOrder, playerNumResolved, startPlayer){
     const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
     const shop = myGame.getGameDetails().shop;
     const workValue = establishWorkValue(players);
+    io.to(`${myGame.getGameDetails().roomCode}`).emit("displayWorkValue", workValue);
 
     let numToResolve = 0
     // determine how far already progressed in playerOrder 
@@ -515,20 +539,20 @@ function attemptPurchase(players, startPlayer, shop){
                     const numCardsBought = currentBuyer.cardsToBuy.length;
                     let boughtCardsString = "";
                     if (numCardsBought == 0){
-                        boughtCardsString += ("no new Actions")
+                        boughtCardsString += "no new Actions";
                     }
                     currentBuyer.cardsToBuy.forEach((card, index) => {
                         if (numCardsBought == 3 && index > 0){
-                            boughtCardsString += (",");
+                            boughtCardsString += ",";
                         }
                         if (numCardsBought > 1 && index == numCardsBought - 1){
-                            boughtCardsString += (" and ");
+                            boughtCardsString += " and ";
                         }
                         if(["A", "I", "Ho"].some((vowel) => card.name.startsWith(vowel))){
-                            boughtCardsString += (" an " + card.name);
+                            boughtCardsString += " an '" + card.name + "'";
                         }
                         else{
-                            boughtCardsString += (" a " + card.name);
+                            boughtCardsString += " a '" + card.name + "'";
                         }
                     })
 

@@ -51,7 +51,7 @@ export const allActions = [
         "background": "static/Images/Backgrounds/green_(red)_arrow.png",
         "text": "Take 3 coins.<br> Target player cannot steal from you. On try, <b>Steal</b>.",
         "isWork": false,
-        "isSteal": `if(players[player.currentTarget].playedCard.name != "Retaliate && players[player.currentTarget].playedCard.isSteal)`,
+        "isSteal": `if(players[player.currentTarget].playedCard.name != "Retaliate && players[player.currentTarget].playedCard.isSteal && players[player.currentTarget].currentTarget == player.playerNum)`,
         "isTargeting": true,
         "effect":  `player.numCoins += 3;
                     player.retaliatingAgainst = player.currentTarget;`,
@@ -69,9 +69,9 @@ export const allActions = [
         "isWork": false,
         "isSteal": false,
         "isTargeting": false,
-        "effect":  `player.isReady = false;
-                    player.waitingOn = "retrieveCards";
-                    if (player.countCards("discard") >= 2){
+        "effect":  `if (player.countCards("discard") >= 2){
+                        player.isReady = false;
+                        player.waitingOn = "retrieveCards";
                         io.to(myGame.getGameDetails().roomCode).emit("retrieveCards", player, Math.floor(player.countCards("discard") / 2));
                     }`,
         "priority": 0,
@@ -172,7 +172,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["Redirecting this card AFTER it has resolved does not change players' immunity from Thieves.", "Since this is resolved before 'Sabotage', it cannot affect you."]
+        "FAQ": ["Redirecting this card AFTER it has resolved does not change players' immunity from Thieves.", "Since this is resolved before 'Sabotage', it can still earn coins from <b>Work</b>."]
     },
     {
         "name": "Curse",
@@ -184,7 +184,6 @@ export const allActions = [
         "effect":  `player.numCoins += 3;
                     players.forEach((other) => {
                         if (other.currentTarget == player.playerNum){
-                            io.to(myGame.getGameDetails().roomCode).emit("notification", "You have been <i>Cursed</i>", "warning", other.playerNum);
                             cursed(other, shop);
                         }
                     })`,
@@ -384,7 +383,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["If your target played 'Retaliate' but has yet to be stolen from, they are not yet a Thief."]
+        "FAQ": ["A player who 'Retaliates', is only a Thief if they are targeted by a Thief."]
     },
     {
         "name": "Abduct",
