@@ -133,9 +133,11 @@ io.on("connection", (socket) => {
 
     socket.on("leftLobby", (playerID) => {
         const myLobby = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == playerID));
-        const indexToRemove = myLobby.getPlayers().findIndex((player) => player.playerID == playerID);
-        myLobby.getPlayers().splice(indexToRemove, 1);
-        io.to(`${myLobby.getGameDetails().roomCode}`).emit("playerKicked", playerID);
+        if (!myLobby.getGameDetails().gameHasStarted){
+            const indexToRemove = myLobby.getPlayers().findIndex((player) => player.playerID == playerID);
+            myLobby.getPlayers().splice(indexToRemove, 1);
+            io.to(`${myLobby.getGameDetails().roomCode}`).emit("playerKicked", playerID);
+        }
     })
 
     socket.on("tutorialRequest", (what, data, ID) => {
@@ -218,7 +220,7 @@ io.on("connection", (socket) => {
         players[playerNum].retrieveSelectedCards(retrievedCards);
         players[playerNum].isReady = true;
 
-        io.to(myGame.getGameDetails().roomCode).emit("notification", `<b style = color:${me.playerColor[0]}">${me.playerName}</b> returned ${retrievedCards}.`, "info");
+        io.to(myGame.getGameDetails().roomCode).emit("notification", `<b style = color:${me.playerColor[0]}">${me.playerName}</b> returned ${retrievedCards}.`, "info", "ALL");
         determineResolutionOrder(players, myGame.getGameDetails().startPlayer, me.playerNum);
     })
     socket.on("returnedCooperation", (targetID, cooperatorID, coins) => {
@@ -250,13 +252,14 @@ io.on("connection", (socket) => {
 
     socket.on("impersonated", (actionName, myID) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
-        const impersonator = myGame.find((player) => player.playerID == myID);
+        const impersonator = myGame.getPlayers().find((player) => player.playerID == myID);
         const action = allActions.find((action) => action.name == actionName);
         impersonator.playedCard = action;
         impersonator.isImpersonating = true;
         impersonator.isReady = true;
 
-        determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, impersonator.playerNum);
+        io.to(`${myGame.getGameDetails().roomCode}`).emit("revealActions", myGame.getPlayers());
+        determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer);
     })
 
     socket.on("finishedRedirecting", (newTargets, myID) => {
@@ -529,7 +532,7 @@ function attemptPurchase(players, startPlayer, shop){
                         }
                     })
 
-                    io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", `<b style="color: ${currentBuyer.playerColor[0]}">${currentBuyer.playerName}</b> bought ${boughtCardsString}.`, "info");
+                    io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", `<b style="color: ${currentBuyer.playerColor[0]}">${currentBuyer.playerName}</b> bought ${boughtCardsString}.`, "info", "ALL");
                     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
                     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", players, startPlayer);
                     currentBuyer.cardsToBuy = undefined;
@@ -603,6 +606,7 @@ function work(worker, workValue, modification){
 }
 
 function steal(stealer, stealFrom, modification, players){
+    const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
     const stealValue = establishStealValue(stealFrom, players);
     const coinsToSteal = Math.min(stealValue + modification, stealFrom.numCoins);
     if (stealFrom.retaliatingAgainst == stealer.playerNum){

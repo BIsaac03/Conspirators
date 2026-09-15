@@ -238,9 +238,11 @@ export const allActions = [
         "isWork": "",
         "isSteal": "",
         "isTargeting": "",
-        "effect":   `player.isReady = false;
-                    player.waitingOn = "chooseImpersonate";
-                    io.to(myGame.getGameDetails().roomCode).emit("chooseImpersonate", players.length, player.playerID);`,
+        "effect":   `if(player.isImpersonating == false){
+                        player.isReady = false;
+                        player.waitingOn = "chooseImpersonate";
+                        io.to(myGame.getGameDetails().roomCode).emit("chooseImpersonate", players.length, player.playerID);
+                    }`,
         "priority": 1,
         "cost": 6,
         "isBasicAction": false,

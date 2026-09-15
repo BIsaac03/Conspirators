@@ -107,7 +107,7 @@ export class Player{
                 }
 
                 // return OneShots to shop
-                else if (returnToShop){
+                if (returnToShop){
                     const actionInShop = shop.find((shopEntry) => shopEntry[0].name == this.playedCard.name);
                     if (!actionInShop){
                         shop.push([this.playedCard, 1])
