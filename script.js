@@ -641,6 +641,7 @@ function steal(stealer, stealFrom, modification, players){
     else if (!stealFrom.isImmune){
         stealer.numCoins += coinsToSteal;
         stealFrom.numCoins -= coinsToSteal;
+        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", stealFrom.playerNum, stealer.playerNum, coinsToSteal, players.length);
         io.to(myGame.getGameDetails().roomCode).emit("notification", `<b style = "color: ${stealer.playerColor[0]}">${stealer.playerName}</b> just stole ${coinsToSteal} coins from you!`, "warning", stealFrom.playerNum);
     }
 }

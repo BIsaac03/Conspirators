@@ -261,6 +261,16 @@ button:hover{
     background-color: rgb(255, 220, 210);
 }
 
+.coin{
+    position: absolute;
+    width: 2vw;
+    height: 2vw;
+    border-radius: 50%;
+    background-color: goldenrod;
+    box-shadow: 0 0 5px black inset;
+    z-index: 3;
+}
+
 #gameSpace{
     position: absolute;
     place-self: center;

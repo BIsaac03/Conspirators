@@ -198,7 +198,6 @@ socket.on("revealActions", (players) => {
 })
 socket.on("allowShopPurchases", (shop, players) => {
     actionPhaseCleanUp(players.length);
-    displayNotification("SHOPPING TIME!", "info");
     displayCards(players[myPlayerNum], shop, "buy", false);
     createCheckOutList(players[myPlayerNum].numCoins, false);
 })
@@ -243,6 +242,10 @@ socket.on("hijackRedirects", (playerID) => {
 socket.on("displayWorkValue", (workValue) => {
     const workValueDisplay = document.querySelector(`#workValueScorecard p`);
     workValueDisplay.textContent = workValue;
+})
+
+socket.on("animateCoinTransfer", (playerFrom, playerTo, numCoins, numPlayers) => {
+    animateCoinTransfer(playerFrom, playerTo, numCoins, numPlayers);
 })
 
 socket.on("updateStats", (players, startPlayer) => {
@@ -1742,6 +1745,41 @@ function revealActions(players){
     })
 }
 
+function animateCoinTransfer(playerFrom, playerTo, numCoins, numPlayers){
+    const elementFrom = document.querySelector(`#player${playerFrom} .playerIcon`);
+    const elementTo = document.querySelector(`#player${playerTo} .playerIcon`);
+    const rectFrom = elementFrom.getBoundingClientRect();
+    const rectTo = elementTo.getBoundingClientRect();
+    const coordFrom = [(rectFrom.left + rectFrom.right) / 2, (rectFrom.top + rectFrom.bottom) / 2];
+    const coordTo = [(rectTo.left + rectTo.right) / 2, (rectTo.top + rectTo.bottom) / 2];
+
+    const angle = Math.atan2(coordFrom[1] - coordTo[1], coordFrom[0] - coordTo[0]) * 180 / Math.PI;
+
+    for (let i = 0; i < numCoins; i++){
+        setTimeout(() => {
+            const coin = document.createElement("div");
+            coin.classList.add("coin");
+            const arc = Math.floor(Math.random()*50);
+            const direction = Math.floor(Math.random()*2);
+
+            coin.style.offsetPath = `path("M ${coordFrom[0]},${coordFrom[1]} A ${arc} ${100} ${angle + 90} 0 ${direction} ${coordTo[0]},${coordTo[1]}")`;
+            bodyElement.appendChild(coin);
+
+            setTimeout(() => {
+                coin.remove()
+            }, 2000);
+
+            coin.animate([
+                { offsetDistance: "0%" },
+                { offsetDistance: "100%" }
+                ], {
+                duration: 2000,
+                easing: 'ease-in-out'
+            });
+        }, i*200);
+    }
+}
+
 function createCheckOutList(coinsToSpend, isTutorial){
     const checkOutList = document.createElement("div");
     checkOutList.id  = "checkOutList";
@@ -2289,7 +2327,7 @@ function displayNotification(notification, notificationType){
     if (notificationType == "info"){
         notificationIcon.src = "static/Images/Icons/notification_info.svg";
         notificationDiv.classList.add("info");
-        setTimeout(() => {notificationDiv.remove()}, 60000);
+        setTimeout(() => {notificationDiv.remove()}, 40000);
     }
     else if (notificationType == "error"){
         notificationIcon.src = "static/Images/Icons/notification_error.svg";
@@ -2299,7 +2337,7 @@ function displayNotification(notification, notificationType){
     else if (notificationType == "warning"){
         notificationIcon.src = "static/Images/Icons/notification_warning.svg";
         notificationDiv.classList.add("warning");
-        setTimeout(() => {notificationDiv.remove()}, 30000);
+        setTimeout(() => {notificationDiv.remove()}, 20000);
     }
 
     const notificationContent = document.createElement("p");
