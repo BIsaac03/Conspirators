@@ -89,6 +89,7 @@ button:hover{
 }
 #tutorialMessage{
     align-self: anchor-center;
+    line-height: 120%;
 }
 .tutorialProgress{
     align-self: center;
@@ -502,6 +503,19 @@ div[id^="player"] #handIcon{
     height: 7vh;
     width: 14vh;
     font-size: 3vh;
+}
+
+#impersonateDiv{
+    position: absolute;
+    place-self: center;
+    width: 10vw;
+    display: grid;
+    justify-items: center;
+    text-align: center;
+    font-size: 1.5vw;
+    gap: 2vw;
+    background-color: rgba(255, 248, 220);
+    padding: 2vw;
 }
 
 #retrieveDiv{

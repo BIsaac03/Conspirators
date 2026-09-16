@@ -85,12 +85,14 @@ io.on("connection", (socket) => {
             const shop = createShop("basic");
             const newGame = makeGame(roomCode, shop)
             ongoingGames.push(newGame);
+            socket.join(`${roomCode}`);
         }
         else{
             if (existingLobby.getGameDetails().isGameInProgress){
                 socket.emit("gameInProgress");
             }
             else{
+                socket.join(`${roomCode}`);
                 socket.emit("displayExistingPlayers", existingLobby.getPlayers());
             }     
         }  
@@ -101,7 +103,6 @@ io.on("connection", (socket) => {
             socket.emit("gameInProgress");
         }
         else{
-            socket.join(`${roomCode}`);
             let colorSpecs = [playerColor, false];
             const existingName = myLobby.getPlayers().find((player) => player.playerName == playerName);
             const existingPlayer = myLobby.getPlayers().find((player) => player.playerID == playerID);
@@ -211,6 +212,11 @@ io.on("connection", (socket) => {
         attemptPurchase(myGame.getPlayers(), myGame.getGameDetails().startPlayer, myGame.getGameDetails().shop)
     })
 
+    socket.on("newImpersonatedCard", (selectedAction, myPlayerNum, myID) => {
+        const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
+        io.to(myGame.getGameDetails().roomCode).emit("updateImpersonation", myPlayerNum, selectedAction);
+    })
+
     socket.on("returnCardsToHand", (playerNum, retrievedCards, myID) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
         const players = myGame.getPlayers();
@@ -255,7 +261,7 @@ io.on("connection", (socket) => {
         target.numCoins -= coins;
         cooperator.numCoins += coins;
         io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", myGame.getPlayers(), myGame.getGameDetails().startPlayer);
-        io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", `<b style = "color:${target.playerColor[0]}">${target.playerName}</b> gave you ${coins} coins!`, "info", cooperator.playerNum);
+        io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", `<b style = "color:${target.playerColor[0]}">${target.playerName}</b> returned ${coins}/4 coins.`, "info", cooperator.playerNum);
   
         determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, cooperator.playerNum);
     })
@@ -270,7 +276,7 @@ io.on("connection", (socket) => {
         giver.numCoins += coins;
         receiver.numCoins += honoredCoins;
         io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", myGame.getPlayers(), myGame.getGameDetails().startPlayer);
-        io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", `<b style = "color: ${giver.playerColor[0]}">${giver.playerName}</b> gave you ${honoredCoins} coins!`, "info", receiver.playerNum);
+        io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", `<b style = "color: ${giver.playerColor[0]}">${giver.playerName}</b> honored you with ${honoredCoins} coins!`, "info", receiver.playerNum);
     
         determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, giver.playerNum);
     })

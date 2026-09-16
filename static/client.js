@@ -213,6 +213,11 @@ socket.on("chooseImpersonate", (numPlayers, playerID) => {
         promptImpersonate(numPlayers);
     }
 })
+socket.on("updateImpersonation", (playerNum, impersonatedAction) => {
+    const playedCard = document.querySelector(`#player${playerNum} .playedCard`);
+    generateCard(playedCard, impersonatedAction, true);
+    playedCard.setAttribute("action", impersonatedAction.name);
+})
 socket.on("retrieveCards", (player, numCardsToRetrieve) => {
     if (player.playerID == myID){
         retrieveCards(player, numCardsToRetrieve);
@@ -420,7 +425,7 @@ function tutorialPhase(phase){
         case 1:
             addTutorialProgressArrows([ "Click the arrows to navigate through parts of the tutorial.",
                                         "The game will be played over a series of rounds, where you will play cards, get coins, and buy new cards.",
-                                        "Each player starts with the same hand of cards.",
+                                        "Each player starts the game with the same cards in their Hand.",
                                         "Click the gray bar on the left to open the player display."
                                         ], 2, tutorialDiv)
             break;
@@ -449,8 +454,9 @@ function tutorialPhase(phase){
             socket.emit("tutorialRequest", "save", 4, myID);
             socket.emit("tutorialRequest", "setWaitingOn", "", myID);
             removePreviousElement(`.tutorialProgress`);
-            addTutorialProgressArrows([ "Whenever you play an action, you must choose ANOTHER player to target.",
+            addTutorialProgressArrows([ "Whenever you play an action, you must choose a player to target.",
                                         "For some cards, this will matter, but the choice here is arbitrary.",
+                                        "You may NEVER target yourself; all effects on the card apply to you, unless otherwise stated.",
                                         "Click on a player (the colored circles) to target them, then confirm your play."
                                         ], 5, tutorialDiv);
             populateCardBacks(3);
@@ -544,9 +550,9 @@ function tutorialPhase(phase){
             generateCard(pudgieCard, work, false);
             addTutorialProgressArrows([ "Played actions are resolved clockwise, starting with the underlined player.",
                                         "At the end of each round, the underline rotates clockwise, so your turn order will change over time.",
-                                        "One of the main ways you will earn coins is by working.",
-                                        "The value of each work changes each round based on the total number of workers.",
-                                        "A greater number of workers will make each work action yield fewer coins.",
+                                        "One of the main ways you will earn coins is by <b>Working</b>.",
+                                        "The value of a <b>Work</b> changes each round based on the total number of workers.",
+                                        "A greater number of workers will make each <b>Work</b> yield fewer coins.",
                                         "Hover over the blue scorecard in the bottom-left corner to see exactly how these values correlate with this many players."
                                         ], 9, tutorialDiv);
             break;
@@ -567,7 +573,7 @@ function tutorialPhase(phase){
             document.querySelector(`#player2 .numCoins`).textContent = "4";
             var currentWorkValue = document.querySelector(`#workValueScorecard p`);
             currentWorkValue.textContent = "2";
-            addTutorialProgressArrows([ "Since all 3 players are workers this round, each work will only give 2 coins.",
+            addTutorialProgressArrows([ "Since all 3 players are workers this round, each <b>Work</b> will only give 2 coins.",
                                         "You can see the current work value displayed on the scorecard.",
                                         "Grudgie's card modifies their work value by -2, so they won't receive any coins!",
                                         "That's not the only thing their card does, however.",
@@ -632,14 +638,14 @@ function tutorialPhase(phase){
             socket.emit("tutorialRequest", "save", 16, myID);
             removePreviousElement(`.tutorialProgress`);
             addTutorialProgressArrows([ "Bewitch is a special type of action called a One-Shot.",
-                                        "One-Shots have powerful abilities, but can only be played once, returning to the Shop rather than your discard.",
+                                        "One-Shots have powerful abilities, but can only be played once, returning to the Shop rather than your Discard.",
                                         "They can be distinguished by their unique name formatting and slightly darker background.",
                                         "All cards in the shop have a number in a gold circle on the left, denoting its cost in coins.",
-                                        "This can differentiate Basic Actions (the ones in your starting hand) from non-Basic Actions.",
+                                        "This can differentiate Basic Actions (the ones in your starting Hand) from non-Basic Actions.",
                                         "The color of a card has no MECHANICAL impact, but can help identify a card's ability at a glance.",
                                         "Cards with an arrow affect the player it targets. (All cards still 'target' someone, even if they don't have an arrow.)",
-                                        "Blue cards Work, making players who played one 'Workers'.",
-                                        "Red cards Steal, making players who played one 'Thieves'.",
+                                        "Blue cards <b>Work</b>, making players who played one 'workers'.",
+                                        "Red cards <b>Steal</b> coins from other players, making players who played one 'thieves'.",
                                         "Purple cards (like Bewitch) have a special effect that lasts beyond the normal action phase.",
                                         "Yellow cards have none of these defining features.",
                                         "Some cards are also green, but that will be explained in a later section.",
@@ -682,14 +688,14 @@ function tutorialPhase(phase){
         case 20:
             socket.emit("tutorialRequest", "save", 20, myID);
             removePreviousElement(`.tutorialProgress`);
-            addTutorialProgressArrows([ "You can buy up to 3 different cards each round.",
+            addTutorialProgressArrows([ "You can buy up to 3 <strong>different</strong> cards each round.",
                                         "If you buy more than 1, you'll get a rebate.",
                                         "Buying 2 cards will earn you 1 coin, while buying 3 will earn you 3.",
-                                        "The coins are earned AFTER your purchase, so you cannot use them this round.",
+                                        "The coins are earned <strong>after</strong> your purchase, so you cannot use them this round.",
                                         "While all players can place their orders simultaneously, the orders will be resolved in turn-order.",
                                         "If you tried to place an order for an action that is now unavaiable, you will be prompted to place a new order.",
                                         "If you ever want to view clarifying details about a card in the shop, you can RIGHT-click it instead of searching for it.",
-                                        "Let's buy a Curse and a Bewitch. (You may need to scroll through the shop if you cannot find them.)"
+                                        "Let's buy a 'Curse' and a 'Bewitch'. (You may need to scroll through the shop if you cannot find them.)"
                                         ], 21, tutorialDiv);
             break;
     
@@ -711,7 +717,7 @@ function tutorialPhase(phase){
             document.querySelector(`#player2 .discardNum`).textContent = "2";
             document.querySelector(`#player2 .numCoins`).textContent = "0";
             socket.emit("tutorialRequest", "setWaitingOn", "", myID);
-            addTutorialProgressArrows([ "Newly bought cards will go in your discard, so you won't be able to play them next round.",
+            addTutorialProgressArrows([ "Newly bought cards will go in your Discard, so you won't be able to play them next round.",
                                         "Open the player display again, and navigate to your Discard."
                                         ], 23, tutorialDiv);
             break;
@@ -728,9 +734,9 @@ function tutorialPhase(phase){
             tutorialHighlight("discardNum", false);
             tutorialHighlight("handNum", true);
             socket.emit("tutorialRequest", "setWaitingOn", "clickRest", myID);
-            addTutorialProgressArrows([ "In order to play cards in your discard pile, you must first add them to your hand.",
+            addTutorialProgressArrows([ "In order to play cards in your Discard, you must first add them to your Hand.",
                                         "You will get to do this when you 'Rest'.",
-                                        "Go back to your hand, read 'Rest', and click on it when you are ready to progress to the next round."
+                                        "Go back to your Hand, read 'Rest', and click on it when you are ready to progress to the next round."
                                         ], 25, tutorialDiv);
             break;
 
@@ -887,7 +893,7 @@ function tutorialPhase(phase){
             document.querySelector(`#player0 .handNum`).textContent = "10";
             document.querySelector(`#player1 .handNum`).textContent = "10";
             document.querySelector(`#player2 .handNum`).textContent = "10";
-            addTutorialProgressArrows([ "Even though Grudgie goes before us in turn order, our Retaliate will block their Steal.",
+            addTutorialProgressArrows([ "Even though Grudgie goes before us in turn order, our 'Retaliate' will block their 'Steal'.",
                                         "Green cards are always resolved before ANY non-green cards, regardless of turn order.",
                                         "If multiple green cards are played in the same round, the lowest numbered one takes priority.",
                                         "In the event that multiple players play the same green action, regular turn order determines which is resolved first.",
@@ -898,10 +904,9 @@ function tutorialPhase(phase){
         case 34:
             socket.emit("tutorialRequest", "save", 34, myID);
             removePreviousElement(`.tutorialProgress`);
-            addTutorialProgressArrows([ "The number of coins taken on a Steal action is determined by how many players are stealing from your target.",
-                                        "The more thieves focused on a single player, the fewer coins each thief steals.",
-                                        "The value of the Steal is resolved before any player performs their Steals.",
-                                        "Hover over the red scorecard in the bottom-left to see exactly how many coins doubled-up thieves steal."
+            addTutorialProgressArrows([ "The number of coins taken by a <b>Steal</b> is determined by how many players are <b>stealing</b> from your target.",
+                                        "The more thieves targeting a single player, the fewer coins each thief will <b>Steal</b>.",
+                                        "Hover over the red scorecard in the bottom-left to see exactly how many coins doubled-up thieves <b>Steal</b>."
                                         ], 35, tutorialDiv);
             break;
 
@@ -916,6 +921,7 @@ function tutorialPhase(phase){
         case 36:
             socket.emit("tutorialRequest", "save", 36, myID);
             removePreviousElement(`.tutorialProgress`);
+            animateCoinTransfer(1, 0, 4, 3)
             document.querySelector(`#player0 .numCoins`).textContent = "10";
             document.querySelector(`#player1 .numCoins`).textContent = "0";
             document.querySelector(`#player2 .numCardSwaps`).textContent = "4";
@@ -924,9 +930,9 @@ function tutorialPhase(phase){
                                         "...",
                                         "Oh, you want to learn how to win?",
                                         "*sigh* I guess...",
-                                        "Once a player has at least 20 cards in their hand, the end of the game has been triggered.",
+                                        "Once a player has at least <strong>20</strong> cards in their Hand, the end of the game has been triggered.",
                                         "Any players who reached this milestone will earn 10 additional points.",
-                                        "Then, players add the cost of all actions in their hand and discard, earning points equal to half this number, rounded down.",
+                                        "Then, players add the cost of all actions in their Hand and Discard, earning points equal to <b>half</b> this number, rounded down.",
                                         "Finally, players will earn a point for every coin in their possession at the end of the game.",
                                         "Now it is truly time to say goodbye.",
                                         "Click 'Leave Tutorial' in the top-right."
@@ -2023,8 +2029,10 @@ function promptDonation(giver, receiver, donationType){
 
 function promptImpersonate(numPlayers){
     const impersonateDiv = document.createElement("div");
+    impersonateDiv.id = "impersonateDiv";
+
     const instruction = document.createElement("p");
-    instruction.textContent = "Click on the card you want to Impersonate";
+    instruction.textContent = "Click on the card you wish to Impersonate";
 
     const confirm = document.createElement("button");
     confirm.textContent = "Confirm";
@@ -2056,6 +2064,7 @@ function promptImpersonate(numPlayers){
             generateCard(myCard, selectedAction, true);
             myCard.setAttribute("action", selectedAction.name);
             confirm.disabled = false;
+            socket.emit("newImpersonatedCard", selectedAction, myPlayerNum, myID);
         })
     }
 }
@@ -2433,7 +2442,7 @@ function actionPhaseCleanUp(numPlayers){
 
 function tutorialMessage(message){
     const previousMessage = document.getElementById("tutorialMessage");
-    previousMessage.textContent = message;
+    previousMessage.innerHTML = message;
 }
 
 function removePreviousElement(query){

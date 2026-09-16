@@ -69,7 +69,7 @@ export const allActions = [
     {
         "name": "Rest",
         "background": "static/Images/Backgrounds/purple.png",
-        "text": "Return half of your discarded cards to your hand (rounded down). This card is discarded to your hand.",
+        "text": "Return half of your discarded cards to your Hand (rounded down). This card is discarded to your Hand.",
         "definingColor": "purple",
         "isWork": false,
         "isSteal": false,
@@ -84,7 +84,7 @@ export const allActions = [
         "isBasicAction": true,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["This does NOT count as one of the cards in your discard for its calculation."]
+        "FAQ": ["This does NOT count as one of the cards in your Discard for its calculation."]
     },
     {
         "name": "Cooperate",
@@ -162,7 +162,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": true,
-        "FAQ": ["Basic Actions are any cards that started the game in your hand (they will not have a cost).", "If multiple 'Bewitches' are played in a round, everyone is still only <i>Bewitched</i> for a single round."]
+        "FAQ": ["Basic Actions are any cards that started the game in your Hand (they will not have a cost).", "If multiple 'Bewitches' are played in a round, everyone is still only <i>Bewitched</i> for a single round."]
     },
     {
         "name": "Communalize",
@@ -182,7 +182,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["Redirecting this card AFTER it has resolved does not change players' immunity from Thieves.", "Since this is resolved before 'Sabotage', it can still earn coins from <b>Work</b>."]
+        "FAQ": ["Redirecting this card after it has resolved does not change players' immunity from Thieves.", "Since this is resolved before 'Sabotage', it can still earn coins from <b>Work</b>."]
     },
     {
         "name": "Curse",
@@ -284,7 +284,7 @@ export const allActions = [
     {
         "name": "Recruit",
         "background": "static/Images/Backgrounds/purple_blue.png",
-        "text": "<b>Work</b>.<br>Cards you buy this<br>turn are added into your hand.",
+        "text": "<b>Work</b>.<br>Cards you buy this<br>turn are added into your Hand.",
         "definingColor": "purple",
         "isWork": true,
         "isSteal": false,
@@ -373,7 +373,7 @@ export const allActions = [
     {
         "name": "Sacrifice",
         "background": "static/Images/Backgrounds/yellow.png",
-        "text": "Discard your hand.<br>Take 1 coin per card discarded.",
+        "text": "Discard your Hand.<br>Take 1 coin per card discarded.",
         "definingColor": "yellow",
         "isWork": false,
         "isSteal": false,
@@ -409,7 +409,7 @@ export const allActions = [
     {
         "name": "Abduct",
         "background": "static/Images/Backgrounds/yellow_arrow.png",
-        "text": "Target player's card is discarded to your hand. If it is a Basic Action, take 3 coins.",
+        "text": "Target player's card is discarded to your Hand. If it is a Basic Action, take 3 coins.",
         "definingColor": "yellow",
         "isWork": false,
         "isSteal": false,
@@ -431,7 +431,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": true,
-        "FAQ": ["The action still resolves as normal.", "'Rest' will always return to the original owner's hand.", "If multiple 'Abducts' are played against the same target, both get copies."]
+        "FAQ": ["The action still resolves as normal.", "'Rest' will always return to the original owner's Hand.", "If multiple 'Abducts' are played against the same target, all get copies."]
     },
     {
         "name": "Proselytize",
@@ -451,6 +451,6 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["Basic Actions are any cards that started the game in your hand (they will not have a cost)."]
+        "FAQ": ["Basic Actions are any cards that started the game in your Hand (they will not have a cost)."]
     }
 ]
