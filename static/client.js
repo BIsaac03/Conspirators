@@ -1187,7 +1187,9 @@ function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
     const playedCard = document.querySelector(`#player${originPlayerNum} .playedCard`);
     playedCard.setAttribute("targetNum", targetPlayerNum);
     const targetAngle = calculateTargetAngle(originPlayerNum, targetPlayerNum, numPlayers);
-    playedCard.style.transform = "translateX("+(10 + 5*Math.sin(targetAngle))+"vmin) translateY("+(-15*Math.cos(targetAngle))+"vmin) rotate("+(targetAngle)+"rad)";       
+    const xTrans = 10 + 5*Math.sin(targetAngle);
+    const yTrans = -15*Math.cos(targetAngle);
+    playedCard.style.transform = `translateX(min(${xTrans}vh, ${xTrans * 2/3}vw)) translateY(min(${yTrans}vh, ${yTrans * 2/3}vw)) rotate${targetAngle}rad)`;       
 }
 
 function populateGameSpace(players){
@@ -1199,16 +1201,16 @@ function populateGameSpace(players){
     for (let i = 0; i < players.length; i++){
         const playerSpace = document.createElement("div");
         playerSpace.id = "player"+i;
-        playerSpace.style.transform = "rotate("+(2*Math.PI * i/players.length + radianOffset)+"rad) translateX(25vmin)"; 
+        playerSpace.style.transform = "rotate("+(2*Math.PI * i/players.length + radianOffset)+"rad) translateX(min(25vh, calc(25vw * 2 / 3)))";
 
         const playerIcon = document.createElement("div");
         playerIcon.classList.add("playerIcon");
         playerIcon.style.transform = "rotate("+(-2*Math.PI * i/players.length - radianOffset)+"rad)";
-        playerIcon.style.boxShadow = `0 0 10vmin 10px ${players[i].playerColor[0]} inset`;
+        playerIcon.style.boxShadow = `0 0 min(10vh, calc(10vw * 2 / 3)) 10px ${players[i].playerColor[0]} inset`;
 
         const playedCard = document.createElement("div");
         playedCard.classList.add("playedCard");
-        playedCard.style.transform = "translateX(5vmin) rotate(-90deg)";
+        playedCard.style.transform = "translateX(min(5vh, calc(5vw * 2 / 3))) rotate(-90deg)";
 
         if (i == myPlayerNum){
             playedCard.addEventListener("click", () => {
@@ -2266,11 +2268,12 @@ function createStats(players){
         const playerRotation = playerDiv.style.transform.trim().split(/[()]\s*/)[1].slice(0, -3);
         const counterRotation = eval(playerRotation) * -1;
 
+        const yTrans = Math.sin(playerRotation) * -3;
         if (Math.sign(Math.cos(playerRotation) < 0)){
-            statsDisplay.style.transform = `rotate(${counterRotation}rad) translateX(${-23}vmin) translateY(${Math.sin(playerRotation) * -3}vmin)`;
+            statsDisplay.style.transform = `rotate(${counterRotation}rad) translateX(-15vw) translateY(${yTrans}vh)`;
         }
         else{
-            statsDisplay.style.transform = `rotate(${counterRotation}rad) translateX(${23}vmin) translateY(${Math.sin(playerRotation) * -3}vmin)`;
+            statsDisplay.style.transform = `rotate(${counterRotation}rad) translateX(15vw) translateY(${yTrans}vh)`;
         }
 
         playerDiv.appendChild(statsDisplay);        
@@ -2503,7 +2506,7 @@ function actionPhaseCleanUp(numPlayers){
         playedCard.classList.remove("card");
         playedCard.style.border = "3px dashed cyan";
         playedCard.style.opacity = "0.3";
-        playedCard.style.transform = "translateX(5vmin) rotate(-90deg)";
+        playedCard.style.transform = "translateX(min(5vh, calc(5vw * 2 / 3))) rotate(-90deg)";
     }
     
     const workValueDisplay = document.querySelector(`#workValueScorecard p`);

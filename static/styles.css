@@ -191,7 +191,7 @@ button:hover{
 
 .statsDisplay{
     position: absolute;
-    grid-column: 2 /3;
+    grid-column: 2 / 3;
     display: grid;
     grid-template: 5vh 5vh 5vh / 1fr 1fr;
     gap: 1vh;
@@ -283,25 +283,25 @@ button:hover{
 #gameSpace{
     position: absolute;
     place-self: center;
-    width: 75vmin;
-    height: 75vmin;
+    width: min(75vh, 50vw);
+    height: min(75vh, 50vw);
     border-radius: 50%;
     background-color: blanchedalmond;
 }
 #gameSpace>div[id^="player"]{
     position: absolute;
     display: grid;
-    grid-template-columns: 27vmin 20vmin;
+    grid-template-columns: min(27vh, calc(27vw * 2 / 3)) min(20vh, calc(20vw * 2 / 3));
     align-items: center;
-    left: calc(50% - 20vmin);
-    top: calc(50% - 10vmin);
-    width: 40vmin;
-    height: 20vmin;
+    left: calc(50% - min(20vh, calc(20vw * 2 / 3)));
+    top: calc(50% - min(10vh, calc(10vw * 2 / 3)));
+    width: min(40vh, calc(40vw * 2 / 3));
+    height: min(20vh, calc(20vw * 2 / 3));
 }
 div[id^="player"] .playerIcon{
     grid-column: 2 / 3;
-    width: 20vmin;
-    height: 20vmin;
+    width: min(20vh, calc(20vw * 2 / 3));
+    height: min(20vh, calc(20vw * 2 / 3));
     background-color: gainsboro;
     border-radius: 50%;
     background-size: cover;
@@ -312,8 +312,8 @@ div[id^="player"] .playerIcon{
 div[id^="player"] .playedCard{
     position: fixed;
     justify-self: center;
-    margin-left: -5vmin;
-    width: 15vmin;
+    margin-left: min(-5vh, calc(-5vw * 2 / 3));
+    width: min(15vh, 10vw);
     aspect-ratio: 5 / 7;
     border-radius: 13%;
     border: 3px dashed cyan;
@@ -325,7 +325,7 @@ div[id^="player"] .playedCard{
 }
 
 .playedCard.back{
-    transform: translateX(5vmin) rotate(-90deg);
+    transform: translateX(min(5vh, calc(5vw * 2 / 3))) rotate(-90deg);
     border: 3px dashed cyan;
     opacity: 0.5;
     background-image: url(/static/Images/Misc/back.png);
@@ -336,7 +336,7 @@ div[id^="player"] .playedCard{
 
 .playerIcon img{
     place-self: center;
-    width: 7vmin;
+    width: min(7vh, calc(7vw * 2 / 3));
     filter: invert(60%) sepia(100%) saturate(300%);
 }
 
@@ -394,7 +394,7 @@ div[id^="player"] #handIcon{
     font-size: 5vh;
 }
 #shopDisplayVisibilityToggle:hover{
-    background-color: rgb(219, 183, 92);
+    background-color: rgba(220, 180, 90, 0.85);
 }
 #shopDisplayVisibilityToggle{
     grid-area: 1 / 1 / 3 / 2;
@@ -403,7 +403,7 @@ div[id^="player"] #handIcon{
     height: 100%;
     display: grid;
     align-items: center;
-    background-color: goldenrod;
+    background-color: rgba(230, 170, 30, 0.85);
 }
 #shopDisplayVisibilityToggle img{
     justify-self: center;
@@ -411,7 +411,7 @@ div[id^="player"] #handIcon{
 }
 
 #playerDisplayVisibilityToggle:hover{
-    background-color: #acacacd5;
+    background-color: rgba(180, 180, 180, 0.85);
 }
 #playerDisplayVisibilityToggle{
     grid-area: 1 / 2 / 3 / 3;
@@ -419,7 +419,7 @@ div[id^="player"] #handIcon{
     height: 100%;
     display: grid;
     align-items: center;
-    background-color: #6e6e6ed5;
+    background-color: rgba(130, 130, 130, 0.85);
 }
 #cardLocationToggle{
     align-self: center;
