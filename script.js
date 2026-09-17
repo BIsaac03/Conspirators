@@ -166,6 +166,7 @@ io.on("connection", (socket) => {
         if (!myLobby.getGameDetails().isGameInProgress){
             myLobby.getPlayers().forEach((player) => {
                 player.isInGame = true;
+                player.discardHand();
             })
             myLobby.getGameDetails().isGameInProgress = true;
             roundStart(myLobby);
@@ -302,6 +303,46 @@ io.on("connection", (socket) => {
         const me = myGame.getPlayers().find((player) => player.playerID == myID);
         determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, me.playerNum);
     })
+
+    socket.on("sortCards", (sortBy, isAscending, where, myID) => {
+        const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
+        const me = myGame.getPlayers().find((player) => player.playerID == myID);
+        switch (sortBy){
+            case "cost":
+                if (isAscending){
+                    me.hand.sort((a, b) => a[0].cost - b[0].cost);
+                    me.discard.sort((a, b) => a[0].cost - b[0].cost);
+                }
+                else{
+                    me.hand.sort((a, b) => b[0].cost - a[0].cost);
+                    me.discard.sort((a, b) => b[0].cost - a[0].cost);
+                }
+                break;
+
+            case "A-Z":
+                if (isAscending){
+                    me.hand.sort((a, b) => a[0].name.localeCompare(b[0].name));
+                    me.discard.sort((a, b) => a[0].name.localeCompare(b[0].name));
+                }
+                else{
+                    me.hand.sort((a, b) => b[0].name.localeCompare(a[0].name));
+                    me.discard.sort((a, b) => b[0].name.localeCompare(a[0].name));
+                }
+                break;
+            
+            case "type":
+                if (isAscending){
+                    me.hand.sort((a, b) => a[0].definingColor.localeCompare(b[0].definingColor));
+                    me.discard.sort((a, b) => a[0].definingColor.localeCompare(b[0].definingColor));
+                }
+                else{
+                    me.hand.sort((a, b) => b[0].definingColor.localeCompare(a[0].definingColor));
+                    me.discard.sort((a, b) => b[0].definingColor.localeCompare(a[0].definingColor));
+                }
+                break;
+        }
+        socket.emit("updateCards", myGame.getPlayers(), myGame.getGameDetails().shop, where, true, false);
+    });
 
     socket.on("getUpdatedCards", (where, shouldDisplay, myID) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));

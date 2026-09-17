@@ -366,12 +366,14 @@ function startTutorial(players, phase){
     bodyElement.appendChild(leaveTutorial);
 }
 function hideElementsForTutorial(){
+    const actionSort = document.getElementById("sortActions");
     const actionSearch = document.getElementById("actionSearch");
     const playerDisplay = document.getElementById("playerDisplay");
     const shopDisplay = document.getElementById("shopDisplay");
     const workValueScorecard = document.getElementById("workValueScorecard");
     const stealValueScorecard = document.getElementById("stealValueScorecard");
 
+    actionSort.style.visibility = "hidden";
     actionSearch.style.visibility = "hidden";
     playerDisplay.style.visibility = "hidden";
     shopDisplay.style.visibility = "hidden";
@@ -551,8 +553,8 @@ function tutorialPhase(phase){
             addTutorialProgressArrows([ "Played actions are resolved clockwise, starting with the underlined player.",
                                         "At the end of each round, the underline rotates clockwise, so your turn order will change over time.",
                                         "One of the main ways you will earn coins is by <b>Working</b>.",
-                                        "The value of a <b>Work</b> changes each round based on the total number of workers.",
-                                        "A greater number of workers will make each <b>Work</b> yield fewer coins.",
+                                        "The value of a <b>Work</b> changes each round based on the total number of Workers.",
+                                        "A greater number of Workers will make each <b>Work</b> yield fewer coins.",
                                         "Hover over the blue scorecard in the bottom-left corner to see exactly how these values correlate with this many players."
                                         ], 9, tutorialDiv);
             break;
@@ -573,9 +575,9 @@ function tutorialPhase(phase){
             document.querySelector(`#player2 .numCoins`).textContent = "4";
             var currentWorkValue = document.querySelector(`#workValueScorecard p`);
             currentWorkValue.textContent = "2";
-            addTutorialProgressArrows([ "Since all 3 players are workers this round, each <b>Work</b> will only give 2 coins.",
-                                        "You can see the current work value displayed on the scorecard.",
-                                        "Grudgie's card modifies their work value by -2, so they won't receive any coins!",
+            addTutorialProgressArrows([ "Since all 3 players are Workers this round, each <b>Work</b> will only give 2 coins.",
+                                        "You can see the current value of a <b>Work</b> displayed on the scorecard.",
+                                        "Grudgie's card modifies their <b>Work</b> by -2, so they won't receive any coins!",
                                         "That's not the only thing their card does, however.",
                                         "If the size/angle of a played card makes it difficult to read, you can enlarge it. Hover over Grudgie's card."
                                         ], 11, tutorialDiv);
@@ -644,8 +646,8 @@ function tutorialPhase(phase){
                                         "This can differentiate Basic Actions (the ones in your starting Hand) from non-Basic Actions.",
                                         "The color of a card has no MECHANICAL impact, but can help identify a card's ability at a glance.",
                                         "Cards with an arrow affect the player it targets. (All cards still 'target' someone, even if they don't have an arrow.)",
-                                        "Blue cards <b>Work</b>, making players who played one 'workers'.",
-                                        "Red cards <b>Steal</b> coins from other players, making players who played one 'thieves'.",
+                                        "Blue cards <b>Work</b>, making players who played one 'Workers'.",
+                                        "Red cards <b>Steal</b> coins from other players, making players who played one 'Thieves'.",
                                         "Purple cards (like Bewitch) have a special effect that lasts beyond the normal action phase.",
                                         "Yellow cards have none of these defining features.",
                                         "Some cards are also green, but that will be explained in a later section.",
@@ -905,8 +907,8 @@ function tutorialPhase(phase){
             socket.emit("tutorialRequest", "save", 34, myID);
             removePreviousElement(`.tutorialProgress`);
             addTutorialProgressArrows([ "The number of coins taken by a <b>Steal</b> is determined by how many players are <b>stealing</b> from your target.",
-                                        "The more thieves targeting a single player, the fewer coins each thief will <b>Steal</b>.",
-                                        "Hover over the red scorecard in the bottom-left to see exactly how many coins doubled-up thieves <b>Steal</b>."
+                                        "The more Thieves targeting a single player, the fewer coins each Thief will <b>Steal</b>.",
+                                        "Hover over the red scorecard in the bottom-left to see exactly how many coins doubled-up Thieves <b>Steal</b>."
                                         ], 35, tutorialDiv);
             break;
 
@@ -1420,15 +1422,54 @@ function addCardDisplayListeners(){
 
     const discardToggle = document.getElementById("discardToggle");
     discardToggle.style.backgroundColor = "rgba(110, 110, 110, 0.83)";
-    discardToggle.addEventListener("click", () => {
+
+    const responsiveDiscardToggle = discardToggle.querySelector(`p`);
+    responsiveDiscardToggle.addEventListener("click", () => {
         socket.emit("getUpdatedCards", "discard", true, myID);
     })
 
     const handToggle = document.getElementById("handToggle");
     handToggle.style.backgroundColor = "rgba(0, 0, 0, 0.83)";
-    handToggle.addEventListener("click", () => {
+
+    const responsiveHandToggle = handToggle.querySelector(`p`);
+    responsiveHandToggle.addEventListener("click", () => {
         socket.emit("getUpdatedCards", "hand", true, myID);
     })
+
+    const actionSortDiv = document.getElementById("sortActions");
+    const actionSortIcon = actionSortDiv.querySelector(`img`);
+    actionSortIcon.addEventListener("mouseenter", () => {
+        const sortBy = actionSortDiv.querySelector(`form`);
+        sortBy.style.visibility = "visible";
+    })
+    actionSortDiv.addEventListener("mouseleave", () => {
+        const sortBy = actionSortDiv.querySelector(`form`);
+        sortBy.style.visibility = "hidden";
+    })
+
+    actionSortIcon.addEventListener("click", () => {
+        const sortBy = actionSortDiv.querySelector(`input[name="sortBy"]:checked`);
+        const where = whereInPlayerDisplay();
+        if (actionSortIcon.src.includes("/static/Images/Icons/sort-ascending.svg")){
+            actionSortIcon.src = "/static/Images/Icons/sort-descending.svg";
+            socket.emit("sortCards", sortBy.value, false, where, myID);
+        }
+        else{
+            actionSortIcon.src = "/static/Images/Icons/sort-ascending.svg";
+            socket.emit("sortCards", sortBy.value, true, where, myID);
+        }
+    })
+
+    const sortByButtons = document.querySelectorAll(`input[name="sortBy"]`);
+    sortByButtons.forEach(sortBy => {
+        sortBy.addEventListener("change", (e) => {
+            if (e.target.checked) {
+                const where = whereInPlayerDisplay();
+                actionSortIcon.src = "/static/Images/Icons/sort-ascending.svg";
+                socket.emit("sortCards", sortBy.value, true, where, myID);
+            }
+        });
+    });
 
     const shopDisplayVisibilityToggle = document.getElementById("shopDisplayVisibilityToggle");
     shopDisplayVisibilityToggle.addEventListener("click", openCloseShopDisplay);
@@ -1468,6 +1509,14 @@ function openClosePlayerDisplay(){
         playerDisplay.style.right = "calc(100vw - max(3vw, 40px))";
         sliderIcon.src = "/static/Images/Icons/rightArrows.svg";
     }
+}
+
+function whereInPlayerDisplay(){
+    const handToggle = document.getElementById("handToggle");
+    if (handToggle.style.backgroundColor == "rgba(0, 0, 0, 0.83)"){
+        return "hand"
+    }
+    return "discard"
 }
 
 function openRelevantPlayerDisplay(player, where, isTutorial){

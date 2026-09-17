@@ -421,7 +421,7 @@ div[id^="player"] #handIcon{
     height: 100%;
 }
 #cardLocationToggle>div>p{
-    width: 50%;
+    width: 60%;
     height: 70%;
     background-color: whitesmoke;
     border: solid 1px black;
@@ -432,6 +432,25 @@ div[id^="player"] #handIcon{
 #cardLocationToggle>div:hover{
     cursor: pointer;
 }
+#sortActions{
+    position: absolute;
+    top: 0;
+    left: calc(100% - 5vw - max(3vw, 40px));
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: calc(1vw + max(3vw, 40px));
+    width: 20vw;
+}
+#sortActions img{
+    filter: invert(1);
+    height: 4vw;
+}
+#sortActions form{
+    visibility: hidden;
+    padding-left: 1vw;
+    font-size: 2vw;
+}
+
 .actionSelection.play{
     grid-row: 2 / 3;
 }
