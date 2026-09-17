@@ -101,6 +101,9 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
                     lockInCard(player.playerNum);
                     orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
                     generateCard(playedCard, player.playedCard, player.isImpersonating);
+                    if (player.isImmune){
+                        addProtectionIcon(player.playerNum);
+                    }
                 })
                 break;
 
@@ -204,6 +207,9 @@ socket.on("allowShopPurchases", (shop, players) => {
 socket.on("resetGameDisplay", () => {
     removePreviousElement(`#checkOutList`);
     populateCardBacks();
+})
+socket.on("protectIcon", (playerNum) => {
+    addProtectionIcon(playerNum);
 })
 socket.on("bewitchIcons", (players) => {
     modifyBewitchedIcons(players);
@@ -550,8 +556,8 @@ function tutorialPhase(phase){
             generateCard(grudgieCard, cooperate, false);
             var pudgieCard = document.querySelector(`#player2 .playedCard`);
             generateCard(pudgieCard, work, false);
-            addTutorialProgressArrows([ "Played actions are resolved clockwise, starting with the underlined player.",
-                                        "At the end of each round, the underline rotates clockwise, so your turn order will change over time.",
+            addTutorialProgressArrows([ "Played actions are resolved clockwise, starting with the crowned player.",
+                                        "At the end of each round, the crown is passed clockwise, so your turn order will change<br> over time.",
                                         "One of the main ways you will earn coins is by <b>Working</b>.",
                                         "The value of a <b>Work</b> changes each round based on the total number of Workers.",
                                         "A greater number of Workers will make each <b>Work</b> yield fewer coins.",
@@ -576,7 +582,7 @@ function tutorialPhase(phase){
             var currentWorkValue = document.querySelector(`#workValueScorecard p`);
             currentWorkValue.textContent = "2";
             addTutorialProgressArrows([ "Since all 3 players are Workers this round, each <b>Work</b> will only give 2 coins.",
-                                        "You can see the current value of a <b>Work</b> displayed on the scorecard.",
+                                        "You can see the value of a <b>Work</b> this round displayed on the scorecard.",
                                         "Grudgie's card modifies their <b>Work</b> by -2, so they won't receive any coins!",
                                         "That's not the only thing their card does, however.",
                                         "If the size/angle of a played card makes it difficult to read, you can enlarge it. Hover over Grudgie's card."
@@ -593,7 +599,7 @@ function tutorialPhase(phase){
             removePreviousElement(`.tutorialProgress`);
             document.querySelector(`#player0 .numCoins`).textContent = "9";
             socket.emit("tutorialRequest", "setCoins", 9, myID);
-            addTutorialProgressArrows([ "Grudgie's Cooperate gave us 5 coins. They are likely expecting at least a few back.",
+            addTutorialProgressArrows([ "Grudgie's 'Cooperate' gave us 5 coins. They are likely expecting at least a few back.",
                                         "Let's keep all of them.",
                                         "Enter a '0' and click 'Confirm'."
                                         ], 13, tutorialDiv);
@@ -644,7 +650,7 @@ function tutorialPhase(phase){
                                         "They can be distinguished by their unique name formatting and slightly darker background.",
                                         "All cards in the shop have a number in a gold circle on the left, denoting its cost in coins.",
                                         "This can differentiate Basic Actions (the ones in your starting Hand) from non-Basic Actions.",
-                                        "The color of a card has no MECHANICAL impact, but can help identify a card's ability at a glance.",
+                                        "The color of a card has no mechanical impact, but helps identify a card's ability at a glance.",
                                         "Cards with an arrow affect the player it targets. (All cards still 'target' someone, even if they don't have an arrow.)",
                                         "Blue cards <b>Work</b>, making players who played one 'Workers'.",
                                         "Red cards <b>Steal</b> coins from other players, making players who played one 'Thieves'.",
@@ -1041,6 +1047,8 @@ function loadPreviousTutorialSteps(phase, target){
     }
     else if (phase == 16){
         const bewitch = allActions.find((action) => action.name == "Bewitch");
+        const searchInput = document.querySelector(`#actionSearch input`);
+        searchInput.value = "Bewitch";
         blowUpAction(bewitch, false, false);
     }
     else if (phase == 29){
@@ -1176,7 +1184,7 @@ function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
     const playedCard = document.querySelector(`#player${originPlayerNum} .playedCard`);
     playedCard.setAttribute("targetNum", targetPlayerNum);
     const targetAngle = calculateTargetAngle(originPlayerNum, targetPlayerNum, numPlayers);
-    playedCard.style.transform = "translateX("+(10 + 5*Math.sin(targetAngle))+"vh) translateY("+(-15*Math.cos(targetAngle))+"vh) rotate("+(targetAngle)+"rad)";       
+    playedCard.style.transform = "translateX("+(10 + 5*Math.sin(targetAngle))+"vmin) translateY("+(-15*Math.cos(targetAngle))+"vmin) rotate("+(targetAngle)+"rad)";       
 }
 
 function populateGameSpace(players){
@@ -1188,16 +1196,16 @@ function populateGameSpace(players){
     for (let i = 0; i < players.length; i++){
         const playerSpace = document.createElement("div");
         playerSpace.id = "player"+i;
-        playerSpace.style.transform = "rotate("+(2*Math.PI * i/players.length + radianOffset)+"rad) translateX(25vh)"; 
+        playerSpace.style.transform = "rotate("+(2*Math.PI * i/players.length + radianOffset)+"rad) translateX(25vmin)"; 
 
         const playerIcon = document.createElement("div");
         playerIcon.classList.add("playerIcon");
         playerIcon.style.transform = "rotate("+(-2*Math.PI * i/players.length - radianOffset)+"rad)";
-        playerIcon.style.boxShadow = `0 0 10vh 10px ${players[i].playerColor[0]} inset`;
+        playerIcon.style.boxShadow = `0 0 10vmin 10px ${players[i].playerColor[0]} inset`;
 
         const playedCard = document.createElement("div");
         playedCard.classList.add("playedCard");
-        playedCard.style.transform = "translateX(5vh) rotate(-90deg)";
+        playedCard.style.transform = "translateX(5vmin) rotate(-90deg)";
 
         if (i == myPlayerNum){
             playedCard.addEventListener("click", () => {
@@ -1228,6 +1236,13 @@ function populateGameSpace(players){
         gameSpace.appendChild(playerSpace);
     }
     bodyElement.appendChild(gameSpace);
+}
+
+function addProtectionIcon(playerNum){
+    const playerIcon = document.querySelector(`#player${playerNum} .playerIcon`);
+    const protectionIcon = document.createElement("img");
+    protectionIcon.src = "/static/Images/Icons/shield.svg"
+    playerIcon.appendChild(protectionIcon);
 }
 
 function modifyBewitchedIcons(players){
@@ -2192,6 +2207,11 @@ function createStats(players){
         const statsDisplay = document.createElement("div");
         statsDisplay.classList.add("statsDisplay");
 
+        const startPlayerIcon = document.createElement("img");
+        startPlayerIcon.src = "static/Images/Icons/startPlayer.svg";
+        startPlayerIcon.classList.add("startPlayerIcon");
+        statsDisplay.appendChild(startPlayerIcon);
+
         const playerName = document.createElement("p");
         playerName.textContent = players[i].playerName;
         playerName.style.color = players[i].playerColor[0];
@@ -2241,10 +2261,10 @@ function createStats(players){
         const counterRotation = eval(playerRotation) * -1;
 
         if (Math.sign(Math.cos(playerRotation) < 0)){
-            statsDisplay.style.transform = `rotate(${counterRotation}rad) translateX(${-23}vh) translateY(${Math.sin(playerRotation) * -3}vh)`;
+            statsDisplay.style.transform = `rotate(${counterRotation}rad) translateX(${-23}vmin) translateY(${Math.sin(playerRotation) * -3}vmin)`;
         }
         else{
-            statsDisplay.style.transform = `rotate(${counterRotation}rad) translateX(${23}vh) translateY(${Math.sin(playerRotation) * -3}vh)`;
+            statsDisplay.style.transform = `rotate(${counterRotation}rad) translateX(${23}vmin) translateY(${Math.sin(playerRotation) * -3}vmin)`;
         }
 
         playerDiv.appendChild(statsDisplay);        
@@ -2256,7 +2276,7 @@ function updateStats(players, startPlayer){
     if (previousStartPlayer){
         previousStartPlayer.id = "";
     }
-    const newStartPlayer = document.querySelector(`#player${startPlayer} .playerName`);
+    const newStartPlayer = document.querySelector(`#player${startPlayer} .statsDisplay`);
     newStartPlayer.id = "startPlayer";
 
     for (let i = 0; i < players.length; i++){
@@ -2477,7 +2497,7 @@ function actionPhaseCleanUp(numPlayers){
         playedCard.classList.remove("card");
         playedCard.style.border = "3px dashed cyan";
         playedCard.style.opacity = "0.3";
-        playedCard.style.transform = "translateX(5vh) rotate(-90deg)";
+        playedCard.style.transform = "translateX(5vmin) rotate(-90deg)";
     }
     
     const workValueDisplay = document.querySelector(`#workValueScorecard p`);

@@ -213,7 +213,15 @@ button:hover{
     font-size: 3vh;
     font-weight: bold;
 }
-#startPlayer.playerName{
+.startPlayerIcon{
+    position: absolute;
+    bottom: 87%;
+    visibility: hidden;
+}
+#startPlayer .startPlayerIcon{
+    visibility: visible;
+}
+#startPlayer .playerName{
     text-decoration: underline;
 }
 .statsDisplay div{
@@ -275,36 +283,37 @@ button:hover{
 #gameSpace{
     position: absolute;
     place-self: center;
-    width: 75vh;
-    height: 75vh;
+    width: 75vmin;
+    height: 75vmin;
     border-radius: 50%;
     background-color: blanchedalmond;
 }
 #gameSpace>div[id^="player"]{
     position: absolute;
     display: grid;
-    grid-template-columns: 27vh 20vh;
+    grid-template-columns: 27vmin 20vmin;
     align-items: center;
-    left: calc(50% - 20vh);
-    top: calc(50% - 10vh);
-    width: 40vh;
-    height: 20vh;
+    left: calc(50% - 20vmin);
+    top: calc(50% - 10vmin);
+    width: 40vmin;
+    height: 20vmin;
 }
 div[id^="player"] .playerIcon{
     grid-column: 2 / 3;
-    width: 20vh;
-    height: 20vh;
+    width: 20vmin;
+    height: 20vmin;
     background-color: gainsboro;
     border-radius: 50%;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
+    display: grid;
 }
 div[id^="player"] .playedCard{
     position: fixed;
     justify-self: center;
-    margin-left: -5vh;
-    width: 15vh;
+    margin-left: -5vmin;
+    width: 15vmin;
     aspect-ratio: 5 / 7;
     border-radius: 13%;
     border: 3px dashed cyan;
@@ -316,13 +325,19 @@ div[id^="player"] .playedCard{
 }
 
 .playedCard.back{
-    transform: translateX(5vh) rotate(-90deg);
+    transform: translateX(5vmin) rotate(-90deg);
     border: 3px dashed cyan;
     opacity: 0.5;
     background-image: url(/static/Images/Misc/back.png);
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
+}
+
+.playerIcon img{
+    place-self: center;
+    width: 7vmin;
+    filter: invert(60%) sepia(100%) saturate(300%);
 }
 
 .mustache{
@@ -570,10 +585,10 @@ div[id^="player"] #handIcon{
 
 #workValueScorecard{
     position: absolute;
-    top: 91vh;
-    left: 7vh;
+    top: 90vh;
+    left: calc(1vw + max(3vw, 40px));
     width: 6vh;
-    height: 8vh;
+    height: calc(10vh - 1vw);
     background-color: #41A7BF;
     border-radius: 1vh;
     display: grid;
@@ -586,10 +601,10 @@ div[id^="player"] #handIcon{
 }
 #stealValueScorecard{
     position: absolute;
-    top: 91vh;
-    left: 15vh;
+    top: 90vh;
+    left: calc(2vw + max(3vw, 40px) + 6vh);
     width: 6vh;
-    height: 8vh;
+    height: calc(10vh - 1vw);
     background-color: #BA0000;
     border-radius: 1vh;
 }

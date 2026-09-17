@@ -41,7 +41,8 @@ export const allActions = [
         "isSteal": false,
         "isTargeting": false,
         "effect":  `player.numCoins += 2; 
-                    player.isImmune = true;`,
+                    player.isImmune = true;
+                    io.to(myGame.getGameDetails().roomCode).emit("protectIcon", player.playerNum);`,
         "priority": 4,
         "cost": 0,
         "isBasicAction": true,
@@ -175,8 +176,10 @@ export const allActions = [
         "effect":  `work(player, workValue, 2); 
                     player.numCardSwaps++;
                     player.isImmune = true;
+                    io.to(myGame.getGameDetails().roomCode).emit("protectIcon", player.playerNum);
                     players[player.currentTarget].numCardSwaps++;
-                    players[player.currentTarget].isImmune = true;`,
+                    players[player.currentTarget].isImmune = true;
+                    io.to(myGame.getGameDetails().roomCode).emit("protectIcon", player.currentTarget);`,
         "priority": 4,
         "cost": 7,
         "isBasicAction": false,
