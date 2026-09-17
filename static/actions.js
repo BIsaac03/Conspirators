@@ -219,8 +219,8 @@ export const allActions = [
         "effect": ` player.numCoins += 3;
                     player.isReady = false;
                     player.waitingOn = "hijackRedirects";
-                    io.to(myGame.getGameDetails().roomCode).emit("hijackRedirects", player.playerID);
-                    steal(player, players[player.currentTarget], -2, players);`, // !! steal after redirects RESOLVED
+                    io.to(myGame.getGameDetails().roomCode).emit("hijackRedirects", players, player.playerID);`, 
+                    // steal is resolved in 'finishedRedirecting' event listener ////
         "priority": 6,
         "cost": 6,
         "isBasicAction": false,
@@ -365,7 +365,7 @@ export const allActions = [
                     player.numCardSwaps++;
                     player.isReady = false;
                     player.waitingOn = "whistleRedirects";
-                    io.to(myGame.getGameDetails().roomCode).emit("whistleRedirects", player.playerID);`,
+                    io.to(myGame.getGameDetails().roomCode).emit("whistleRedirects", players, player.playerID);`,
         "priority": 3,
         "cost": 5,
         "isBasicAction": false,

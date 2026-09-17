@@ -139,11 +139,11 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
                     break;
 
                 case "whistleRedirects":
-                    promptRedirects("whistle");
+                    promptRedirects("whistle", players);
                     break;
 
                 case "hijackRedirects":
-                    promptRedirects("whistle");
+                    promptRedirects("hijack", players);
                     break;
                 
                 case "buyCards":
@@ -224,6 +224,9 @@ socket.on("updateImpersonation", (playerNum, impersonatedAction) => {
     generateCard(playedCard, impersonatedAction, true);
     playedCard.setAttribute("action", impersonatedAction.name);
 })
+socket.on("displayRedirection", (owner, target) => {
+    orientCardToPlayer(owner, target, numPlayers);
+})
 socket.on("retrieveCards", (player, numCardsToRetrieve) => {
     if (player.playerID == myID){
         retrieveCards(player, numCardsToRetrieve);
@@ -239,14 +242,14 @@ socket.on("honor", (player, target) => {
         promptDonation(player, target, "honor");
     }
 })
-socket.on("whistleRedirects", (playerID) => {
+socket.on("whistleRedirects", (players, playerID) => {
     if (playerID == myID){
-        promptRedirects("whistle");
+        promptRedirects("whistle", players);
     }
 })
-socket.on("hijackRedirects", (playerID) => {
+socket.on("hijackRedirects", (players, playerID) => {
     if (playerID == myID){
-        promptRedirects("hijack");
+        promptRedirects("hijack", players);
     }
 })
 
@@ -985,7 +988,7 @@ function tutorialOpenedShop(){
     tutorialPhase(20);
 }
 function tutorialOpenedDiscard(){
-    const displayToggle = document.getElementById("discardToggle");
+    const displayToggle = document.querySelector(`#discardToggle p`);
     displayToggle.removeEventListener("click", tutorialOpenedDiscard);
     tutorialPhase(24);
 }
@@ -1251,7 +1254,6 @@ function modifyBewitchedIcons(players){
         if (players[i].isBewitched){
             const randNum = Math.floor(Math.random()*3);
             playerIcon.style.backgroundImage = `url(/static/Images/Misc/bewitched${randNum}.jpg)`;
-
         }
         else{
             playerIcon.style.backgroundImage = "";
@@ -2133,58 +2135,62 @@ function promptImpersonate(numPlayers){
     }
 }
 
-function promptRedirects(type){
-    const playedCards = document.querySelectorAll(`.playedCard`);
+function promptRedirects(type, players){
+    const redirectableCards = [];
     switch(type){
         case "whistle":
-            playedCards.forEach((card) => {
-                const target = card.getAttribute("targetNum");
-                if ((target == myPlayerNum || 
-                target == (myPlayerNum + 1) % playedCards.length ||
-                target == (myPlayerNum - 1 + playedCards.length) % playedCards.length) &&
-                card.parentElement.id.slice(6) != myPlayerNum){
-                    card.classList.add("redirectable");
-                    card.setAttribute("originalTarget", target);
-                    card.addEventListener("click", () => {
-                        // !! let user eaesilt switch from one neighbor to another
-                        if (card.getAttribute("targetNum") != myPlayerNum){
-                            orientCardToPlayer(card.parentElement.id.slice(6), myPlayerNum, playedCards.length);
-                        }
-                        else if (card.getAttribute("originalTarget") != myPlayerNum){
-                            orientCardToPlayer(card.parentElement.id.slice(6), card.getAttribute("originalTarget"), playedCards.length);
-                        }
-                        else if (card.parentElement.id.slice(6) == (myPlayerNum + 1) % playedCards.length){
-                            orientCardToPlayer(card.parentElement.id.slice(6), (myPlayerNum - 1 + playedCards.length) % playedCards.length, playedCards.length);   
-                        }
-                        else if (card.parentElement.id.slice(6) == (myPlayerNum - 1 + playedCards.length) % playedCards.length)
-                            orientCardToPlayer(card.parentElement.id.slice(6), (myPlayerNum + 1) % playedCards.length, playedCards.length);
-                        else{
-                            addPlayerTargeting(card, card.parentElement.id.slice(6), playedCards.length);
-                        }
-                    })
+            players.forEach((player) => {
+                if (player.playerNum != myPlayerNum){
+                    if (player.currentTarget == myPlayerNum){
+                        redirectableCards.push([player.playerNum, [myPlayerNum, (myPlayerNum + 1) % players.length, (myPlayerNum - 1 + players.length) % players.length]]);
+                    }
+                    else if (player.currentTarget == (myPlayerNum + 1) % players.length){
+                        redirectableCards.push([player.playerNum, [myPlayerNum, (myPlayerNum + 1) % players.length]]);
+                    }
+                    else if ( player.currentTarget == ((myPlayerNum - 1 + players.length) % players.length)){
+                        redirectableCards.push([player.playerNum, [myPlayerNum, (myPlayerNum - 1 + players.length) % players.length]]);
+                    }
                 }
             })
             break;
         
         case "hijack":
-            const myTarget = document.querySelector(`#player${myPlayerNum} .playedCard`).getAttribute("targetNum");
-            playedCards.forEach((card) => {
-                const target = card.getAttribute("targetNum");
-                if (target == myTarget){
-                    card.classList.add("redirectable");
-                    card.setAttribute("originalTarget", target);
-                    card.addEventListener("click", () => {
-                        if (card.getAttribute("targetNum") != myTarget){
-                            orientCardToPlayer(card.parentElement.id.slice(6), myTarget, playedCards.length);
-                        }
-                        else{
-                            // !! allow user to choose new targets
+            const myTarget = players[myPlayerNum].currentTarget;
+            players.forEach((player) => {
+                if (player.currentTarget == myTarget){
+                    const legalTargets = [];
+                    players.forEach((potentialTarget) => {
+                        if (potentialTarget.playerNum != player.playerNum){
+                            legalTargets.push(potentialTarget.playerNum);
                         }
                     })
+                    redirectableCards.push([player.playerNum, legalTargets]);
                 }
             })
             break;
     }
+
+    redirectableCards.forEach((entry) => {
+        const cardOwner = entry[0];
+        const legalTargets = entry[1];
+        const cardDOM = document.querySelector(`#player${cardOwner} .playedCard`);
+        
+        cardDOM.classList.add("redirectable");
+        cardDOM.addEventListener("click", () => {
+            const currentTarget = cardDOM.getAttribute("targetNum");
+            if (legalTargets.length == 2){
+                if (legalTargets[0] == currentTarget){
+                    socket.emit("newRedirection", cardOwner, legalTargets[1], myID);
+                }
+                else{
+                    socket.emit("newRedirection", cardOwner, legalTargets[0], myID);
+                }
+            }
+            else{
+                // !! add LIMITED targeting only for legal targets
+            }
+        })
+    })
 
     const finalizeTargeting = document.createElement("button");
     finalizeTargeting.textContent = "Finalize Targeting";

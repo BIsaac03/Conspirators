@@ -166,7 +166,6 @@ io.on("connection", (socket) => {
         if (!myLobby.getGameDetails().isGameInProgress){
             myLobby.getPlayers().forEach((player) => {
                 player.isInGame = true;
-                player.discardHand();
             })
             myLobby.getGameDetails().isGameInProgress = true;
             roundStart(myLobby);
@@ -216,6 +215,11 @@ io.on("connection", (socket) => {
     socket.on("newImpersonatedCard", (selectedAction, myPlayerNum, myID) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
         io.to(myGame.getGameDetails().roomCode).emit("updateImpersonation", myPlayerNum, selectedAction);
+    })
+
+    socket.on("newRedirection", (owner, target, myID) => {
+        const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
+        io.to(myGame.getGameDetails().roomCode).emit("displayRedirection", owner, target, myGame.getPlayers().length);
     })
 
     socket.on("returnCardsToHand", (playerNum, retrievedCards, myID) => {
@@ -296,12 +300,22 @@ io.on("connection", (socket) => {
 
     socket.on("finishedRedirecting", (newTargets, myID) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
-        for (let i = 0; i < myGame.getPlayers().length; i++){
-            myGame.getPlayers()[i].currentTarget = newTargets[i];
+        const players = myGame.getPlayers();
+        const me = players.find((player) => player.playerID == myID);
+        me.isReady = true;
+
+        for (let i = 0; i < players.length; i++){
+            players[i].currentTarget = newTargets[i];
         }
 
-        const me = myGame.getPlayers().find((player) => player.playerID == myID);
-        determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, me.playerNum);
+        // resolves final part of Hijack action ////
+        if (me.playedCard.name == "Hijack"){
+            steal(me, players[me.currentTarget], -2, players);
+        }
+        
+        setTimeout(() => {
+            determineResolutionOrder(players, myGame.getGameDetails().startPlayer, me.playerNum);
+        }, 200);
     })
 
     socket.on("sortCards", (sortBy, isAscending, where, myID) => {
@@ -319,7 +333,7 @@ io.on("connection", (socket) => {
                 }
                 break;
 
-            case "A-Z":
+            case "name":
                 if (isAscending){
                     me.hand.sort((a, b) => a[0].name.localeCompare(b[0].name));
                     me.discard.sort((a, b) => a[0].name.localeCompare(b[0].name));
@@ -383,13 +397,12 @@ function createShop(type){
         const abduct = allActions.find((action) => action.name == "Abduct");
         const proselytize = allActions.find((action) => action.name == "Proselytize");
 
-        // !! reduced for testing, should start with 4 copies of each
-        forSale.push([ransack, 1]);
-        forSale.push([honor, 1]);
-        forSale.push([hijack, 1]);
-        forSale.push([recruit, 1]);
-        forSale.push([impersonate, 1]);
-        forSale.push([unionize, 1]);
+        forSale.push([ransack, 4]);
+        forSale.push([honor, 4]);
+        forSale.push([hijack, 4]);
+        forSale.push([recruit, 4]);
+        forSale.push([impersonate, 4]);
+        forSale.push([unionize, 4]);
         forSale.push([whistle, 4]);
         forSale.push([communalize, 4]);
         forSale.push([curse, 4]);
