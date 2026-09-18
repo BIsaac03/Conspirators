@@ -176,10 +176,12 @@ io.on("connection", (socket) => {
     socket.on("chosenAction", (playerNum, action, target, isFinal, myID) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
         const players = myGame.getPlayers();
-        players[playerNum].confirmAction(action, target, isFinal);
+        players[playerNum].confirmAction(action, target, Boolean(isFinal));
         players[playerNum].isReady = true;
+        if (Boolean(isFinal) && isFinal != true){
+            players[playerNum].usedCardSwap = true;
+        }
 
-        socket.emit("updateCards", players, [], "hand", false);
         socket.broadcast.emit("opponentActionChosen", playerNum);
 
         const keepWaiting = players.find((player) => !player.isReady)
@@ -191,7 +193,11 @@ io.on("connection", (socket) => {
             }
             else if (myGame.getGameDetails().gamePhase == "cardSwaps"){
                 players.forEach(player => {
+                    player.waitingOn = "actionResolution";
                     player.isBewitched = false;
+                    if (player.usedCardSwap){
+                        player.numCardSwaps--;
+                    }
                 })
 
                 myGame.changeGamePhase("actionResolution");
@@ -519,7 +525,6 @@ function determineResolutionOrder(players, startPlayer, playerNumResolved){
         return a.playedCard.priority - b.playedCard.priority;
     });
     const playerOrder = priorityOrder.map((player) => player.playerNum);
-    console.log(playerOrder);
     resolveActions(players, playerOrder, playerNumResolved, startPlayer);
 }
 
@@ -742,6 +747,7 @@ function updatePlayerWaitingOn(players, newWaitingOn){
 
 function roundEndCleanup(players){
     players.forEach(player => {
+        player.usedCardSwap = false;
         player.cooperatingWith = undefined;
         player.retaliatingAgainst = undefined;
         player.isImmune = false;

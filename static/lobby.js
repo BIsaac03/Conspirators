@@ -36,6 +36,7 @@ function populateLobby(bodyElement, socket, roomCode){
 
     const startGameButton = document.getElementById("startGame");
     startGameButton.addEventListener("click", () => {
+        console.log("start game clicked")
         if (confirm("Are you sure you want to start the game? New players will not be able to join an in-progress game.")){
             socket.emit("startGame", roomCode);
         }

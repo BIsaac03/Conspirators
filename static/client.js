@@ -837,7 +837,7 @@ function tutorialPhase(phase){
             useCardSwap.addEventListener("click", () => {
                 document.querySelector(`#player0 .numCardSwaps`).textContent = "0";
                 cardSwapPopUp.remove();
-                actionPhaseCleanUp(1);
+                cleanUpPlayerCard(0);
 
                 const playedCard = document.querySelector(`#player0 .playedCard`);
                 addPlayerTargeting(playedCard, myPlayerNum, 3);
@@ -883,6 +883,7 @@ function tutorialPhase(phase){
             const playedCard = document.querySelector(`#player0 .playedCard`);
             const retaliate = allActions.find((action) => action.name == "Retaliate");
             generateCard(playedCard, retaliate, false);
+            playedCard.style.opacity = "1";
             break;
 
         case 32:
@@ -1184,12 +1185,13 @@ function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
 }
 
 function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
+    console.log(targetPlayerNum)
     const playedCard = document.querySelector(`#player${originPlayerNum} .playedCard`);
     playedCard.setAttribute("targetNum", targetPlayerNum);
     const targetAngle = calculateTargetAngle(originPlayerNum, targetPlayerNum, numPlayers);
     const xTrans = 10 + 5*Math.sin(targetAngle);
     const yTrans = -15*Math.cos(targetAngle);
-    playedCard.style.transform = `translateX(min(${xTrans}vh, ${xTrans * 2/3}vw)) translateY(min(${yTrans}vh, ${yTrans * 2/3}vw)) rotate${targetAngle}rad)`;       
+    playedCard.style.transform = `translateX(min(${xTrans}vh, ${xTrans * 2/3}vw)) translateY(min(${yTrans}vh, ${yTrans * 2/3}vw)) rotate(${targetAngle}rad)`;       
 }
 
 function populateGameSpace(players){
@@ -1690,6 +1692,7 @@ function actionSelection(players, myPlayerNum, originalCard){
 
     // orients card to target player 
     addPlayerTargeting(myCard, myPlayerNum, players.length)
+    allowCardSelection(true);
 
     const confirm = document.createElement("button");
     confirm.id = "confirmAction";
@@ -1705,8 +1708,10 @@ function actionSelection(players, myPlayerNum, originalCard){
         if (actionToPlayName != undefined && targetPlayerNum != undefined){
             const actionToPlay = players[myPlayerNum].hand.find((action) => actionToPlayName.startsWith(action[0].name));
             if (!players[myPlayerNum].isBewitched || actionToPlay[0].isBasicAction){
-                socket.emit("chosenAction", myPlayerNum, actionToPlay[0], targetPlayerNum, Boolean(originalCard), myID);
+                socket.emit("chosenAction", myPlayerNum, actionToPlay[0], targetPlayerNum, originalCard, myID);
+                displayCards(players[myPlayerNum], players[myPlayerNum].hand, "play", false);
                 removeAllPlayerTargeting(players.length);
+                allowCardSelection(false);
                 confirm.remove();
             }
             else{
@@ -1770,10 +1775,25 @@ function removeAllPlayerTargeting(numPlayers){
     }
 }
 
+function allowCardSelection(shouldEnable){
+    const actionDiv = document.querySelector(`.actionSelection.play`);
+    if (shouldEnable){
+        actionDiv.style.pointerEvents = "auto";
+    }
+    else{
+        actionDiv.style.pointerEvents = "none";
+    }
+}
+
 function lockInCard(playerNum){
     const playerCard = document.querySelector(`#player${playerNum} .playedCard`);
     playerCard.style.opacity = "1";
     playerCard.style.border = "3px solid black";
+
+    if (myPlayerNum == playerNum){
+        const targetPlayerNum = playerCard.getAttribute("targetNum");
+        document.querySelector(`#player${targetPlayerNum} .playerIcon`).id = "selectedPlayer";
+    }
 }
 
 function allowCardSwaps(players){
@@ -1791,6 +1811,9 @@ function allowCardSwaps(players){
     const useCardSwap = document.createElement("button");
     useCardSwap.textContent = "Use Card Swap";
     useCardSwap.addEventListener("click", () => {
+        const myNumCardSwaps = document.querySelector(`#player${myPlayerNum} .numCardSwaps`)
+        myNumCardSwaps.textContent = Number(myNumCardSwaps.textContent) - 1;
+        cleanUpPlayerCard(myPlayerNum);
         cardSwapPopUp.remove();
         actionSelection(players, myPlayerNum, originalCard);
     })
@@ -2298,6 +2321,11 @@ function updateStats(players, startPlayer){
         const numCardSwaps = document.querySelector(`#player${i} .statsDisplay .numCardSwaps`)
         numCardSwaps.textContent = players[i].numCardSwaps;
     }
+
+    if (players[myPlayerNum].waitingOn == "useCardSwap" && players[myPlayerNum].usedCardSwap){
+        const numCardSwaps = document.querySelector(`#player${myPlayerNum} .statsDisplay .numCardSwaps`)
+        numCardSwaps.textContent = numCardSwaps.textContent - 1;
+    }
 }
 
 function addActionSearchListeners(isTutorial){
@@ -2500,21 +2528,26 @@ function populateCardBacks(numPlayers){
 
 function actionPhaseCleanUp(numPlayers){
     for (let i = 0; i < numPlayers; i++){
-        const playedCard = document.querySelector(`#player${i} .playedCard`);
-        playedCard.innerHTML = "";
-        playedCard.removeAttribute("action");
-        playedCard.classList.remove("card");
-        playedCard.style.border = "3px dashed cyan";
-        playedCard.style.opacity = "0.3";
-        playedCard.style.transform = "translateX(min(5vh, calc(5vw * 2 / 3))) rotate(-90deg)";
-    }
-    
+        cleanUpPlayerCard(i);
+    } 
     const workValueDisplay = document.querySelector(`#workValueScorecard p`);
     workValueDisplay.textContent = "";
+}
 
-    const selectedPlayer = document.getElementById("selectedPlayer");
-    if (selectedPlayer){
-        selectedPlayer.id = "";
+function cleanUpPlayerCard(playerNum){
+    const playedCard = document.querySelector(`#player${playerNum} .playedCard`);
+    playedCard.innerHTML = "";
+    playedCard.removeAttribute("action");
+    playedCard.classList.remove("card");
+    playedCard.style.border = "3px dashed cyan";
+    playedCard.style.opacity = "0.3";
+    playedCard.style.transform = "translateX(min(5vh, calc(5vw * 2 / 3))) rotate(-90deg)";
+
+    if (playerNum == myPlayerNum){
+        const selectedPlayer = document.getElementById("selectedPlayer");
+        if (selectedPlayer){
+            selectedPlayer.id = "";
+        }
     }
 }
 

@@ -474,7 +474,7 @@ div[id^="player"] #handIcon{
 }
 .actionSelection{
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 25%));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 25%));
     scrollbar-width: none;
     overflow: auto;
     background-color: #000000d5;
