@@ -90,16 +90,16 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
                 orientCardToPlayer(myPlayerNum, reconnectedPlayer.currentTarget, players.length);
 
                 players.forEach(player => {
-                    lockInCard(player.playerNum);
                     orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
+                    lockInCard(player.playerNum);
                 })
                 break;
 
             case "actionResolution":
                 players.forEach(player => {
                     const playedCard = document.querySelector(`#player${player.playerNum} .playedCard`);
-                    lockInCard(player.playerNum);
                     orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
+                    lockInCard(player.playerNum);
                     generateCard(playedCard, player.playedCard, player.isImpersonating);
                     if (player.isImmune){
                         addProtectionIcon(player.playerNum);
@@ -224,7 +224,8 @@ socket.on("updateImpersonation", (playerNum, impersonatedAction) => {
     generateCard(playedCard, impersonatedAction, true);
     playedCard.setAttribute("action", impersonatedAction.name);
 })
-socket.on("displayRedirection", (owner, target) => {
+socket.on("displayRedirection", (owner, target, numPlayers) => {
+    console.log("redirection");
     orientCardToPlayer(owner, target, numPlayers);
 })
 socket.on("retrieveCards", (player, numCardsToRetrieve) => {
@@ -1223,6 +1224,10 @@ function populateGameSpace(players){
         // blow up played cards on hover
         playedCard.addEventListener("mouseenter", () => {
             if (playedCard.hasAttribute("action")){
+                let waitToBlowUp = 250;
+                if (players[myPlayerNum].waitingOn.endsWith("Redirects")){
+                    waitToBlowUp = 1000;
+                }
                 setTimeout(() => {
                     if (playedCard.matches(":hover") && !document.getElementById("blownUp")){
                         const action = allActions.find((card) => card.name == playedCard.getAttribute("action"));
@@ -1234,7 +1239,7 @@ function populateGameSpace(players){
                             playedCard.style.opacity = "1.0";
                         })
                     }
-                }, 250)
+                }, waitToBlowUp)
             }
         })
         playerSpace.appendChild(playedCard);
@@ -1249,7 +1254,7 @@ function addProtectionIcon(playerNum){
     const playerIcon = document.querySelector(`#player${playerNum} .playerIcon`);
     const protectionIcon = document.createElement("img");
     protectionIcon.src = "/static/Images/Icons/shield.svg"
-    playerIcon.appendChild(protectionIcon);
+    playerIcon.replaceChildren(protectionIcon);
 }
 
 function modifyBewitchedIcons(players){
@@ -1442,7 +1447,7 @@ function addCardDisplayListeners(){
     playerDisplayVisibilityToggle.addEventListener("click", openClosePlayerDisplay);
 
     const discardToggle = document.getElementById("discardToggle");
-    discardToggle.style.backgroundColor = "rgba(110, 110, 110, 0.83)";
+    discardToggle.style.backgroundColor = "rgba(130, 130, 130, 0.85)"
 
     const responsiveDiscardToggle = discardToggle.querySelector(`p`);
     responsiveDiscardToggle.addEventListener("click", () => {
@@ -1450,7 +1455,7 @@ function addCardDisplayListeners(){
     })
 
     const handToggle = document.getElementById("handToggle");
-    handToggle.style.backgroundColor = "rgba(0, 0, 0, 0.83)";
+    handToggle.style.backgroundColor = "rgba(0, 0, 0, 0.85)";
 
     const responsiveHandToggle = handToggle.querySelector(`p`);
     responsiveHandToggle.addEventListener("click", () => {
@@ -1534,7 +1539,7 @@ function openClosePlayerDisplay(){
 
 function whereInPlayerDisplay(){
     const handToggle = document.getElementById("handToggle");
-    if (handToggle.style.backgroundColor == "rgba(0, 0, 0, 0.83)"){
+    if (handToggle.style.backgroundColor == "rgba(0, 0, 0, 0.85)"){
         return "hand"
     }
     return "discard"
@@ -1545,13 +1550,13 @@ function openRelevantPlayerDisplay(player, where, isTutorial){
     const handToggle = document.getElementById("handToggle");
     const sliderIcon = document.querySelector(`#playerDisplay .sliderIcon`);
     if (where == "hand"){
-        handToggle.style.backgroundColor = "rgba(0, 0, 0, 0.83)";
-        discardToggle.style.backgroundColor = "rgba(110, 110, 110, 0.83)";     
+        handToggle.style.backgroundColor = "rgba(0, 0, 0, 0.85)";
+        discardToggle.style.backgroundColor = "rgba(130, 130, 130, 0.85)";     
         displayCards(player, player.hand, "play", isTutorial);
     }
     else if (where == "discard"){
-        handToggle.style.backgroundColor = "rgba(110, 110, 110, 0.83)";
-        discardToggle.style.backgroundColor = "rgba(0, 0, 0, 0.83)";
+        handToggle.style.backgroundColor = "rgba(130, 130, 130, 0.85)";
+        discardToggle.style.backgroundColor = "rgba(0, 0, 0, 0.85)";
         displayCards(player, player.discard, "play", isTutorial);
     }
     if (sliderIcon.src.includes("/static/Images/Icons/rightArrows.svg")){
@@ -1687,7 +1692,6 @@ function promptActionSelection(player, isTutorial){
 
 function actionSelection(players, myPlayerNum, originalCard){
     const myCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
-    myCard.style.opacity = "1";
     promptActionSelection(players[myPlayerNum], false);
 
     // orients card to target player 
@@ -1746,11 +1750,11 @@ function addPlayerTargeting(card, playerNum, numPlayers){
                     }
 
                     if (targetPlayerNum == undefined){
-                        card.style.border = "3px solid black";
+                        card.setAttribute("targeting", "locked");
                         playerIcon.id = "selectedPlayer";
                     }
                     else if (targetPlayerNum == i){
-                        card.style.border = "3px dashed cyan";
+                        card.setAttribute("targeting", "open");
                         playerIcon.id = "";
                     }
                     else{
@@ -1788,11 +1792,14 @@ function allowCardSelection(shouldEnable){
 function lockInCard(playerNum){
     const playerCard = document.querySelector(`#player${playerNum} .playedCard`);
     playerCard.style.opacity = "1";
-    playerCard.style.border = "3px solid black";
+    playerCard.setAttribute("targeting", "locked");
 
     if (myPlayerNum == playerNum){
         const targetPlayerNum = playerCard.getAttribute("targetNum");
-        document.querySelector(`#player${targetPlayerNum} .playerIcon`).id = "selectedPlayer";
+        const selectedPlayer = document.querySelector(`#player${targetPlayerNum} .playerIcon`);
+        if (selectedPlayer){
+            selectedPlayer.id = "selectedPlayer";
+        }
     }
 }
 
@@ -2169,13 +2176,17 @@ function promptRedirects(type, players){
             players.forEach((player) => {
                 if (player.playerNum != myPlayerNum){
                     if (player.currentTarget == myPlayerNum){
-                        redirectableCards.push([player.playerNum, [myPlayerNum, (myPlayerNum + 1) % players.length, (myPlayerNum - 1 + players.length) % players.length]]);
+                        const legalTargets = [myPlayerNum]
+                        if (player.playerNum != (myPlayerNum + 1) % players.length){
+                            legalTargets.push((myPlayerNum + 1) % players.length);
+                        }
+                        if (player.playerNum != (myPlayerNum - 1 + players.length) % players.length){
+                            legalTargets.push((myPlayerNum - 1 + players.length) % players.length);
+                        }
+                        redirectableCards.push([player.playerNum, legalTargets]);
                     }
-                    else if (player.currentTarget == (myPlayerNum + 1) % players.length){
-                        redirectableCards.push([player.playerNum, [myPlayerNum, (myPlayerNum + 1) % players.length]]);
-                    }
-                    else if ( player.currentTarget == ((myPlayerNum - 1 + players.length) % players.length)){
-                        redirectableCards.push([player.playerNum, [myPlayerNum, (myPlayerNum - 1 + players.length) % players.length]]);
+                    else if (player.currentTarget == (myPlayerNum + 1) % players.length || player.currentTarget == (myPlayerNum - 1 + players.length) % players.length){
+                        redirectableCards.push([player.playerNum, [player.currentTarget, myPlayerNum]]);
                     }
                 }
             })
@@ -2185,9 +2196,9 @@ function promptRedirects(type, players){
             const myTarget = players[myPlayerNum].currentTarget;
             players.forEach((player) => {
                 if (player.currentTarget == myTarget){
-                    const legalTargets = [];
+                    const legalTargets = [myTarget];
                     players.forEach((potentialTarget) => {
-                        if (potentialTarget.playerNum != player.playerNum){
+                        if (potentialTarget.playerNum != player.playerNum || potentialTarget.playerNum == myTarget){
                             legalTargets.push(potentialTarget.playerNum);
                         }
                     })
@@ -2202,19 +2213,22 @@ function promptRedirects(type, players){
         const legalTargets = entry[1];
         const cardDOM = document.querySelector(`#player${cardOwner} .playedCard`);
         
-        cardDOM.classList.add("redirectable");
+        cardDOM.setAttribute("targeting", "redirectable");
         cardDOM.addEventListener("click", () => {
+            cardDOM.setAttribute("targeting", "open");
             const currentTarget = cardDOM.getAttribute("targetNum");
             if (legalTargets.length == 2){
                 if (legalTargets[0] == currentTarget){
                     socket.emit("newRedirection", cardOwner, legalTargets[1], myID);
+                    cardDOM.setAttribute("targeting", "redirected");
                 }
                 else{
                     socket.emit("newRedirection", cardOwner, legalTargets[0], myID);
+                    cardDOM.setAttribute("targeting", "redirectable");
                 }
             }
             else{
-                // !! add LIMITED targeting only for legal targets
+                addLimitedTargeting(entry, players.length);
             }
         })
     })
@@ -2233,6 +2247,26 @@ function promptRedirects(type, players){
         socket.emit("finishedRedirecting", newTargets, myID);
     })
     bodyElement.appendChild(finalizeTargeting);
+}
+
+function addLimitedTargeting([cardOwner, legalTargets], numPlayers){   
+    const redirectedCard = document.querySelector(`#player${cardOwner} .playedCard`);
+    legalTargets.forEach((target) => {
+        const targetIcon = document.querySelector(`#player${target} .playerIcon`);
+        targetIcon.addEventListener("mouseenter", () => {
+            socket.emit("newRedirection", cardOwner, target, myID);
+            orientCardToPlayer(cardOwner, target, numPlayers);
+        })
+        targetIcon.addEventListener("click", () => {
+            if (target == legalTargets[0]){
+                redirectedCard.setAttribute("targeting", "redirectable");
+            }
+            else{
+                redirectedCard.setAttribute("targeting", "redirected");
+            }
+            removeAllPlayerTargeting(numPlayers);
+        })
+    })           
 }
 
 function createStats(players){
@@ -2519,18 +2553,18 @@ function displayNotification(notification, notificationType){
 
 function populateCardBacks(numPlayers){
     for (let i = 0; i < numPlayers; i++){
-        if (i != myPlayerNum){
-            const playedCard = document.querySelector(`#player${i} .playedCard`);
-            playedCard.classList.remove("card");
-            playedCard.innerHTML = "";
-            playedCard.classList.add("back");
-        }
+        const playedCard = document.querySelector(`#player${i} .playedCard`);
+        playedCard.classList.remove("card");
+        playedCard.innerHTML = "";
+        playedCard.classList.add("back");
+        playedCard.setAttribute("targeting", "open");
     }
 }
 
 function actionPhaseCleanUp(numPlayers){
     for (let i = 0; i < numPlayers; i++){
         cleanUpPlayerCard(i);
+        document.querySelector(`#player${i} .playerIcon`).replaceChildren();
     } 
     const workValueDisplay = document.querySelector(`#workValueScorecard p`);
     workValueDisplay.textContent = "";
@@ -2541,7 +2575,7 @@ function cleanUpPlayerCard(playerNum){
     playedCard.innerHTML = "";
     playedCard.removeAttribute("action");
     playedCard.classList.remove("card");
-    playedCard.style.border = "3px dashed cyan";
+    playedCard.setAttribute("targeting", "open");
     playedCard.style.opacity = "0.3";
     playedCard.style.transform = "translateX(min(5vh, calc(5vw * 2 / 3))) rotate(-90deg)";
 
