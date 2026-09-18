@@ -26,7 +26,7 @@ app.get('/', (req, res) => {
 
 const io = new Server(httpServer, {
     cors: {
-        origin: "http://conspirators.onrender.com",
+        origin: "https://conspirators.onrender.com",
         //origin: "http://localhost:5500",
 }
 });
