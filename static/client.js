@@ -20,7 +20,7 @@ const bodyElement = document.body;
 socket.on("outsideLobby", () => {
     console.log(window.location.href);
     //if (window.location.href == "http://localhost:3000/" || window.location.href == "http://localhost:3000/index.html"){
-    if (window.location.href == "conspirators.onrender.com" || window.location.href == "https://conspirators.onrender.com/index.html"){
+    if (window.location.href == "https://conspirators.onrender.com/" || window.location.href == "https://conspirators.onrender.com/index.html"){
         addMainMenuListeners();
     }
     //else if (window.location.href.startsWith("http://localhost:3000/lobby.html")){
