@@ -2022,6 +2022,7 @@ function modifyCheckOutList(actionName, actionCost){
 }
 
 function retrieveCards(player, numCardsToRetrieve){
+    allowCardSelection(true);
     openRelevantPlayerDisplay(player, "discard", false);
 
     const retrieveDiv = document.createElement("div");
@@ -2058,6 +2059,7 @@ function retrieveCards(player, numCardsToRetrieve){
             socket.emit("getUpdatedCards", "discard", false, myID);
             retrieveDiv.remove();
             openClosePlayerDisplay();
+            allowCardSelection(false);
         }        
     })
 

@@ -72,7 +72,6 @@ io.on("connection", (socket) => {
         opp2.numCoins += 2;
         tutorialGame.addPlayer(opp2);
         tutorialGame.startGame();
-        socket.join("tutorial");
         socket.emit("startTutorial", tutorialGame.getPlayers());
     })
     socket.on("leaveTutorial", (ID) => {
@@ -211,11 +210,24 @@ io.on("connection", (socket) => {
 
     socket.on("logAttemptedPurchase", (cardsToBuy, myID) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
-        const buyer = myGame.getPlayers().find((player) => player.playerID == myID);
+        const players = myGame.getPlayers();
+        const buyer = players.find((player) => player.playerID == myID);
         buyer.cardsToBuy = cardsToBuy;
         buyer.isReady = true;
 
-        attemptPurchase(myGame.getPlayers(), myGame.getGameDetails().startPlayer, myGame.getGameDetails().shop)
+        if (myGame.getGameDetails().roomCode == "tutorial"){
+            const shop = myGame.getGameDetails().shop;
+            const proselytize = allActions.find((action) => action.name == "Proselytize");
+            removeBoughtCardsFromShop([proselytize], shop);
+            removeBoughtCardsFromShop(players[0].cardsToBuy, shop);
+            players[0].buyCards(players[0].cardsToBuy, 9);
+            players[0].cardsToBuy = undefined;
+            socket.emit("updateCards", players, shop, "shop", false);
+        }
+        else{
+            // ensure purchases are resolved in player order in case of limited quantity
+            attemptPurchase(players, myGame.getGameDetails().startPlayer, myGame.getGameDetails().shop)
+        }
     })
 
     socket.on("newImpersonatedCard", (selectedAction, myPlayerNum, myID) => {
@@ -569,75 +581,63 @@ function attemptPurchase(players, startPlayer, shop){
     const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
     let currentBuyer = players[startPlayer];
 
-    // ensure purchases are resolved in player order in case of limited quantity
-    if (myGame.getGameDetails().roomCode == "tutorial"){
-        const proselytize = allActions.find((action) => action.name == "Proselytize");
-        removeBoughtCardsFromShop([proselytize], shop);
-        removeBoughtCardsFromShop(players[0].cardsToBuy, shop);
-        players[0].buyCards(players[0].cardsToBuy, 9);
-        players[0].cardsToBuy = undefined;
-        io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
-    }
-    else{
-        while(currentBuyer.isReady){
-            if (currentBuyer.cardsToBuy){
-                let totalCost = 0;
-                for (let i = 0; i < currentBuyer.cardsToBuy.length; i++){
-                    const shopContainsAction = shop.find((action) => action[0].name == currentBuyer.cardsToBuy[i].name)
-                    if (!shopContainsAction){
-                        currentBuyer.isReady = false;
-                        io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", "An action you wished to buy has been purchased by a player ahead of you in turn order. Please place a new order.", "error", currentBuyer.playerNum);
-                        io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
-                        return;
-                    }
-                    totalCost += currentBuyer.cardsToBuy[i].cost;
-                }
-
-                if (totalCost > currentBuyer.numCoins){
+    while(currentBuyer.isReady){
+        if (currentBuyer.cardsToBuy){
+            let totalCost = 0;
+            for (let i = 0; i < currentBuyer.cardsToBuy.length; i++){
+                const shopContainsAction = shop.find((action) => action[0].name == currentBuyer.cardsToBuy[i].name)
+                if (!shopContainsAction){
                     currentBuyer.isReady = false;
-                    io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", "You do not have enough coins for the order you placed. Please place a new order.", "error", currentBuyer.playerNum);
+                    io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", "An action you wished to buy has been purchased by a player ahead of you in turn order. Please place a new order.", "error", currentBuyer.playerNum);
                     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
                     return;
                 }
-                else{
-                    removeBoughtCardsFromShop(currentBuyer.cardsToBuy, shop);
-                    currentBuyer.buyCards(currentBuyer.cardsToBuy, totalCost, currentBuyer.hasRecruited);
-                    
-                    const numCardsBought = currentBuyer.cardsToBuy.length;
-                    let boughtCardsString = "";
-                    if (numCardsBought == 0){
-                        boughtCardsString += "no new Actions";
-                    }
-                    currentBuyer.cardsToBuy.forEach((card, index) => {
-                        if (numCardsBought == 3 && index > 0){
-                            boughtCardsString += ",";
-                        }
-                        if (numCardsBought > 1 && index == numCardsBought - 1){
-                            boughtCardsString += " and ";
-                        }
-                        if(["A", "I", "Ho"].some((vowel) => card.name.startsWith(vowel))){
-                            boughtCardsString += ` an <span>${card.name}</span>`;
-                        }
-                        else{
-                            boughtCardsString += ` a <span>${card.name}</span>`;
-                        }
-                    })
-
-                    io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", `<b style="color: ${currentBuyer.playerColor[0]}">${currentBuyer.playerName}</b> bought ${boughtCardsString}.`, "info", "ALL");
-                    io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
-                    io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", players, startPlayer);
-                    currentBuyer.cardsToBuy = undefined;
-
-                    if (currentBuyer.playerNum == (startPlayer - 1 + players.length) % players.length){
-                        endOfRound(players, shop);
-                        return;
-                    } 
-                }
+                totalCost += currentBuyer.cardsToBuy[i].cost;
             }
-            currentBuyer = players[(currentBuyer.playerNum + 1) % players.length];
+
+            if (totalCost > currentBuyer.numCoins){
+                currentBuyer.isReady = false;
+                io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", "You do not have enough coins for the order you placed. Please place a new order.", "error", currentBuyer.playerNum);
+                io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
+                return;
+            }
+            else{
+                removeBoughtCardsFromShop(currentBuyer.cardsToBuy, shop);
+                currentBuyer.buyCards(currentBuyer.cardsToBuy, totalCost, currentBuyer.hasRecruited);
+                
+                const numCardsBought = currentBuyer.cardsToBuy.length;
+                let boughtCardsString = "";
+                if (numCardsBought == 0){
+                    boughtCardsString += "no new Actions";
+                }
+                currentBuyer.cardsToBuy.forEach((card, index) => {
+                    if (numCardsBought == 3 && index > 0){
+                        boughtCardsString += ",";
+                    }
+                    if (numCardsBought > 1 && index == numCardsBought - 1){
+                        boughtCardsString += " and ";
+                    }
+                    if(["A", "I", "Ho"].some((vowel) => card.name.startsWith(vowel))){
+                        boughtCardsString += ` an <span>${card.name}</span>`;
+                    }
+                    else{
+                        boughtCardsString += ` a <span>${card.name}</span>`;
+                    }
+                })
+
+                io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", `<b style="color: ${currentBuyer.playerColor[0]}">${currentBuyer.playerName}</b> bought ${boughtCardsString}.`, "info", "ALL");
+                io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
+                io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", players, startPlayer);
+                currentBuyer.cardsToBuy = undefined;
+
+                if (currentBuyer.playerNum == (startPlayer - 1 + players.length) % players.length){
+                    endOfRound(players, shop);
+                    return;
+                } 
+            }
         }
+        currentBuyer = players[(currentBuyer.playerNum + 1) % players.length];
     }
- 
 }
 
 function removeBoughtCardsFromShop(boughtCards, shop){
