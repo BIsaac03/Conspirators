@@ -193,7 +193,7 @@ button:hover{
     position: absolute;
     grid-column: 2 / 3;
     display: grid;
-    grid-template: 5vh 5vh 5vh / 1fr 1fr;
+    grid-template: repeat(3, min(5vh, calc(5vw * 2 / 3))) / 1fr 1fr;
     gap: 1vh;
     align-items: center;
     justify-items: center;
@@ -231,7 +231,7 @@ button:hover{
     width: 100%;
 }
 .statsDisplay img{
-    width: 5vh;
+    width: min(5vh, calc(5vw * 2 / 3));
 }
 
 #blownUp{
@@ -244,8 +244,8 @@ button:hover{
 }
 #blownUp.FAQOnly{
     box-shadow: none;
-    top: 10vh;
-    left: calc(1vw + max(3vw, 40px));
+    top: 8vh;
+    left: calc(6vw + max(3vw, 40px));
 }
 #blownUp .FAQ{
     position: absolute;
@@ -283,8 +283,8 @@ button:hover{
 #gameSpace{
     position: absolute;
     place-self: center;
-    width: min(75vh, 50vw);
-    height: min(75vh, 50vw);
+    width: min(85vh, 50vw);
+    height: min(85vh, 50vw);
     border-radius: 50%;
     background-color: blanchedalmond;
 }
@@ -312,7 +312,6 @@ div[id^="player"] .playerIcon{
 div[id^="player"] .playedCard{
     position: fixed;
     justify-self: center;
-    margin-left: min(-5vh, calc(-5vw * 2 / 3));
     width: min(15vh, 10vw);
     aspect-ratio: 5 / 7;
     border-radius: 13%;
@@ -378,7 +377,7 @@ div[id^="player"] #handIcon{
 #playerDisplay, #shopDisplay{
     position: absolute;
     align-self: center;
-    width: 70vw;
+    width: 60vw;
     height: 92vh;
     display: grid;
     grid-template-rows: 7vh auto;
@@ -457,20 +456,26 @@ div[id^="player"] #handIcon{
 #sortActions{
     position: absolute;
     top: 0;
-    left: calc(100% - 5vw - max(3vw, 40px));
+    right: calc(0% + max(3vw, 40px));
     display: grid;
-    grid-template-columns: auto 1fr;
-    gap: calc(1vw + max(3vw, 40px));
-    width: 20vw;
+    grid-template-rows: 7vh 1fr;
+    grid-template-columns: 1fr 2fr;
+    width: 15%;
+    cursor: default;
 }
 #sortActions img{
+    grid-column: 2 / 3;
     filter: invert(1);
-    height: 4vw;
+    width: min(50%, 5.5vh);
+    place-self: center;
 }
 #sortActions form{
-    visibility: hidden;
-    padding-left: 1vw;
+    grid-column: 1 / 3;
+    justify-self: end;
+    padding: 0.5vw 1vw;
     font-size: 2vw;
+    background-color: whitesmoke;
+    visibility: hidden;
 }
 
 .actionSelection.play{
@@ -510,16 +515,16 @@ div[id^="player"] #handIcon{
 #actionSearch img{
     position: absolute;
     grid-row: 1/2;
-    left: 143px;
-    width: 20px;
+    left: 11vw;
+    width: min(3vh, 20px);
     align-self: center;
 }
 #actionSearch input{
-    height: 25px;
-    width: 155px;
+    height: 3vh;
+    width: 12vw;
     border-radius: 50px;
     padding-left: 10px;
-    font-size: 20px;
+    font-size: 1.5vw;
 }
 #actionSearch div{
     padding-left: 10px;
@@ -622,7 +627,6 @@ div[id^="player"] #handIcon{
     height: 39vh;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: 8vh;
     align-items: center;
     justify-items: center;
     color: white;
@@ -658,14 +662,14 @@ div[id^="player"] #handIcon{
 }
 #checkOutList{
     position: absolute;
-    right: 73vw;
+    right: 75vw;
     bottom: calc(10vh + 1vw);
     display: flex;
     flex-direction: column-reverse;
     gap: 2.5vh;
     padding: 1vh 1vw;
-    width: calc(24vw - max(3vw, 40px));
-    background-color: lightgoldenrodyellow;
+    width: calc(22vw - max(3vw, 40px));
+    background-color: goldenrod;
 
 }
 #checkOutList div{
@@ -722,17 +726,21 @@ div[id^="player"] #handIcon{
     text-align: center;
     z-index: 3;
 }
+.notificationDiv b{
+    text-shadow: 1px 1px 1px black;
+}
 .notificationDiv span{
+    text-shadow: 1px 1px 1px black;
     font-weight: bold;
 }
 .notificationDiv.info{
-    background-color: rgba(255, 248, 220, 0.5);
+    background-color: rgba(255, 248, 220, 0.8);
 }
 .notificationDiv.error{
-    background-color: rgba(255, 100, 90, 0.5);
+    background-color: rgba(255, 100, 90, 0.8);
 }
 .notificationDiv.warning{
-    background-color: rgba(255, 170, 160, 0.5);
+    background-color: rgba(255, 170, 160, 0.8);
 }
 .notificationDiv img{
     width: 20px;

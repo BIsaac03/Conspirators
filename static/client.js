@@ -8,8 +8,8 @@ if (document.cookie == ""){
 const myID = document.cookie.slice(7);
 let myPlayerNum = undefined;
 
-//const socket = io("http://localhost:3000", {
-const socket = io("https://conspirators.onrender.com", {
+const socket = io("http://localhost:3000", {
+//const socket = io("https://conspirators.onrender.com", {
     auth: {
         token: myID
     }
@@ -19,12 +19,12 @@ const bodyElement = document.body;
 
 socket.on("outsideLobby", () => {
     console.log(window.location.href);
-    //if (window.location.href == "http://localhost:3000/" || window.location.href == "http://localhost:3000/index.html"){
-    if (window.location.href == "https://conspirators.onrender.com/" || window.location.href == "https://conspirators.onrender.com/index.html"){
+    if (window.location.href == "http://localhost:3000/" || window.location.href == "http://localhost:3000/index.html"){
+    //if (window.location.href == "https://conspirators.onrender.com/" || window.location.href == "https://conspirators.onrender.com/index.html"){
         addMainMenuListeners();
     }
-    //else if (window.location.href.startsWith("http://localhost:3000/lobby.html")){
-    else if (window.location.href.startsWith("https://conspirators.onrender.com/lobby")){
+    else if (window.location.href.startsWith("http://localhost:3000/lobby.html")){
+    //else if (window.location.href.startsWith("https://conspirators.onrender.com/lobby")){
         const params = new URLSearchParams(window.location.search);
         const roomCode = params.get('roomCode');
         socket.emit("connectToNewLobby", roomCode); 
@@ -462,6 +462,7 @@ function tutorialPhase(phase){
         
         case 3:
             socket.emit("tutorialRequest", "save", 3, myID);
+            populateCardBacks(3);
             removePreviousElement(`.tutorialProgress`);
             tutorialMessage("Choose to 'Work'.");
             break;
@@ -475,7 +476,6 @@ function tutorialPhase(phase){
                                         "You may NEVER target yourself; all effects on the card apply to you, unless otherwise stated.",
                                         "Click on a player (the colored circles) to target them, then confirm your play."
                                         ], 5, tutorialDiv);
-            populateCardBacks(3);
             break;
 
         case 5:
@@ -740,7 +740,7 @@ function tutorialPhase(phase){
 
         case 23:
             socket.emit("getUpdatedCards", "hand", false, myID);
-            const discardToggle = document.getElementById("discardToggle");
+            const discardToggle = document.querySelector(`#discardToggle p`);
             discardToggle.addEventListener("click", tutorialOpenedDiscard);
             break;
         
@@ -1048,6 +1048,11 @@ function loadPreviousTutorialSteps(phase, target){
         stealValueScorecard.style.visibility = "visible";
     }
 
+    // start of new round
+    if (phase == 4 || phase == 6 || phase == 26 || phase == 29){
+        populateCardBacks(3);
+    }
+
     // update player card
     if (4 <= phase && phase <= 12){
         const work = allActions.find((action) => action.name == "Work");
@@ -1072,9 +1077,6 @@ function loadPreviousTutorialSteps(phase, target){
     }
 
     // update opponent cards
-    if (phase == 6 || phase == 26 || phase == 29){
-        populateCardBacks(3);
-    }
     else if (phase == 10 || phase == 12){
         const work = allActions.find((action) => action.name == "Work");
         const cooperate = allActions.find((action) => action.name == "Cooperate");
@@ -1190,13 +1192,13 @@ function calculateTargetAngle(myPlayerNum, targetPlayerNum, numPlayers){
 }
 
 function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
-    console.log(targetPlayerNum)
     const playedCard = document.querySelector(`#player${originPlayerNum} .playedCard`);
     playedCard.setAttribute("targetNum", targetPlayerNum);
     const targetAngle = calculateTargetAngle(originPlayerNum, targetPlayerNum, numPlayers);
-    const xTrans = 10 + 5*Math.sin(targetAngle);
-    const yTrans = -15*Math.cos(targetAngle);
-    playedCard.style.transform = `translateX(min(${xTrans}vh, ${xTrans * 2/3}vw)) translateY(min(${yTrans}vh, ${yTrans * 2/3}vw)) rotate(${targetAngle}rad)`;       
+    console.log(targetAngle);
+    const xTrans = 22 + 20*Math.sin(targetAngle);
+    const yTrans = -12*Math.cos(targetAngle);
+    playedCard.style.transform = `translateX(${xTrans*6}%) translateY(${yTrans*5}%) rotate(${targetAngle}rad)`;
 }
 
 function populateGameSpace(players){
@@ -1217,7 +1219,7 @@ function populateGameSpace(players){
 
         const playedCard = document.createElement("div");
         playedCard.classList.add("playedCard");
-        playedCard.style.transform = "translateX(min(5vh, calc(5vw * 2 / 3))) rotate(-90deg)";
+        playedCard.style.transform = "translateX(min(1.9vh, calc(1.9vw * 2 / 3))) rotate(-90deg)";
 
         if (i == myPlayerNum){
             playedCard.addEventListener("click", () => {
@@ -1229,7 +1231,7 @@ function populateGameSpace(players){
         playedCard.addEventListener("mouseenter", () => {
             if (playedCard.hasAttribute("action")){
                 let waitToBlowUp = 250;
-                if (players[myPlayerNum].waitingOn.endsWith("Redirects")){
+                if (players[myPlayerNum].waitingOn && (players[myPlayerNum].waitingOn.endsWith("Redirects") || players[myPlayerNum].waitingOn == "chooseImpersonate")){
                     waitToBlowUp = 1000;
                 }
                 setTimeout(() => {
@@ -1471,10 +1473,13 @@ function addCardDisplayListeners(){
     actionSortIcon.addEventListener("mouseenter", () => {
         const sortBy = actionSortDiv.querySelector(`form`);
         sortBy.style.visibility = "visible";
+        actionSortDiv.style.cursor = "pointer";
+
     })
     actionSortDiv.addEventListener("mouseleave", () => {
         const sortBy = actionSortDiv.querySelector(`form`);
         sortBy.style.visibility = "hidden";
+        actionSortDiv.style.cursor = "default";
     })
 
     actionSortIcon.addEventListener("click", () => {
@@ -1514,7 +1519,7 @@ function openCloseShopDisplay(){
             openClosePlayerDisplay()
         }
 
-        shopDisplay.style.left = "calc(30vw)";
+        shopDisplay.style.left = "calc(40vw)";
         sliderIcon.src = "/static/Images/Icons/rightArrows.svg";
     }
     else if (sliderIcon.src.includes("/static/Images/Icons/rightArrows.svg")){
@@ -1532,7 +1537,7 @@ function openClosePlayerDisplay(){
             openCloseShopDisplay()
         }
 
-        playerDisplay.style.right = "calc(30vw)";
+        playerDisplay.style.right = "calc(40vw)";
         sliderIcon.src = "/static/Images/Icons/leftArrows.svg";
     }
     else if (sliderIcon.src.includes("/static/Images/Icons/leftArrows.svg")){
@@ -1632,6 +1637,7 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
                 actionDiv.id = "selectedCard";
 
                 const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
+                myPlayedCard.style.opacity = "1";
                 generateCard(myPlayedCard, cardsToDisplay[i][0], false);
                 openClosePlayerDisplay();
             }
@@ -2247,6 +2253,7 @@ function promptRedirects(type, players){
             newTargets.push(card.getAttribute("targetNum"));
             const clone = card.cloneNode(true);
             card.replaceWith(clone);
+            card.setAttribute("targeting", "locked");
         })
         socket.emit("finishedRedirecting", newTargets, myID);
     })
