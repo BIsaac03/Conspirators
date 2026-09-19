@@ -56,7 +56,7 @@ export const allActions = [
         "text": "Take 3 coins.<br> Target player cannot steal from you. On try, <b>Steal</b>.",
         "definingColor": "red",
         "isWork": false,
-        "isSteal": `if(players[player.currentTarget].playedCard.name != "Retaliate && players[player.currentTarget].playedCard.isSteal && players[player.currentTarget].currentTarget == player.playerNum)`,
+        "isSteal": `(players[potentialThief.currentTarget].playedCard.name != "Retaliate" && players[potentialThief.currentTarget].playedCard.isSteal && players[potentialThief.currentTarget].currentTarget == potentialThief.playerNum)`,
         "isTargeting": true,
         "effect":  `player.numCoins += 3;
                     player.retaliatingAgainst = player.currentTarget;`,
@@ -323,8 +323,8 @@ export const allActions = [
                                 player.currentTarget = (player.currentTarget + 2) % players.length
                             }
                         }
-                        steal(player, players[player.currentTarget], 2, players);
-                    })`, // !! visually display redirects
+                    })
+                    steal(player, players[player.currentTarget], 2, players);`, // !! visually display redirects
         "priority": 7,
         "cost": 4,
         "isBasicAction": false,
@@ -399,7 +399,8 @@ export const allActions = [
         "isSteal": false,
         "isTargeting": true,
         "effect":  `work(player, workValue, -1); 
-                    if(players[player.currentTarget].playedCard.isSteal){
+                    const potentialThief = players[player.currentTarget];
+                    if(eval(potentialThief.playedCard.isSteal)){
                         player.numCoins+=5
                     }`,
         "priority": 0,

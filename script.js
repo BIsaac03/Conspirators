@@ -26,8 +26,8 @@ app.get('/', (req, res) => {
 
 const io = new Server(httpServer, {
     cors: {
-        origin: "https://conspirators.onrender.com",
-        //origin: "http://localhost:5500",
+        //origin: "https://conspirators.onrender.com",
+        origin: "http://localhost:5500",
 }
 });
 
@@ -517,8 +517,9 @@ function establishStealValue(target, players){
     // thieves steal 4 coins -1 per other thief with the same target (min 2)
     let stealValue = 5;
     for (let i = 0; i < players.length; i++){
-        if (players[i].currentTarget == target && players[i].playedCard.isSteal && stealValue > 2){
-            stealvalue--;
+        const potentialThief = players[i];
+        if (players[i].currentTarget == target && eval(potentialThief.playedCard.isSteal) && stealValue > 2){
+            stealValue--;
         }
     }
     return stealValue;
