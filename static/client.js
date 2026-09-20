@@ -565,7 +565,7 @@ function tutorialPhase(phase){
             var pudgieCard = document.querySelector(`#player2 .playedCard`);
             generateCard(pudgieCard, work, false);
             addTutorialProgressArrows([ "Played actions are resolved clockwise, starting with the crowned player.",
-                                        "At the end of each round, the crown is passed clockwise, so your turn order will change<br> over time.",
+                                        "At the end of each round, the crown is passed clockwise, so your place in turn order will change over time.",
                                         "One of the main ways you will earn coins is by <b>Working</b>.",
                                         "The value of a <b>Work</b> changes each round based on the total number of Workers.",
                                         "A greater number of Workers will make each <b>Work</b> yield fewer coins.",
@@ -766,7 +766,7 @@ function tutorialPhase(phase){
 
             const oldStartPlayer = document.getElementById("startPlayer");
             oldStartPlayer.id = "";
-            const newStartPlayer = document.querySelector(`#player1 .playerName`);
+            const newStartPlayer = document.querySelector(`#player1 .statsDisplay`);
             newStartPlayer.id = "startPlayer";
             
             tutorialHighlight("handNum", false);
@@ -826,6 +826,11 @@ function tutorialPhase(phase){
         
         case 29:
             socket.emit("tutorialRequest", "save", 29, myID);
+            const grudgieDiv = document.getElementById("player1");
+            const grudgieSpeech = document.createElement("p");
+            grudgieSpeech.innerHTML = `"You'll pay for your <span>treachery!!!</span>"`;
+            grudgieSpeech.classList.add("grudgieSpeech");
+            grudgieDiv.appendChild(grudgieSpeech);
             removePreviousElement(`.tutorialProgress`);
             addTutorialProgressArrows([ "Uh oh. It's looking like Grudgie might be holding a grudge.",
                                         "Use a Card Swap token to 'Retaliate' against Grudgie."
@@ -907,6 +912,7 @@ function tutorialPhase(phase){
 
         case 33:
             socket.emit("tutorialRequest", "save", 33, myID);
+            removePreviousElement(`.grudgieSpeech`);
             document.querySelector(`#player0 .handNum`).textContent = "10";
             document.querySelector(`#player1 .handNum`).textContent = "10";
             document.querySelector(`#player2 .handNum`).textContent = "10";
@@ -1077,7 +1083,7 @@ function loadPreviousTutorialSteps(phase, target){
     }
 
     // update opponent cards
-    else if (phase == 10 || phase == 12){
+    if (phase == 10 || phase == 12){
         const work = allActions.find((action) => action.name == "Work");
         const cooperate = allActions.find((action) => action.name == "Cooperate");
 
@@ -1154,7 +1160,7 @@ function loadPreviousTutorialSteps(phase, target){
     if (phase > 26){
         const oldStartPlayer = document.getElementById("startPlayer");
         oldStartPlayer.id = "";
-        const newStartPlayer = document.querySelector(`#player1 .playerName`);
+        const newStartPlayer = document.querySelector(`#player1 .statsDisplay`);
         newStartPlayer.id = "startPlayer";
     }
 
@@ -1629,17 +1635,27 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
                 }
                 
             }
-            else if (JSON.stringify(cardsToDisplay) == JSON.stringify(player.hand) && !player.isReady && (player.waitingOn == "selectAction" || player.waitingOn == "useCardSwap")){
-                const previousSelection = document.getElementById("selectedCard");
-                if (previousSelection != undefined){
-                    previousSelection.id = "";
-                }
-                actionDiv.id = "selectedCard";
+            else if (!player.isReady && (player.waitingOn == "selectAction" || player.waitingOn == "useCardSwap")){
+                if (JSON.stringify(cardsToDisplay) == JSON.stringify(player.hand)){
+                    const previousSelection = document.getElementById("selectedCard");
+                    if (previousSelection != undefined){
+                        previousSelection.id = "";
+                    }
+                    actionDiv.id = "selectedCard";
 
-                const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
-                myPlayedCard.style.opacity = "1";
-                generateCard(myPlayedCard, cardsToDisplay[i][0], false);
-                openClosePlayerDisplay();
+                    const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
+                    myPlayedCard.style.opacity = "1";
+                    generateCard(myPlayedCard, cardsToDisplay[i][0], false);
+                    openClosePlayerDisplay();
+                }
+                else if (JSON.stringify(cardsToDisplay) == JSON.stringify(player.discard)){
+                    openClosePlayerDisplay();
+                    displayNotification("You cannot play cards from your Discard.", "error");
+                }
+                else{
+                    openCloseShopDisplay();
+                    displayNotification("You cannot play cards from the Shop.", "error");
+                }
             }
             else if (JSON.stringify(cardsToDisplay) == JSON.stringify(player.discard) && !player.isReady && player.waitingOn == "retrieveCards"){
                 const remainingRetrievals = document.getElementById("remainingRetrievals");
@@ -1729,9 +1745,12 @@ function actionSelection(players, myPlayerNum, originalCard){
                 confirm.remove();
             }
             else{
-                displayNotification("You are bewitched and can only play Basic Actions.", "error")
+                displayNotification("You are bewitched and can only play Basic Actions.", "error");
             }
-        }  
+        } 
+        else{
+            displayNotification("You must select both a card to play AND a player to target.", "error");
+        } 
     })
     bodyElement.appendChild(confirm);
 }

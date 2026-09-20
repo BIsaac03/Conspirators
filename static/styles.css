@@ -72,8 +72,8 @@ button:hover{
 }
 #tutorial{
     position: absolute;
-    top: 71vh;
-    left: 71vw;
+    top: 72vh;
+    left: 72vw;
     height: 20vh;
     width: calc(26vw - max(3vw, 40px));
     display: grid;
@@ -103,6 +103,33 @@ button:hover{
 .tutorialProgress img:hover{
     cursor: pointer;
 }
+.grudgieSpeech{
+    position: absolute;
+    transform: rotate(150deg);
+    top: 130%;
+    left: 30%;
+    font-weight: bold;
+    font-size: 2vw;
+    width: 15vw;
+    background-color: rgba(255, 0, 0, 0.33);
+    padding: 1vh;
+}
+
+.grudgieSpeech span{
+    display: inline-block;
+    color: red;
+    text-shadow: 1px 1px 1px black;
+    animation: rumble 0.3s infinite;
+}
+@keyframes rumble{
+  0%   {transform: translate(0, 0);}
+  20%  {transform: translate(-1px, 1px);}
+  40%  {transform: translate(-1px, -1px);}
+  60%  {transform: translate(1px, 1px, );}
+  80%  {transform: translate(1px, -1px);}
+  100% {transform: translate(0, 0);}
+}
+
 #leaveTutorial{
     position: absolute;
     right: 7vw;
@@ -584,8 +611,8 @@ div[id^="player"] #handIcon{
     position: relative;
     display: grid;
     place-content: center;
-    top: -20vw;
-    left: 5.6vw;
+    top: -17vw;
+    left: 4vw;
     width: 3vw;
     height: 3vw;
     font-size: 2vw;

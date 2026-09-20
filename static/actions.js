@@ -163,7 +163,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": true,
-        "FAQ": ["Basic Actions are any cards that started the game in your Hand (they will not have a cost).", "If multiple players 'Bewitch' in a round, everyone is still only <i>Bewitched</i> for a single round."]
+        "FAQ": ["Basic Actions are any cards that started the game in your Hand (they will not have a cost).", "If multiple players <i>Bewitch</i> in a round, everyone is still only <i>Bewitched</i> for a single round."]
     },
     {
         "name": "Communalize",
@@ -226,7 +226,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["You may redirect <em>this</em> card as well, though you may not then redirect cards targeting your new target."]
+        "FAQ": ["You may <i>Hijack</i> this card as well, though you may not then <i>Hijack</i> cards targeting your new target."]
     },
     {
         "name": "Honor",
@@ -244,7 +244,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["Coins earned from other sources cannot be used to 'Honor'."]
+        "FAQ": ["Coins earned from other sources cannot be used to <i>Honor<i>."]
     },
     {
         "name": "Impersonate",
@@ -351,7 +351,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["If multiple players 'Unionize', Workers get 2 coins for each."]
+        "FAQ": ["If multiple players <i>Unionize</i>, Workers get 2 coins for each."]
     },
     {
         "name": "Whistle",
@@ -408,7 +408,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["A player who 'Retaliates', is only a Thief if they are targeted by a Thief."]
+        "FAQ": ["A player who <i>Retaliates</i>, is only a Thief if they are targeted by a Thief."]
     },
     {
         "name": "Abduct",
@@ -435,7 +435,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": true,
-        "FAQ": ["The action still resolves as normal.", "'Rest' will always return to the original owner's Hand.", "If multiple players 'Abduct' the same target, all get copies."]
+        "FAQ": ["The action still resolves as normal.", "'Rest' will always return to the original owner's Hand.", "If multiple players <i>Abduct</i> the same target, all get copies."]
     },
     {
         "name": "Proselytize",

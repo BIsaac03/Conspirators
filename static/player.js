@@ -16,12 +16,12 @@ export class Player{
     numCardSwaps = 1;
     numCoins = 0;
     cooperatingWith = undefined;
-    retaliatingAgainst = undefined
+    retaliatingAgainst = undefined;
     isImmune = false;
     isBewitched = false;
     isSabotaged = false;
     isAbducted = false;
-    isImpersonating = false
+    isImpersonating = false;
     hasRecruited = false;
     usedCardSwap = false;
     isInGame = false;
