@@ -271,7 +271,7 @@ io.on("connection", (socket) => {
                 }
             }
         })
-        io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", myGame.getPlayers(), myGame.getGameDetails().startPlayer);
+        io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", myGame.getPlayers());
 
         io.to(myGame.getGameDetails().roomCode).emit("notification", `<b style = "color:${me.playerColor[0]}">${me.playerName}</b> returned ${retrievedCardsString}.`, "info", "ALL");
         determineResolutionOrder(players, myGame.getGameDetails().startPlayer, me.playerNum);
@@ -284,7 +284,7 @@ io.on("connection", (socket) => {
         target.isReady = true;
         target.numCoins -= coins;
         cooperator.numCoins += coins;
-        io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", myGame.getPlayers(), myGame.getGameDetails().startPlayer);
+        io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", myGame.getPlayers());
         io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", `<b style = "color:${target.playerColor[0]}">${target.playerName}</b> returned ${coins}/4 coins.`, "info", cooperator.playerNum);
   
         determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, cooperator.playerNum);
@@ -299,7 +299,7 @@ io.on("connection", (socket) => {
         giver.isReady = true;
         giver.numCoins += coins;
         receiver.numCoins += honoredCoins;
-        io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", myGame.getPlayers(), myGame.getGameDetails().startPlayer);
+        io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", myGame.getPlayers());
         io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", `<b style = "color: ${giver.playerColor[0]}">${giver.playerName}</b> honored you with ${honoredCoins} coins!`, "info", receiver.playerNum);
     
         determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, giver.playerNum);
@@ -538,25 +538,20 @@ function determineResolutionOrder(players, startPlayer, playerNumResolved){
         if (!a.playedCard.priority && b.playedCard.priority) return 1;
         return a.playedCard.priority - b.playedCard.priority;
     });
-    const playerOrder = priorityOrder.map((player) => player.playerNum);
-    beginResolutionPhase(players, playerOrder, playerNumResolved);
-}
 
-function beginResolutionPhase(players, playerOrder, playerNumResolved){
-    let numToResolve = 0
-    // determine how far already progressed in playerOrder 
-    if (playerNumResolved != undefined){
-        const numResolved = playerOrder.indexOf(playerNumResolved);
-        numToResolve = numResolved + 1;
+    const playerOrder = priorityOrder.map((player) => player.playerNum);
+    if (playerNumResolved){
+        resolveAnAction(players, playerOrder, playerOrder.indexOf(playerNumResolved));
     }
-    resolveAnAction(players, playerOrder, numToResolve);
+    else{
+        resolveAnAction(players, playerOrder, 0);
+    }
 }
 
 function resolveAnAction(players, playerOrder, numToResolve){
     const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
     const roomCode = myGame.getGameDetails().roomCode;
     const shop = myGame.getGameDetails().shop;
-    const startPlayer = myGame.getGameDetails().startPlayer;
 
     const workValue = establishWorkValue(players);
     io.to(`${roomCode}`).emit("displayWorkValue", workValue);
@@ -564,7 +559,7 @@ function resolveAnAction(players, playerOrder, numToResolve){
     const player = players[playerOrder[numToResolve]];
     if (player.playedCard){
         eval(player.playedCard.effect);
-        io.to(`${roomCode}`).emit("updateStats", players, startPlayer);
+        io.to(`${roomCode}`).emit("updateStats", players);
     }
     numToResolve++;
 
@@ -575,7 +570,7 @@ function resolveAnAction(players, playerOrder, numToResolve){
                 continueToShopPhase(players)
             }
             else if (!players.find((player) => !player.isReady)){
-                resolveAnAction(players, playerOrder, numToResolve + 1, startPlayer, roomCode);
+                resolveAnAction(players, playerOrder, numToResolve);
             }  
         }
     }, 1000);
@@ -681,7 +676,7 @@ function roundStart(myGame){
 function endOfRound(players, shop){
     const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
     roundEndCleanup(players);
-    io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", players, myGame.getGameDetails().startPlayer);
+    io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", players);
     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, [], "discard", false);
     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, [], "hand", false);
     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, myGame.getGameDetails().shop, "shop", false);

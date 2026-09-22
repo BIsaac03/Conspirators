@@ -68,7 +68,6 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
         addCardDisplayListeners();
         displayCards(players[myPlayerNum], reconnectedPlayer.hand, "play", false);
         displayCards(players[myPlayerNum], shop, "buy", false);
-        modifyBewitchedIcons(players);
 
         // restore interrupted game state
         switch (roundPhase){
@@ -201,7 +200,6 @@ socket.on("cardSwapPhase", (players) => {
 })
 socket.on("revealActions", (players) => {
     revealActions(players);
-    modifyBewitchedIcons(players);
 })
 socket.on("allowShopPurchases", (shop, players) => {
     actionPhaseCleanUp(players.length);
@@ -216,7 +214,7 @@ socket.on("protectIcon", (playerNum) => {
     addProtectionIcon(playerNum);
 })
 socket.on("bewitchIcons", (players) => {
-    modifyBewitchedIcons(players);
+    updateStats(players);
 })
 socket.on("chooseImpersonate", (numPlayers, playerID) => {
     if (playerID == myID){
@@ -1267,19 +1265,6 @@ function addProtectionIcon(playerNum){
     const protectionIcon = document.createElement("img");
     protectionIcon.src = "/static/Images/Icons/shield.svg"
     playerIcon.replaceChildren(protectionIcon);
-}
-
-function modifyBewitchedIcons(players){
-    for (let i = 0; i < players.length; i++){
-        const playerIcon = document.querySelector(`#player${i} .playerIcon`);
-        if (players[i].isBewitched){
-            const randNum = Math.floor(Math.random()*3);
-            playerIcon.style.backgroundImage = `url(/static/Images/Misc/bewitched${randNum}.jpg)`;
-        }
-        else{
-            playerIcon.style.backgroundImage = "";
-        }
-    }
 }
 
 function addScorecardListeners(numPlayers){
@@ -2370,12 +2355,14 @@ function createStats(players){
 }
 
 function updateStats(players, startPlayer){
-    const previousStartPlayer = document.getElementById("startPlayer");
-    if (previousStartPlayer){
-        previousStartPlayer.id = "";
+    if (startPlayer){
+        const previousStartPlayer = document.getElementById("startPlayer");
+        if (previousStartPlayer){
+            previousStartPlayer.id = "";
+        }
+        const newStartPlayer = document.querySelector(`#player${startPlayer} .statsDisplay`);
+        newStartPlayer.id = "startPlayer";
     }
-    const newStartPlayer = document.querySelector(`#player${startPlayer} .statsDisplay`);
-    newStartPlayer.id = "startPlayer";
 
     for (let i = 0; i < players.length; i++){
         const numCardsInHand = document.querySelector(`#player${i} .statsDisplay .handNum`);
@@ -2386,6 +2373,15 @@ function updateStats(players, startPlayer){
         numCoins.textContent = players[i].numCoins;
         const numCardSwaps = document.querySelector(`#player${i} .statsDisplay .numCardSwaps`)
         numCardSwaps.textContent = players[i].numCardSwaps;
+    
+        const playerIcon = document.querySelector(`#player${i} .playerIcon`);
+        if (players[i].isBewitched && !playerIcon.hasAttribute("bewitched")){
+            const randNum = Math.floor(Math.random()*3);
+            playerIcon.setAttribute("bewitched", randNum);
+        }
+        else{
+            playerIcon.removeAttribute("bewitched");
+        }
     }
 
     if (players[myPlayerNum].waitingOn == "useCardSwap" && players[myPlayerNum].usedCardSwap){
