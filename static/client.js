@@ -488,14 +488,14 @@ function tutorialPhase(phase){
                 confirm.id = "confirmAction";
                 confirm.textContent = "Confirm";
                 confirm.addEventListener("click", () => {
-                    const actionToPlayName = document.querySelector(`#player0 .playedCard .name`).textContent;
+                    const actionToPlayName = document.querySelector(`#player0 .playedCard`).getAttribute("action");
                     let targetPlayerNum = undefined;
                     const selectedPlayer = document.getElementById("selectedPlayer");
                     if (selectedPlayer){
                         targetPlayerNum = selectedPlayer.parentElement.id.slice(6);
                     }
 
-                    if (actionToPlayName != undefined && targetPlayerNum != undefined){
+                    if (actionToPlayName && targetPlayerNum){
                         for (let i = 0; i < 3; i++){
                             if (i != myPlayerNum){
                                 const oldPlayerIcon = document.querySelector(`#player${i} .playerIcon`);
@@ -803,7 +803,7 @@ function tutorialPhase(phase){
                         targetPlayerNum = selectedPlayer.parentElement.id.slice(6);
                     }
 
-                    if (targetPlayerNum != undefined){
+                    if (targetPlayerNum){
                         for (let i = 0; i < 3; i++){
                             if (i != myPlayerNum){
                                 const oldPlayerIcon = document.querySelector(`#player${i} .playerIcon`);
@@ -1638,7 +1638,7 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
             else if (!player.isReady && (player.waitingOn == "selectAction" || player.waitingOn == "useCardSwap")){
                 if (JSON.stringify(cardsToDisplay) == JSON.stringify(player.hand)){
                     const previousSelection = document.getElementById("selectedCard");
-                    if (previousSelection != undefined){
+                    if (previousSelection){
                         previousSelection.id = "";
                     }
                     actionDiv.id = "selectedCard";
@@ -1674,7 +1674,7 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
                         document.getElementById("confirmRetrieve").disabled = false;
                     }
                 }
-                else if (numDuplicateRetrievals != undefined){
+                else if (numDuplicateRetrievals){
                     if (cardsToDisplay[i][1] > numDuplicateRetrievals.textContent && remainingRetrievals.textContent > 0){
                         numDuplicateRetrievals.textContent = Number(numDuplicateRetrievals.textContent) + 1;
                         remainingRetrievals.textContent = Number(remainingRetrievals.textContent) - 1;
@@ -1711,7 +1711,7 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
 
 function promptActionSelection(player, isTutorial){
     const waitingOnCard = document.getElementById("confirmAction");
-    if (waitingOnCard != undefined){
+    if (waitingOnCard){
         openRelevantPlayerDisplay(player, "hand", isTutorial);
     }
 }
@@ -1728,14 +1728,14 @@ function actionSelection(players, myPlayerNum, originalCard){
     confirm.id = "confirmAction";
     confirm.textContent = "Confirm";
     confirm.addEventListener("click", () => {
-        const actionToPlayName = document.querySelector(`#player${myPlayerNum} .playedCard .name`).textContent;
+        const actionToPlayName = document.querySelector(`#player${myPlayerNum} .playedCard`).getAttribute("action");
         let targetPlayerNum = undefined;
-                const previousSelection = document.getElementById("selectedPlayer");
-                if (previousSelection){
-                    targetPlayerNum = previousSelection.parentElement.id.slice(6);
-                }
+        const previousSelection = document.getElementById("selectedPlayer");
+        if (previousSelection){
+            targetPlayerNum = previousSelection.parentElement.id.slice(6);
+        }
 
-        if (actionToPlayName != undefined && targetPlayerNum != undefined){
+        if (actionToPlayName && targetPlayerNum){
             const actionToPlay = players[myPlayerNum].hand.find((action) => actionToPlayName.startsWith(action[0].name));
             if (!players[myPlayerNum].isBewitched || actionToPlay[0].isBasicAction){
                 socket.emit("chosenAction", myPlayerNum, actionToPlay[0], targetPlayerNum, originalCard, myID);
@@ -1745,7 +1745,7 @@ function actionSelection(players, myPlayerNum, originalCard){
                 confirm.remove();
             }
             else{
-                displayNotification("You are bewitched and can only play Basic Actions.", "error");
+                displayNotification("You are <i>Bewitched</i> and can only play Basic Actions.", "error");
             }
         } 
         else{

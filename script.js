@@ -539,44 +539,56 @@ function determineResolutionOrder(players, startPlayer, playerNumResolved){
         return a.playedCard.priority - b.playedCard.priority;
     });
     const playerOrder = priorityOrder.map((player) => player.playerNum);
-    resolveActions(players, playerOrder, playerNumResolved, startPlayer);
+    beginResolutionPhase(players, playerOrder, playerNumResolved);
 }
 
-function resolveActions(players, playerOrder, playerNumResolved, startPlayer){
-    const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
-    const shop = myGame.getGameDetails().shop;
-    const workValue = establishWorkValue(players);
-    io.to(`${myGame.getGameDetails().roomCode}`).emit("displayWorkValue", workValue);
-
+function beginResolutionPhase(players, playerOrder, playerNumResolved){
     let numToResolve = 0
     // determine how far already progressed in playerOrder 
     if (playerNumResolved != undefined){
         const numResolved = playerOrder.indexOf(playerNumResolved);
         numToResolve = numResolved + 1;
     }
-    // resolve actions until player input is required or all actions have been resolved
-    while (!players.find((player) => !player.isReady) && numToResolve < playerOrder.length){
-        const player = players[playerOrder[numToResolve]];
-        if (player.playedCard){
-            eval(player.playedCard.effect);
-            io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", players, startPlayer);
-        }
-        numToResolve++;
-    }
-    checkShopPhase(players)
+    resolveAnAction(players, playerOrder, numToResolve);
 }
 
-function checkShopPhase(players){
-    const waitingOn = players.find((player) => !player.isReady);
-    if (!waitingOn){
-        const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
-        myGame.changeGamePhase("buyCards");
-        players.forEach((player) => {
-            player.discardPlayedCard(myGame.getGameDetails().shop);
-        })
-        updatePlayerWaitingOn(players, "buyCards");
-        io.to(`${myGame.getGameDetails().roomCode}`).emit("allowShopPurchases", myGame.getGameDetails().shop, players);
+function resolveAnAction(players, playerOrder, numToResolve){
+    const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
+    const roomCode = myGame.getGameDetails().roomCode;
+    const shop = myGame.getGameDetails().shop;
+    const startPlayer = myGame.getGameDetails().startPlayer;
+
+    const workValue = establishWorkValue(players);
+    io.to(`${roomCode}`).emit("displayWorkValue", workValue);
+
+    const player = players[playerOrder[numToResolve]];
+    if (player.playedCard){
+        eval(player.playedCard.effect);
+        io.to(`${roomCode}`).emit("updateStats", players, startPlayer);
     }
+    numToResolve++;
+
+    // continue resolving actions until player input is required or all actions have been resolved
+    setTimeout(() => {
+        if (!players.find((player) => !player.isReady)){
+            if (numToResolve == playerOrder.length){
+                continueToShopPhase(players)
+            }
+            else if (!players.find((player) => !player.isReady)){
+                resolveAnAction(players, playerOrder, numToResolve + 1, startPlayer, roomCode);
+            }  
+        }
+    }, 1000);
+}
+
+function continueToShopPhase(players){
+    const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
+    myGame.changeGamePhase("buyCards");
+    players.forEach((player) => {
+        player.discardPlayedCard(myGame.getGameDetails().shop);
+    })
+    updatePlayerWaitingOn(players, "buyCards");
+    io.to(`${myGame.getGameDetails().roomCode}`).emit("allowShopPurchases", myGame.getGameDetails().shop, players);
 }
 
 function attemptPurchase(players, startPlayer, shop){
