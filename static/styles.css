@@ -12,7 +12,7 @@
 :root {
     --standard-action-color: rgb(255, 245, 230);
     --one-shot-color: rgb(255, 220, 210);
-    --shop-color: (230, 170, 30, 0.85);
+    --shop-color: rgb(230, 170, 30, 0.85);
     --work-color: #41A7BF;
     --steal-color: #BA0000;
     --neutral-background-rgbs: 255, 248, 220;
@@ -401,6 +401,14 @@ div[id^="player"] .playedCard{
     width: 15vh;
     height: 10vh;
     font-size: 3vh;
+}
+
+#finalizeTargeting{
+    position: absolute;
+    place-self: center;
+    height: 7vw;
+    width: 14vw;
+    font-size: 2.5vw;
 }
 
 div[id^="player"] #handIcon{

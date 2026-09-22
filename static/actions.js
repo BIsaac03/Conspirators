@@ -42,6 +42,7 @@ export const allActions = [
         "isTargeting": false,
         "effect":  `player.numCoins += 2; 
                     player.isImmune = true;
+                    io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 2, players.length, player.playerNum);
                     io.to(myGame.getGameDetails().roomCode).emit("protectIcon", player.playerNum);`,
         "priority": 4,
         "cost": 0,
@@ -59,6 +60,7 @@ export const allActions = [
         "isSteal": `(players[potentialThief.currentTarget].playedCard.name != "Retaliate" && players[potentialThief.currentTarget].playedCard.isSteal && players[potentialThief.currentTarget].currentTarget == potentialThief.playerNum)`,
         "isTargeting": true,
         "effect":  `player.numCoins += 3;
+                    io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 3, players.length, player.playerNum);
                     player.retaliatingAgainst = player.currentTarget;`,
         "priority": 5,
         "cost": 0,
@@ -97,6 +99,7 @@ export const allActions = [
         "isTargeting": true,
         "effect":  `work(player, workValue, -2); 
                     players[player.currentTarget].numCoins += 5; 
+                    io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 5, players.length, player.currentTarget);
                     players[player.currentTarget].isReady = false;
                     players[player.currentTarget].waitingOn = "cooperate";
                     players[player.currentTarget].cooperatingWith = player.playerNum;
@@ -134,7 +137,9 @@ export const allActions = [
         "isTargeting": true,
         "effect":   `steal(player, players[player.currentTarget], -1, players);
                     players[(player.currentTarget + 1) % players.length].numCoins += 2;
-                    players[(player.currentTarget - 1 + players.length) % players.length].numCoins += 2;`,
+                    players[(player.currentTarget - 1 + players.length) % players.length].numCoins += 2;
+                    io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 2, players.length, (player.currentTarget + 1) % players.length);
+                    io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 2, players.length, (player.currentTarget - 1 + players.length) % players.length);`,
         "priority": 0,
         "cost": 3,
         "isBasicAction": false,
@@ -196,6 +201,7 @@ export const allActions = [
         "isSteal": false,
         "isTargeting": false,
         "effect":  `player.numCoins += 3;
+                    io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 3, players.length, player.playerNum);
                     players.forEach((other) => {
                         if (other.currentTarget == player.playerNum){
                             cursed(other, shop);
@@ -217,6 +223,7 @@ export const allActions = [
         "isSteal": true,
         "isTargeting": true,
         "effect": ` player.numCoins += 3;
+                    io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 3, players.length, player.playerNum);
                     player.isReady = false;
                     player.waitingOn = "hijackRedirects";
                     io.to(myGame.getGameDetails().roomCode).emit("hijackRedirects", players, player.playerID);`, 
@@ -276,7 +283,9 @@ export const allActions = [
         "isTargeting": true,
         "effect":   `const beforeCoins = player.numCoins;
                     steal(player, players[player.currentTarget], 5, players);
-                    player.numCoins = beforeCoins + 9`,
+                    const coinsFromBank = 9 - (player.numCoins - beforeCoins);
+                    io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", coinsFromBank, players.length, player.playerNum);
+                    player.numCoins += coinsFromBank;`,
         "priority": 0,
         "cost": 5,
         "isBasicAction": false,
@@ -292,7 +301,7 @@ export const allActions = [
         "isWork": true,
         "isSteal": false,
         "isTargeting": false,
-        "effect":   `work(player, workValue);
+        "effect":   `work(player, workValue, 0);
                     player.hasRecruited = true;`,
         "priority": 0,
         "cost": 4,
@@ -341,11 +350,14 @@ export const allActions = [
         "isSteal": false,
         "isTargeting": false,
         "effect":  `work(player, workValue, 1);
-                    players.forEach((player) => {
-                        if (player.playedCard.isWork){
-                            player.numCoins += 2;
-                        }
-                    })`, 
+                    setTimeout(() => {
+                        players.forEach((player) => {
+                            if (player.playedCard.isWork){
+                                player.numCoins += 2;
+                                io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 2, players.length, player.playerNum);
+                            }
+                        })
+                    }, 1000)`, 
         "priority": 0,
         "cost": 5,
         "isBasicAction": false,
@@ -362,6 +374,7 @@ export const allActions = [
         "isSteal": false,
         "isTargeting": false,
         "effect":  `player.numCoins++; 
+                    io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 1, players.length, player.playerNum);
                     player.numCardSwaps++;
                     player.isReady = false;
                     player.waitingOn = "whistleRedirects";
@@ -381,7 +394,9 @@ export const allActions = [
         "isWork": false,
         "isSteal": false,
         "isTargeting": false,
-        "effect":  `player.numCoins += player.countCards("hand");
+        "effect":  `const numCards = player.countCards("hand")
+                    player.numCoins += numCards;
+                    io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", numCards, players.length, player.playerNum);
                     player.discardHand();`,
         "priority": 0,
         "cost": 4,
@@ -401,7 +416,8 @@ export const allActions = [
         "effect":  `work(player, workValue, -1); 
                     const potentialThief = players[player.currentTarget];
                     if(eval(potentialThief.playedCard.isSteal)){
-                        player.numCoins+=5
+                        player.numCoins+=5;
+                        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 5, players.length, player.playerNum);
                     }`,
         "priority": 0,
         "cost": 4,
@@ -429,6 +445,7 @@ export const allActions = [
                         }
                     if (players[player.currentTarget].playedCard.isBasicAction){
                         player.numCoins +=3;
+                        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 3, players.length, player.playerNum);
                     }`,
         "priority": 0,
         "cost": 3,
@@ -449,6 +466,8 @@ export const allActions = [
                     if (players[player.currentTarget].playedCard.isBasicAction){
                         players[player.currentTarget].numCoins += 4;
                         player.numCoins += 4;
+                        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 4, players.length, player.currentTarget);
+                        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 4, players.length, player.playerNum);
                     }`,
         "priority": 0,
         "cost": 6,

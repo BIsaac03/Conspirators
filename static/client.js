@@ -261,8 +261,8 @@ socket.on("displayWorkValue", (workValue) => {
     workValueDisplay.textContent = workValue;
 })
 
-socket.on("animateCoinTransfer", (playerFrom, playerTo, numCoins, numPlayers) => {
-    animateCoinTransfer(playerFrom, playerTo, numCoins, numPlayers);
+socket.on("animateCoinTransfer", (numCoins, numPlayers, playerTo, playerFrom) => {
+    animateCoinTransfer(numCoins, numPlayers, playerTo, playerFrom);
 })
 
 socket.on("updateStats", (players, startPlayer) => {
@@ -942,7 +942,7 @@ function tutorialPhase(phase){
         case 36:
             socket.emit("tutorialRequest", "save", 36, myID);
             removePreviousElement(`.tutorialProgress`);
-            animateCoinTransfer(1, 0, 4, 3)
+            animateCoinTransfer(4, 3, 0, 1)
             document.querySelector(`#player0 .numCoins`).textContent = "10";
             document.querySelector(`#player1 .numCoins`).textContent = "0";
             document.querySelector(`#player2 .numCardSwaps`).textContent = "4";
@@ -1289,6 +1289,11 @@ function addScorecardListeners(numPlayers){
         
         scorecard.addEventListener("mouseleave", () => {
             removePreviousElement(`#blownUpScorecard`);
+        })
+
+        // TESTING
+        scorecard.addEventListener("click", () => {
+            animateCoinTransfer(4, 3, 2);
         })
     }
 }
@@ -1794,12 +1799,16 @@ function removeAllPlayerTargeting(numPlayers){
 }
 
 function allowCardSelection(shouldEnable){
-    const actionDiv = document.querySelector(`.actionSelection.play`);
+    const actionDiv = document.querySelectorAll(`.actionSelection.play div`);
     if (shouldEnable){
-        actionDiv.style.pointerEvents = "auto";
+        actionDiv.forEach((div) =>{
+            div.style.pointerEvents = "auto";
+        })
     }
     else{
-        actionDiv.style.pointerEvents = "none";
+        actionDiv.forEach((div) =>{
+            div.style.pointerEvents = "none";
+        })
     }
 }
 
@@ -1863,12 +1872,21 @@ function revealActions(players){
     })
 }
 
-function animateCoinTransfer(playerFrom, playerTo, numCoins, numPlayers){
-    const elementFrom = document.querySelector(`#player${playerFrom} .playerIcon`);
-    const elementTo = document.querySelector(`#player${playerTo} .playerIcon`);
+function animateCoinTransfer(numCoins, numPlayers, playerTo, playerFrom){
+    let animationTime = undefined;
+    let elementFrom = undefined;
+    if (playerFrom == undefined){
+        elementFrom = document.getElementById("gameSpace");
+        animationTime = 1000;
+    }
+    else{
+        elementFrom = document.querySelector(`#player${playerFrom} .playerIcon`);
+        animationTime = 2000;
+    }
     const rectFrom = elementFrom.getBoundingClientRect();
-    const rectTo = elementTo.getBoundingClientRect();
     const coordFrom = [(rectFrom.left + rectFrom.right) / 2, (rectFrom.top + rectFrom.bottom) / 2];
+    const elementTo = document.querySelector(`#player${playerTo} .playerIcon`);
+    const rectTo = elementTo.getBoundingClientRect();
     const coordTo = [(rectTo.left + rectTo.right) / 2, (rectTo.top + rectTo.bottom) / 2];
 
     const angle = Math.atan2(coordFrom[1] - coordTo[1], coordFrom[0] - coordTo[0]) * 180 / Math.PI;
@@ -1885,13 +1903,13 @@ function animateCoinTransfer(playerFrom, playerTo, numCoins, numPlayers){
 
             setTimeout(() => {
                 coin.remove()
-            }, 2000);
+            }, animationTime);
 
             coin.animate([
                 { offsetDistance: "0%" },
                 { offsetDistance: "100%" }
                 ], {
-                duration: 2000,
+                duration: animationTime,
                 easing: 'ease-in-out'
             });
         }, i*200);
@@ -2207,12 +2225,12 @@ function promptRedirects(type, players){
             break;
         
         case "hijack":
-            const myTarget = players[myPlayerNum].currentTarget;
+            const myTarget = Number(players[myPlayerNum].currentTarget);
             players.forEach((player) => {
                 if (player.currentTarget == myTarget){
                     const legalTargets = [myTarget];
                     players.forEach((potentialTarget) => {
-                        if (potentialTarget.playerNum != player.playerNum || potentialTarget.playerNum == myTarget){
+                        if (potentialTarget.playerNum != player.playerNum && potentialTarget.playerNum != myTarget){
                             legalTargets.push(potentialTarget.playerNum);
                         }
                     })
@@ -2248,6 +2266,7 @@ function promptRedirects(type, players){
     })
 
     const finalizeTargeting = document.createElement("button");
+    finalizeTargeting.id = "finalizeTargeting";
     finalizeTargeting.textContent = "Finalize Targeting";
     finalizeTargeting.addEventListener("click", () => {
         const newTargets = []
@@ -2255,9 +2274,9 @@ function promptRedirects(type, players){
         const playedCards = document.querySelectorAll(`.playedCard`);
         playedCards.forEach((card) => {
             newTargets.push(card.getAttribute("targetNum"));
+            card.setAttribute("targeting", "locked");
             const clone = card.cloneNode(true);
             card.replaceWith(clone);
-            card.setAttribute("targeting", "locked");
         })
         socket.emit("finishedRedirecting", newTargets, myID);
     })
@@ -2355,7 +2374,7 @@ function createStats(players){
 }
 
 function updateStats(players, startPlayer){
-    if (startPlayer){
+    if (startPlayer != undefined){
         const previousStartPlayer = document.getElementById("startPlayer");
         if (previousStartPlayer){
             previousStartPlayer.id = "";

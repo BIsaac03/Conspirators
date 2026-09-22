@@ -284,6 +284,7 @@ io.on("connection", (socket) => {
         target.isReady = true;
         target.numCoins -= coins;
         cooperator.numCoins += coins;
+        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", coins, myGame.getPlayers().length, cooperator.playerNum, target.playerNum);
         io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", myGame.getPlayers());
         io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", `<b style = "color:${target.playerColor[0]}">${target.playerName}</b> returned ${coins}/4 coins.`, "info", cooperator.playerNum);
   
@@ -299,6 +300,8 @@ io.on("connection", (socket) => {
         giver.isReady = true;
         giver.numCoins += coins;
         receiver.numCoins += honoredCoins;
+        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", coins, myGame.getPlayers().length, giver.playerNum);
+        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", honoredCoins, myGame.getPlayers().length, receiver.playerNum);
         io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", myGame.getPlayers());
         io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", `<b style = "color: ${giver.playerColor[0]}">${giver.playerName}</b> honored you with ${honoredCoins} coins!`, "info", receiver.playerNum);
     
@@ -332,9 +335,7 @@ io.on("connection", (socket) => {
             steal(me, players[me.currentTarget], -2, players);
         }
         
-        setTimeout(() => {
-            determineResolutionOrder(players, myGame.getGameDetails().startPlayer, me.playerNum);
-        }, 200);
+        determineResolutionOrder(players, myGame.getGameDetails().startPlayer, me.playerNum);
     })
 
     socket.on("sortCards", (sortBy, isAscending, where, myID) => {
@@ -540,8 +541,8 @@ function determineResolutionOrder(players, startPlayer, playerNumResolved){
     });
 
     const playerOrder = priorityOrder.map((player) => player.playerNum);
-    if (playerNumResolved){
-        resolveAnAction(players, playerOrder, playerOrder.indexOf(playerNumResolved));
+    if (playerNumResolved != undefined){
+        resolveAnAction(players, playerOrder, playerOrder.indexOf(playerNumResolved) + 1);
     }
     else{
         resolveAnAction(players, playerOrder, 0);
@@ -553,27 +554,28 @@ function resolveAnAction(players, playerOrder, numToResolve){
     const roomCode = myGame.getGameDetails().roomCode;
     const shop = myGame.getGameDetails().shop;
 
-    const workValue = establishWorkValue(players);
-    io.to(`${roomCode}`).emit("displayWorkValue", workValue);
-
-    const player = players[playerOrder[numToResolve]];
-    if (player.playedCard){
-        eval(player.playedCard.effect);
-        io.to(`${roomCode}`).emit("updateStats", players);
+    if (numToResolve == players.length){
+        setTimeout(() => {
+            continueToShopPhase(players)
+        }, 2000);
     }
-    numToResolve++;
+    else{
+        const workValue = establishWorkValue(players);
+        io.to(`${roomCode}`).emit("displayWorkValue", workValue);
 
-    // continue resolving actions until player input is required or all actions have been resolved
-    setTimeout(() => {
-        if (!players.find((player) => !player.isReady)){
-            if (numToResolve == playerOrder.length){
-                continueToShopPhase(players)
-            }
-            else if (!players.find((player) => !player.isReady)){
-                resolveAnAction(players, playerOrder, numToResolve);
-            }  
+        const player = players[playerOrder[numToResolve]];
+        if (player.playedCard){
+            eval(player.playedCard.effect);
+            io.to(`${roomCode}`).emit("updateStats", players);
         }
-    }, 1000);
+
+        // continue resolving actions until player input is required or all actions have been resolved
+        if (!players.find((player) => !player.isReady)){
+            setTimeout(() => {
+                resolveAnAction(players, playerOrder, numToResolve + 1);
+            }, 2500);  
+        }
+    }
 }
 
 function continueToShopPhase(players){
@@ -665,6 +667,7 @@ function roundStart(myGame){
     const players = myGame.getPlayers();
     players.forEach((player) => {
         player.numCoins += 2;
+        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 2, players.length, player.playerNum);
     })
     myGame.changeGamePhase("actionSelection");
     myGame.rotateStartPlayer(players.length);
@@ -702,6 +705,9 @@ function checkGameEnd(players){
 function work(worker, workValue, modification){
     if (!worker.isSabotaged){
         worker.numCoins += Math.max(0, (workValue + modification));
+        // !! find REAL numPlayers
+        const numPlayers = 3
+        io.emit("animateCoinTransfer", (workValue + modification), numPlayers, worker.playerNum)
     }
 }
 
