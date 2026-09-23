@@ -274,7 +274,9 @@ io.on("connection", (socket) => {
         io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", myGame.getPlayers());
 
         io.to(myGame.getGameDetails().roomCode).emit("notification", `<b style = "color:${me.playerColor[0]}">${me.playerName}</b> returned ${retrievedCardsString}.`, "info", "ALL");
-        determineResolutionOrder(players, myGame.getGameDetails().startPlayer, me.playerNum);
+        setTimeout(() => {
+            determineResolutionOrder(players, myGame.getGameDetails().startPlayer, me.playerNum);
+        }, 1000);
     })
     socket.on("returnedCooperation", (targetID, cooperatorID, coins) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == targetID));
@@ -284,11 +286,15 @@ io.on("connection", (socket) => {
         target.isReady = true;
         target.numCoins -= coins;
         cooperator.numCoins += coins;
+        cooperator.cooperatingWith = undefined;
+
         io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", coins, myGame.getPlayers().length, cooperator.playerNum, target.playerNum);
         io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", myGame.getPlayers());
         io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", `<b style = "color:${target.playerColor[0]}">${target.playerName}</b> returned ${coins}/4 coins.`, "info", cooperator.playerNum);
-  
-        determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, cooperator.playerNum);
+        
+        setTimeout(() => {
+            determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, cooperator.playerNum);
+        }, coins*200 + 3000);
     })
 
     socket.on("honored", (giverID, receiverID, coins) => {
@@ -305,7 +311,9 @@ io.on("connection", (socket) => {
         io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", myGame.getPlayers());
         io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", `<b style = "color: ${giver.playerColor[0]}">${giver.playerName}</b> honored you with ${honoredCoins} coins!`, "info", receiver.playerNum);
     
-        determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, giver.playerNum);
+        setTimeout(() => {
+            determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, giver.playerNum);
+        }, Math.max(coins, honoredCoins)*200 + 2000);
     })
 
     socket.on("impersonated", (actionName, myID) => {
@@ -317,7 +325,9 @@ io.on("connection", (socket) => {
         impersonator.isReady = true;
 
         io.to(`${myGame.getGameDetails().roomCode}`).emit("revealActions", myGame.getPlayers());
-        determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer);
+        setTimeout(() => {
+            determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer);
+        }, 1000);
     })
 
     socket.on("finishedRedirecting", (newTargets, myID) => {
@@ -330,12 +340,15 @@ io.on("connection", (socket) => {
             players[i].currentTarget = newTargets[i];
         }
 
+        let animationTime = 0;
         // resolves final part of Hijack action ////
-        if (me.playedCard.name == "Hijack"){
-            steal(me, players[me.currentTarget], -2, players);
+        if (me.playedCard && me.playedCard.name == "Hijack"){
+            animationTime = steal(me, players[me.currentTarget], -2, players);
         }
         
-        determineResolutionOrder(players, myGame.getGameDetails().startPlayer, me.playerNum);
+        setTimeout(() => {
+            determineResolutionOrder(players, myGame.getGameDetails().startPlayer, me.playerNum);
+        }, animationTime + 1000);
     })
 
     socket.on("sortCards", (sortBy, isAscending, where, myID) => {
@@ -494,7 +507,7 @@ function establishWorkValue(players){
     let workValue = 0;
     let numWorkers = 0;
     players.forEach((player) => {
-        if (player.playedCard.isWork){
+        if (player.playedCard && player.playedCard.isWork){
             numWorkers++;
         }
     })
@@ -519,7 +532,7 @@ function establishStealValue(target, players){
     let stealValue = 5;
     for (let i = 0; i < players.length; i++){
         const potentialThief = players[i];
-        if (players[i].currentTarget == target && eval(potentialThief.playedCard.isSteal) && stealValue > 2){
+        if (players[i].currentTarget == target && potentialThief.playedCard && eval(potentialThief.playedCard.isSteal) && stealValue > 2){
             stealValue--;
         }
     }
@@ -549,32 +562,40 @@ function determineResolutionOrder(players, startPlayer, playerNumResolved){
     }
 }
 
-function resolveAnAction(players, playerOrder, numToResolve){
+async function resolveAnAction(players, playerOrder, numToResolve){
     const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
     const roomCode = myGame.getGameDetails().roomCode;
     const shop = myGame.getGameDetails().shop;
 
     if (numToResolve == players.length){
+        io.to(`${roomCode}`).emit("updateStats", players);
+        io.to(`${roomCode}`).emit("updateActiveCard");
         setTimeout(() => {
-            continueToShopPhase(players)
-        }, 2000);
+            continueToShopPhase(players);
+        }, 3000);
     }
     else{
         const workValue = establishWorkValue(players);
         io.to(`${roomCode}`).emit("displayWorkValue", workValue);
 
+        let animationTime = 0;
         const player = players[playerOrder[numToResolve]];
         if (player.playedCard){
+            io.to(`${roomCode}`).emit("updateActiveCard", player.playerNum);
             eval(player.playedCard.effect);
             io.to(`${roomCode}`).emit("updateStats", players);
         }
 
         // continue resolving actions until player input is required or all actions have been resolved
-        if (!players.find((player) => !player.isReady)){
-            setTimeout(() => {
-                resolveAnAction(players, playerOrder, numToResolve + 1);
-            }, 2500);  
-        }
+        console.log(`before: ${animationTime}`);
+        setTimeout(() => {
+            console.log(`after ${animationTime}`);
+            if (!players.find((player) => !player.isReady)){
+                setTimeout(() => {
+                    resolveAnAction(players, playerOrder, numToResolve + 1);
+                }, animationTime);  
+            } 
+        }, 1000);
     }
 }
 
@@ -704,11 +725,15 @@ function checkGameEnd(players){
 
 function work(worker, workValue, modification){
     if (!worker.isSabotaged){
-        worker.numCoins += Math.max(0, (workValue + modification));
+        const coinsEarned = Math.max(0, (workValue + modification))
+        worker.numCoins += coinsEarned;
         // !! find REAL numPlayers
-        const numPlayers = 3
-        io.emit("animateCoinTransfer", (workValue + modification), numPlayers, worker.playerNum)
+        const numPlayers = 3;
+        io.emit("animateCoinTransfer", coinsEarned, numPlayers, worker.playerNum);
+
+        return coinsEarned*200 + 1000;
     }
+    return 0;
 }
 
 function steal(stealer, stealFrom, modification, players){
@@ -721,9 +746,12 @@ function steal(stealer, stealFrom, modification, players){
     else if (!stealFrom.isImmune){
         stealer.numCoins += coinsToSteal;
         stealFrom.numCoins -= coinsToSteal;
-        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", stealFrom.playerNum, stealer.playerNum, coinsToSteal, players.length);
+        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", coinsToSteal, players.length, stealer.playerNum, stealFrom.playerNum);
         io.to(myGame.getGameDetails().roomCode).emit("notification", `<b style = "color: ${stealer.playerColor[0]}">${stealer.playerName}</b> just stole ${coinsToSteal} coins from you!`, "warning", stealFrom.playerNum);
+    
+        return coinsToSteal*200 + 2000;
     }
+    return 0;
 }
 
 function cursed(cursed){
@@ -763,7 +791,6 @@ function updatePlayerWaitingOn(players, newWaitingOn){
 function roundEndCleanup(players){
     players.forEach(player => {
         player.usedCardSwap = false;
-        player.cooperatingWith = undefined;
         player.retaliatingAgainst = undefined;
         player.isImmune = false;
         player.hasRecruited = false;

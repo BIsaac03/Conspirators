@@ -367,6 +367,10 @@ div[id^="player"] .playedCard{
     background-position: center;
 }
 
+#cardToResolve{
+    box-shadow: 0 0 10px 10px pink;
+}
+
 .playerIcon img{
     place-self: center;
     width: min(7vh, calc(7vw * 2 / 3));

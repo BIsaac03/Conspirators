@@ -107,6 +107,14 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
                     if (player.isImmune){
                         addProtectionIcon(player.playerNum);
                     }
+                    if (!player.isReady){
+                        if (player.cooperatingWith == undefined){
+                            document.querySelector(`#player${player.playerNum} .playedCard`).id = "cardToResolve";
+                        }
+                        else{
+                            document.querySelector(`#player${player.cooperatingWith} .playedCard`).id = "cardToResolve";
+                        }
+                    }
                 })
                 break;
 
@@ -201,6 +209,15 @@ socket.on("cardSwapPhase", (players) => {
 socket.on("revealActions", (players) => {
     revealActions(players);
 })
+socket.on("updateActiveCard", (activePlayer) => {
+    const previousCardToResolve = document.getElementById("cardToResolve");
+    if (previousCardToResolve){
+        previousCardToResolve.id = "";
+    }
+    if (activePlayer != undefined){
+        document.querySelector(`#player${activePlayer} .playedCard`).id = "cardToResolve";
+    }
+})
 socket.on("allowShopPurchases", (shop, players) => {
     actionPhaseCleanUp(players.length);
     displayCards(players[myPlayerNum], shop, "buy", false);
@@ -229,6 +246,10 @@ socket.on("updateImpersonation", (playerNum, impersonatedAction) => {
 socket.on("displayRedirection", (owner, target, numPlayers) => {
     console.log("redirection");
     orientCardToPlayer(owner, target, numPlayers);
+    if (owner == myPlayerNum){
+        document.getElementById("selectedPlayer").id = "";
+        document.querySelector(`#player${target} .playerIcon`).id = "selectedPlayer";
+    }
 })
 socket.on("retrieveCards", (player, numCardsToRetrieve) => {
     if (player.playerID == myID){
@@ -1877,7 +1898,7 @@ function animateCoinTransfer(numCoins, numPlayers, playerTo, playerFrom){
     let elementFrom = undefined;
     if (playerFrom == undefined){
         elementFrom = document.getElementById("gameSpace");
-        animationTime = 1000;
+        animationTime = 2000;
     }
     else{
         elementFrom = document.querySelector(`#player${playerFrom} .playerIcon`);
