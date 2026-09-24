@@ -572,7 +572,7 @@ async function resolveAnAction(players, playerOrder, numToResolve){
         io.to(`${roomCode}`).emit("updateActiveCard");
         setTimeout(() => {
             continueToShopPhase(players);
-        }, 3000);
+        }, 2000);
     }
     else{
         const workValue = establishWorkValue(players);
@@ -582,20 +582,20 @@ async function resolveAnAction(players, playerOrder, numToResolve){
         const player = players[playerOrder[numToResolve]];
         if (player.playedCard){
             io.to(`${roomCode}`).emit("updateActiveCard", player.playerNum);
-            eval(player.playedCard.effect);
-            io.to(`${roomCode}`).emit("updateStats", players);
+            setTimeout(() => {
+                eval(player.playedCard.effect);
+                io.to(`${roomCode}`).emit("updateStats", players);
+            }, 1500);
         }
 
         // continue resolving actions until player input is required or all actions have been resolved
-        console.log(`before: ${animationTime}`);
         setTimeout(() => {
-            console.log(`after ${animationTime}`);
             if (!players.find((player) => !player.isReady)){
                 setTimeout(() => {
                     resolveAnAction(players, playerOrder, numToResolve + 1);
                 }, animationTime);  
             } 
-        }, 1000);
+        }, 2000);
     }
 }
 
@@ -723,20 +723,19 @@ function checkGameEnd(players){
     return false
 }
 
-function work(worker, workValue, modification){
+function work(worker, workValue, modification, players){
+    const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
     if (!worker.isSabotaged){
         const coinsEarned = Math.max(0, (workValue + modification))
         worker.numCoins += coinsEarned;
-        // !! find REAL numPlayers
-        const numPlayers = 3;
-        io.emit("animateCoinTransfer", coinsEarned, numPlayers, worker.playerNum);
+        io.emit("animateCoinTransfer", coinsEarned, players.length, worker.playerNum);
 
-        return coinsEarned*200 + 1000;
+        return coinsEarned*200 + Math.min(coinsEarned*1000, 1000);
     }
     return 0;
 }
 
-function steal(stealer, stealFrom, modification, players){
+function steal(stealer, stealFrom, modification, players, calculateOnly){
     const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
     const stealValue = establishStealValue(stealFrom, players);
     const coinsToSteal = Math.min(stealValue + modification, stealFrom.numCoins);
@@ -744,14 +743,17 @@ function steal(stealer, stealFrom, modification, players){
         steal(stealFrom, stealer, 0, players);
     }
     else if (!stealFrom.isImmune){
-        stealer.numCoins += coinsToSteal;
-        stealFrom.numCoins -= coinsToSteal;
-        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", coinsToSteal, players.length, stealer.playerNum, stealFrom.playerNum);
-        io.to(myGame.getGameDetails().roomCode).emit("notification", `<b style = "color: ${stealer.playerColor[0]}">${stealer.playerName}</b> just stole ${coinsToSteal} coins from you!`, "warning", stealFrom.playerNum);
-    
-        return coinsToSteal*200 + 2000;
+        if (!calculateOnly){
+            stealer.numCoins += coinsToSteal;
+            stealFrom.numCoins -= coinsToSteal;
+            io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", coinsToSteal, players.length, stealer.playerNum, stealFrom.playerNum);
+            io.to(myGame.getGameDetails().roomCode).emit("notification", `<b style = "color: ${stealer.playerColor[0]}">${stealer.playerName}</b> just stole ${coinsToSteal} coins from you!`, "warning", stealFrom.playerNum);
+        }
+        return coinsToSteal*200 + Math.min(coinsToSteal*2000, 2000);
     }
-    return 0;
+    else{
+        return 0;
+    }
 }
 
 function cursed(cursed){

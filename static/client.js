@@ -101,7 +101,9 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
             case "actionResolution":
                 players.forEach(player => {
                     const playedCard = document.querySelector(`#player${player.playerNum} .playedCard`);
-                    orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
+                    if (player.playedCard){
+                        orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
+                    }
                     lockInCard(player.playerNum);
                     generateCard(playedCard, player.playedCard, player.isImpersonating);
                     if (player.isImmune){
@@ -229,9 +231,6 @@ socket.on("resetGameDisplay", () => {
 })
 socket.on("protectIcon", (playerNum) => {
     addProtectionIcon(playerNum);
-})
-socket.on("bewitchIcons", (players) => {
-    updateStats(players);
 })
 socket.on("chooseImpersonate", (numPlayers, playerID) => {
     if (playerID == myID){
@@ -1220,7 +1219,7 @@ function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
     const playedCard = document.querySelector(`#player${originPlayerNum} .playedCard`);
     playedCard.setAttribute("targetNum", targetPlayerNum);
     const targetAngle = calculateTargetAngle(originPlayerNum, targetPlayerNum, numPlayers);
-    console.log(targetAngle);
+    console.log(`origin: ${originPlayerNum}, target: ${targetPlayerNum}, angle: ${targetAngle}`);
     const xTrans = 22 + 20*Math.sin(targetAngle);
     const yTrans = -12*Math.cos(targetAngle);
     playedCard.style.transform = `translateX(${xTrans*6}%) translateY(${yTrans*5}%) rotate(${targetAngle}rad)`;
@@ -1387,6 +1386,9 @@ function generateCard(div, action, isImpersonated){
         if (action.isOneShot){
             div.classList.add("oneShot");
         }
+        else{
+            div.classList.remove("oneShot");
+        }
 
         const name = document.createElement("p");
         name.innerHTML = action.name;
@@ -1428,6 +1430,10 @@ function generateCard(div, action, isImpersonated){
             mustache.classList.add("mustache");
             div.appendChild(mustache);
         }
+    }
+    else{
+        const playerNum = div.parentElement.id.slice(6);
+        cleanUpPlayerCard(playerNum);
     }
 }
 
@@ -1889,7 +1895,6 @@ function revealActions(players){
     players.forEach((player) => {
         const playedCard = document.querySelector(`#player${player.playerNum} .playedCard`);
         generateCard(playedCard, player.playedCard, player.isImpersonating);
-        orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
     })
 }
 
@@ -2415,9 +2420,8 @@ function updateStats(players, startPlayer){
         numCardSwaps.textContent = players[i].numCardSwaps;
     
         const playerIcon = document.querySelector(`#player${i} .playerIcon`);
-        if (players[i].isBewitched && !playerIcon.hasAttribute("bewitched")){
-            const randNum = Math.floor(Math.random()*3);
-            playerIcon.setAttribute("bewitched", randNum);
+        if (players[i].isBewitched){
+            playerIcon.setAttribute("bewitched", players[i].isBewitched);
         }
         else{
             playerIcon.removeAttribute("bewitched");
@@ -2641,6 +2645,7 @@ function cleanUpPlayerCard(playerNum){
     playedCard.innerHTML = "";
     playedCard.removeAttribute("action");
     playedCard.classList.remove("card");
+    playedCard.classList.remove("oneShot");
     playedCard.setAttribute("targeting", "open");
     playedCard.style.opacity = "0.3";
     playedCard.style.transform = "translateX(min(5vh, calc(5vw * 2 / 3))) rotate(-90deg)";
