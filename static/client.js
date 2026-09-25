@@ -88,14 +88,18 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
 
             case "cardSwaps":
                 populateCardBacks(players.length);
-                const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
-                generateCard(myPlayedCard, reconnectedPlayer.playedCard, false);
-                orientCardToPlayer(myPlayerNum, reconnectedPlayer.currentTarget, players.length);
-
                 players.forEach(player => {
                     orientCardToPlayer(player.playerNum, player.currentTarget, players.length);
                     lockInCard(player.playerNum);
                 })
+                const myPlayedCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
+                if (reconnectedPlayer.cardSwapChange){
+                    generateCard(myPlayedCard, reconnectedPlayer.cardSwapChange[0], false);
+                    orientCardToPlayer(myPlayerNum, reconnectedPlayer.cardSwapChange[1], players.length);
+                }
+                else{
+                    generateCard(myPlayedCard, reconnectedPlayer.playedCard, false);
+                }
                 break;
 
             case "actionResolution":
@@ -128,7 +132,7 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
         if (!reconnectedPlayer.isReady){
             switch (reconnectedPlayer.waitingOn){
                 case "selectAction":
-                    actionSelection(players, myPlayerNum);
+                    actionSelection(players, myPlayerNum, false);
                     break;
 
                 case "useCardSwap":
@@ -200,7 +204,7 @@ socket.on("sendToGame", () => {
 socket.on("selectAction", (players) => {
     displayCards(players[myPlayerNum], players[myPlayerNum].hand, "play", false);
     populateCardBacks(players.length);
-    actionSelection(players, myPlayerNum);
+    actionSelection(players, myPlayerNum, false);
 })
 socket.on("opponentActionChosen", (playerNum) => {
     lockInCard(playerNum);
@@ -673,7 +677,7 @@ function tutorialPhase(phase){
             removePreviousElement(`.tutorialProgress`);
             addTutorialProgressArrows([ "Bewitch is a special type of action called a One-Shot.",
                                         "One-Shots have powerful abilities, but can only be played once, returning to the Shop rather than your Discard.",
-                                        "They can be distinguished by their unique name formatting and slightly darker background.",
+                                        "They can be distinguished by their unique name formatting and slightly redder background.",
                                         "All cards in the shop have a number in a gold circle on the left, denoting its cost in coins.",
                                         "This can differentiate Basic Actions (the ones in your starting Hand) from non-Basic Actions.",
                                         "The color of a card has no mechanical impact, but helps identify a card's ability at a glance.",
@@ -1733,7 +1737,7 @@ function promptActionSelection(player, isTutorial){
     }
 }
 
-function actionSelection(players, myPlayerNum, originalCard){
+function actionSelection(players, myPlayerNum, isFinal){
     const myCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
     promptActionSelection(players[myPlayerNum], false);
 
@@ -1755,7 +1759,7 @@ function actionSelection(players, myPlayerNum, originalCard){
         if (actionToPlayName && targetPlayerNum){
             const actionToPlay = players[myPlayerNum].hand.find((action) => actionToPlayName.startsWith(action[0].name));
             if (!players[myPlayerNum].isBewitched || actionToPlay[0].isBasicAction){
-                socket.emit("chosenAction", myPlayerNum, actionToPlay[0], targetPlayerNum, originalCard, myID);
+                socket.emit("chosenAction", myPlayerNum, actionToPlay[0], targetPlayerNum, isFinal, myID);
                 displayCards(players[myPlayerNum], players[myPlayerNum].hand, "play", false);
                 removeAllPlayerTargeting(players.length);
                 allowCardSelection(false);
@@ -1872,7 +1876,7 @@ function allowCardSwaps(players){
         myNumCardSwaps.textContent = Number(myNumCardSwaps.textContent) - 1;
         cleanUpPlayerCard(myPlayerNum);
         cardSwapPopUp.remove();
-        actionSelection(players, myPlayerNum, originalCard);
+        actionSelection(players, myPlayerNum, true);
     })
     if (players[myPlayerNum].numCardSwaps < 1){
         useCardSwap.disabled = true;
@@ -1895,6 +1899,7 @@ function revealActions(players){
     players.forEach((player) => {
         const playedCard = document.querySelector(`#player${player.playerNum} .playedCard`);
         generateCard(playedCard, player.playedCard, player.isImpersonating);
+        orientCardToPlayer(player.playerNum, player.currentTarget, players.length)
     })
 }
 
@@ -2167,16 +2172,18 @@ function promptDonation(giver, receiver, donationType){
     submit.textContent = "Confirm";
     submit.addEventListener("click", () => {
         if (donationEntry.value >= 0 && donationEntry.value <= 4){
-            donationScreen.remove();
             if (donationType == "tutorial"){
                 if (donationEntry.value == 0){
+                    donationScreen.remove();
                     tutorialPhase(14);
                 }
             }
             else if (donationType == "cooperate"){
+                donationScreen.remove();
                 socket.emit("returnedCooperation", giver.playerID, receiver.playerID, Number(donationEntry.value));
             } 
             else if (donationType == "honor"){
+                donationScreen.remove();
                 socket.emit("honored", giver.playerID, receiver.playerID, Number(donationEntry.value));
             }
         }
@@ -2421,14 +2428,14 @@ function updateStats(players, startPlayer){
     
         const playerIcon = document.querySelector(`#player${i} .playerIcon`);
         if (players[i].isBewitched){
-            playerIcon.setAttribute("bewitched", players[i].isBewitched);
+            playerIcon.classList.add("bewitched");
         }
         else{
-            playerIcon.removeAttribute("bewitched");
+            playerIcon.classList.remove("bewitched");
         }
     }
 
-    if (players[myPlayerNum].waitingOn == "useCardSwap" && players[myPlayerNum].usedCardSwap){
+    if (players[myPlayerNum].waitingOn == "useCardSwap" && players[myPlayerNum].cardSwapChange){
         const numCardSwaps = document.querySelector(`#player${myPlayerNum} .statsDisplay .numCardSwaps`)
         numCardSwaps.textContent = numCardSwaps.textContent - 1;
     }

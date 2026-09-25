@@ -176,10 +176,12 @@ io.on("connection", (socket) => {
     socket.on("chosenAction", (playerNum, action, target, isFinal, myID) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
         const players = myGame.getPlayers();
-        players[playerNum].confirmAction(action, target, Boolean(isFinal));
         players[playerNum].isReady = true;
-        if (Boolean(isFinal) && isFinal != true){
-            players[playerNum].usedCardSwap = true;
+        if (!isFinal){
+            players[playerNum].confirmAction(action, target, false);
+        }
+        else if (players[playerNum].playedCard.name != action.name || players[playerNum].currentTarget != target){
+            players[playerNum].cardSwapChange = [action, target];
         }
 
         socket.broadcast.emit("opponentActionChosen", playerNum);
@@ -195,14 +197,23 @@ io.on("connection", (socket) => {
                 players.forEach(player => {
                     player.waitingOn = "actionResolution";
                     player.isBewitched = false;
-                    if (player.usedCardSwap){
+                    if (player.cardSwapChange){
                         player.numCardSwaps--;
+                        player.confirmAction(player.cardSwapChange[0], player.cardSwapChange[1], true);
+                    }
+                    else{
+                        player.confirmAction(player.playedCard, player.currentTarget, true);
                     }
                 })
 
-                myGame.changeGamePhase("actionResolution");
-                io.to(`${myGame.getGameDetails().roomCode}`).emit("revealActions", players);
                 setTimeout(() => {
+                    io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, [], "discard", false);
+                    io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, [], "hand", false);
+                    io.to(`${myGame.getGameDetails().roomCode}`).emit("updateStats", players);
+                    io.to(`${myGame.getGameDetails().roomCode}`).emit("revealActions", players);
+                }, 500);
+                setTimeout(() => {
+                    myGame.changeGamePhase("actionResolution");
                     determineResolutionOrder(players, myGame.getGameDetails().startPlayer);
                 }, 2000)
             }
@@ -568,6 +579,8 @@ async function resolveAnAction(players, playerOrder, numToResolve){
     const shop = myGame.getGameDetails().shop;
 
     if (numToResolve == players.length){
+        io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, [], "discard", false);
+        io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, [], "hand", false);
         io.to(`${roomCode}`).emit("updateStats", players);
         io.to(`${roomCode}`).emit("updateActiveCard");
         setTimeout(() => {
@@ -663,7 +676,9 @@ function attemptPurchase(players, startPlayer, shop){
                 currentBuyer.cardsToBuy = undefined;
 
                 if (currentBuyer.playerNum == (startPlayer - 1 + players.length) % players.length){
-                    endOfRound(players, shop);
+                    setTimeout(() => {
+                        endOfRound(players, shop);
+                    }, 1000);
                     return;
                 } 
             }
@@ -737,7 +752,7 @@ function work(worker, workValue, modification, players){
 
 function steal(stealer, stealFrom, modification, players, calculateOnly){
     const myGame = ongoingGames.find((game) => game.getPlayers()[0] == players[0]);
-    const stealValue = establishStealValue(stealFrom, players);
+    const stealValue = establishStealValue(stealFrom.playerNum, players);
     const coinsToSteal = Math.min(stealValue + modification, stealFrom.numCoins);
     if (stealFrom.retaliatingAgainst == stealer.playerNum){
         steal(stealFrom, stealer, 0, players);
@@ -792,7 +807,7 @@ function updatePlayerWaitingOn(players, newWaitingOn){
 
 function roundEndCleanup(players){
     players.forEach(player => {
-        player.usedCardSwap = false;
+        player.cardSwapChange = undefined;
         player.retaliatingAgainst = undefined;
         player.isImmune = false;
         player.hasRecruited = false;

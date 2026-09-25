@@ -23,7 +23,7 @@ export class Player{
     isAbducted = false;
     isImpersonating = false;
     hasRecruited = false;
-    usedCardSwap = false;
+    cardSwapChange = undefined;
     isInGame = false;
     isReady = false;
     waitingOn = undefined;

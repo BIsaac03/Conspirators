@@ -164,7 +164,7 @@ export const allActions = [
         "effect":  `animationTime = work(player, workValue, 4, players)
                     players.forEach((other) => {
                         if (other.playerID != player.playerID){
-                            other.isBewitched = Math.floor(Math.random() * 3) + 1;
+                            other.isBewitched = true;
                             io.to(myGame.getGameDetails().roomCode).emit("notification", "You have been <i>Bewitched</i>", "warning", other.playerNum);
                         } 
                     })`,
@@ -438,8 +438,13 @@ export const allActions = [
                     const potentialThief = players[player.currentTarget];
                     if(potentialThief.playedCard && (eval(potentialThief.playedCard.isSteal))){
                         player.numCoins+=5;
-                        animationTime = Math.max(2000, workTime);
-                        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 5, players.length, player.playerNum);
+                        animationTime = 2000 + workTime;
+                        setTimeout(() => {
+                            io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 5, players.length, player.playerNum);
+                        }, workTime)
+                    }
+                    else{
+                        animationTime = workTime;
                     }`,
         "priority": 0,
         "cost": 4,
@@ -459,7 +464,7 @@ export const allActions = [
         "effect":  `players[player.currentTarget].isAbducted = true;
                     if (players[player.currentTarget].playedCard){
                         if (players[player.currentTarget].isImpersonating){
-                            const impersonate = allActions.find((action) => action.name == "Impersonate);
+                            const impersonate = allActions.find((action) => action.name == "Impersonate");
                             player.buyCards([impersonate], 0, true);
                         }
                         else{
@@ -477,7 +482,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": true,
-        "FAQ": ["The action still resolves as normal.", "If target is <i>Cursed</i>, you get nothing.", "'Rest' will always return to the original owner's Hand.", "If multiple players <i>Abduct</i> the same target, all get copies."]
+        "FAQ": ["The action still resolves as normal.", "If target is <i>Cursed</i> or decided to <i>Rest</i>, you get nothing.", "If multiple players <i>Abduct</i> the same target, all get copies."]
     },
     {
         "name": "Proselytize",
