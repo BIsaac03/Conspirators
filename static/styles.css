@@ -12,9 +12,12 @@
 :root {
     --standard-action-color: rgb(255, 245, 230);
     --one-shot-color: rgb(255, 220, 210);
+    --dark-mode-standard-action-color: #474757;
+    --dark-mode-one-shot-color: #5b5050;
     --shop-color: rgb(230, 170, 30, 0.85);
     --work-color: #41A7BF;
     --steal-color: #BA0000;
+    --dark-mode-color: #3f353a;
     --neutral-background-rgbs: 255, 248, 220;
     --display-toggle-width: max(3vw, 40px);
 }
@@ -93,6 +96,7 @@ button:hover{
     font-size: 20px;
     background-color: antiquewhite;
     box-shadow: 0 0 0 3px yellow inset;
+    user-select: none;
     z-index: 10;
 }
 #tutorialMessage{
@@ -119,6 +123,7 @@ button:hover{
     font-weight: bold;
     font-size: 2vw;
     width: 15vw;
+    border-radius: 10px;
     background-color: rgba(255, 0, 0, 0.33);
     padding: 1vh;
 }
@@ -147,6 +152,7 @@ button:hover{
     font-size: 32px;
     font-weight: bold;
     padding: 5px 10px;
+    color: black;
     background-color: pink;
 }
 
@@ -210,7 +216,7 @@ button:hover{
 .header{
     position: sticky;
     top: 0vh;
-    background-color: #3f353a;
+    background-color: var(--dark-mode-color);
     height: 9vh;
     display: grid;
     align-items: center;
@@ -247,6 +253,7 @@ button:hover{
     text-align: center;
     font-size: 3vh;
     font-weight: bold;
+    text-shadow: 1px 1px 1px black;
 }
 .startPlayerIcon{
     position: absolute;
@@ -297,7 +304,7 @@ button:hover{
     height: fit-content;
     padding: 15px;
     background-color: var(--standard-action-color);
-    box-shadow: 0 0 10px 3px gray;
+    box-shadow: 0 0 7px 2px gray;
     font-size: 2.7vh;
     text-align: center;
 }
@@ -368,7 +375,7 @@ div[id^="player"] .playedCard{
 }
 
 #cardToResolve{
-    box-shadow: 0 0 10px 10px pink;
+    box-shadow: 0 0 10px 5px yellow;
 }
 
 .playerIcon img{
@@ -575,6 +582,9 @@ div[id^="player"] #handIcon{
     padding-left: 10px;
     font-size: 1.5vw;
 }
+#actionSearch input:focus{
+    outline: none;
+}
 #actionSearch div{
     padding-left: 10px;
 }
@@ -587,14 +597,20 @@ div[id^="player"] #handIcon{
     background-color: lavender;
 }
 
-[bewitched = "1"]{
+#player0 .bewitched{
+    --bewitched-background: url(/static/Images/Misc/bewitched0.jpg);
+}
+#player1 .bewitched{
     --bewitched-background: url(/static/Images/Misc/bewitched1.jpg);
 }
-[bewitched = "2"]{
+#player2 .bewitched{
     --bewitched-background: url(/static/Images/Misc/bewitched2.jpg);
 }
-[bewitched = "3"]{
+#player3 .bewitched{
     --bewitched-background: url(/static/Images/Misc/bewitched3.jpg);
+}
+#player4 .bewitched{
+    --bewitched-background: url(/static/Images/Misc/bewitched4.jpg);
 }
 
 #selectedPlayer{
@@ -729,7 +745,7 @@ div[id^="player"] #handIcon{
     gap: 2.5vh;
     padding: 1vh 1vw;
     width: calc(22vw - var(--display-toggle-width));
-    background-color: goldenrod;
+    background-color: lightgoldenrodyellow;
 
 }
 #checkOutList div{
@@ -794,13 +810,13 @@ div[id^="player"] #handIcon{
     font-weight: bold;
 }
 .notificationDiv.info{
-    background-color: rgba(var(--neutral-background-rgbs), 0.8);
+    background-color: rgba(var(--neutral-background-rgbs), 0.9);
 }
 .notificationDiv.error{
-    background-color: rgba(255, 100, 90, 0.8);
+    background-color: rgba(255, 100, 90, 0.9);
 }
 .notificationDiv.warning{
-    background-color: rgba(255, 170, 160, 0.8);
+    background-color: rgba(255, 170, 160, 0.9);
 }
 .notificationDiv img{
     width: 20px;
@@ -817,13 +833,74 @@ div[id^="player"] #handIcon{
 }
 
 @media (prefers-color-scheme: dark) {
-    .card{
-        background-color: #5b5050;
+    body{
+        background: radial-gradient(circle at center, whitesmoke, var(--dark-mode-color) 50%);
+        background: var(--dark-mode-color);
     }
-    .card.oneShot{
-        background-color: #474757;
+    #gameSpace{
+        background-color: peru;
     }
-    .card p.text, .card p.name{
+    .card.oneShot, #blownUp .FAQ p.oneShot{
+        background-color: var(--dark-mode-one-shot-color); 
+    }
+    .card, #blownUp .FAQ p{
+        background-color: var(--dark-mode-standard-action-color);
+    }
+    .card p.text, .card p.name, #checkOutList p, #notificationCenter, #mainMenu .title, button{
         color: white;
+    }
+
+    #cardLocationToggle>div>p, #sortActions form, #actionSearch div p{
+        color: white;
+        background-color: var(--dark-mode-color);
+    }
+
+    button{
+        background-color: #332a2e;
+    }
+
+    #blownUp .FAQ p{
+        color: white;
+        box-shadow: 0 0 7px 2px whitesmoke;
+    }
+    #blownUp{
+        box-shadow: 0 0 20px 10px whitesmoke;
+    }
+
+    .statsDisplay{
+        filter: invert(1);
+    }
+    .statsDisplay .playerName{
+        filter: invert(1);
+    }
+    div[id^="player"] .playerIcon {
+        background-color: gray;
+    }
+    #actionSearch input, #actionSearch div p.highlighted{
+        color: white;
+        background-color: #3b2832;
+    }
+    #actionSearch img{
+        filter: invert(1);
+    }
+
+    .playedCard[targeting="open"]{
+        border: 3px dashed pink;
+    }
+    .playedCard[targeting="redirected"]{
+        border: 3px solid pink;
+    }
+
+    #checkOutList img{
+        filter: invert(1);
+    }
+    #checkOutList{
+        background-color: darkgoldenrod;
+    }
+    #checkOutList .rebate{
+        color: lightgreen;
+    }
+    #tutorial{
+        filter: invert(1);
     }
 }
