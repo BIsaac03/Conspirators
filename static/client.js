@@ -358,7 +358,7 @@ function addMainMenuListeners(){
         socket.emit("setUpTutorial", myID);
         setTimeout(()=> {
             window.location.href = "gameSpace.html";
-        }, 100)
+        }, 10)
     })
 }
 // TUTORIAL
@@ -938,10 +938,10 @@ function tutorialPhase(phase){
             document.querySelector(`#player0 .handNum`).textContent = "10";
             document.querySelector(`#player1 .handNum`).textContent = "10";
             document.querySelector(`#player2 .handNum`).textContent = "10";
-            addTutorialProgressArrows([ "Even though Grudgie goes before us in turn order, our 'Retaliate' will block their 'Steal'.",
-                                        "Green cards are always resolved before ANY non-green cards, regardless of turn order.",
-                                        "If multiple green cards are played in the same round, the lowest numbered one takes priority.",
-                                        "In the event that multiple players play the same green action, regular turn order determines which is resolved first.",
+            addTutorialProgressArrows([ "Even though it looks like Grudgie goes before us in turn order, our 'Retaliate' will block their 'Steal'.",
+                                        "Green cards are always resolved before ANY non-green cards, regardless of standard turn order.",
+                                        "If multiple green cards are played in the same round, the lower numbered one takes priority.",
+                                        "If they have the same number, regular turn order determines which is resolved first.",
                                         ""
                                         ], 34, tutorialDiv);
             break;
@@ -1031,7 +1031,7 @@ function tutorialHoveredStealScorecard(){
     stealValueScorecard.removeEventListener("mouseenter", tutorialHoveredStealScorecard)
     setTimeout(() => {
         tutorialPhase(36);
-    }, 500);
+    }, 2000);
 }
 function tutorialHighlight(className, makeColorful){
     const relevantNums = document.querySelectorAll(`.${className}`)

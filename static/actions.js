@@ -218,7 +218,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["Players do not need to <b>Steal</b> from you, or even affect you with their card to be <i>Cursed</i>."]
+        "FAQ": ["Players do not need to <b>Steal</b> from you, or even affect you with their card to be <i>Cursed</i>.", "If players attempt to <i>Curse</i> each other, the second one to resolve is returned to the Shop before it can affect any players."]
     },
     {
         "name": "Hijack",
@@ -496,9 +496,14 @@ export const allActions = [
                     if (players[player.currentTarget].playedCard && players[player.currentTarget].playedCard.isBasicAction){
                         players[player.currentTarget].numCoins += 4;
                         player.numCoins += 4;
-                        animationTime = Math.max(1800, workTime);
-                        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 4, players.length, player.currentTarget);
-                        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 4, players.length, player.playerNum);
+                        animationTime = 1800 + workTime;
+                        setTimeout(() => {
+                            io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 4, players.length, player.currentTarget);
+                            io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 4, players.length, player.playerNum);
+                        }, workTime)
+                    }
+                    else{
+                        animationTime = workTime;
                     }`,
         "priority": 0,
         "cost": 6,

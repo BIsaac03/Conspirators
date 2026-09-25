@@ -485,6 +485,7 @@ function makeGame(code, actionShop){
     let gamePhase = undefined;
     let startPlayer = -1;
     let players = [];
+    let EOR_Scores = [];
 
     const getPlayers = () => {
         return players;
@@ -495,7 +496,8 @@ function makeGame(code, actionShop){
             gameHasStarted,
             gamePhase,
             startPlayer,
-            shop
+            shop,
+            EOR_Scores
         }
     };
     const addPlayer = (player) => {
@@ -510,8 +512,15 @@ function makeGame(code, actionShop){
     const rotateStartPlayer = (numPlayers) => {
         startPlayer = (startPlayer + 1) % numPlayers;
     }
+    const recordScore = (players, isFinalScore) => {
+        const currentStandings = [];
+        players.forEach((player) => {
+            currentStandings.push(player.calculateScore(isFinalScore));
+        })
+        EOR_Scores.push(currentStandings);
+    }
 
-    return {getPlayers, getGameDetails, addPlayer, startGame, changeGamePhase, rotateStartPlayer}
+    return {getPlayers, getGameDetails, addPlayer, startGame, changeGamePhase, rotateStartPlayer, recordScore}
 }
 
 function establishWorkValue(players){
@@ -721,10 +730,12 @@ function endOfRound(players, shop){
     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, myGame.getGameDetails().shop, "shop", false);
 
     if (!checkGameEnd(players)){
+        myGame.recordScore(players, false);
         roundStart(myGame);
         io.to(`${myGame.getGameDetails().roomCode}`).emit("resetGameDisplay");
     }
     else{
+        myGame.recordScore(players, true);
         // !! add end of game functionality & scoring
     }
 }

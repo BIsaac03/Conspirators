@@ -121,3 +121,21 @@ ul#playerList{
     font-weight: bold;;
     border-radius: 10px;
 }
+
+@media (prefers-color-scheme: dark) {
+    body{
+        background-color: #3f353a;;
+    }
+    #roomCode img{
+        filter: invert(1);
+    }
+    #lobby p, #lobby ul, #lobby input{
+        color: white;
+    }
+    #playerCustomization #joinGame, #lobby input{
+        background-color: #332a2e;
+    }
+    #playerCustomization input[type = "color"]{
+        border: none;
+    }
+}

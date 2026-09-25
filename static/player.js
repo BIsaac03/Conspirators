@@ -214,4 +214,21 @@ export class Player{
         }
         return totalCards;
     }
+
+    calculateScore(isFinalScore){
+        let coinsOnCards = 0
+        this.hand.forEach((entry) => {
+            coinsOnCards += entry[0].cost * entry[1];
+        })
+        this.discard.forEach((entry) => {
+            coinsOnCards += entry[0].cost * entry[1];
+        })
+        const cardPoints = Math.floor(coinsOnCards / 2);
+        const coinPoints = this.numCoins;
+        let finisherPoints = 0
+        if (isFinalScore && this.countCards("hand") >= 20){
+            finisherPoints = 10;
+        }
+        return cardPoints + coinPoints + finisherPoints;
+    }
 }
