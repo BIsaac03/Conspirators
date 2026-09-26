@@ -833,6 +833,20 @@ div[id^="player"] #handIcon{
     cursor: default;
 }
 
+#scores{
+    position: absolute;
+    place-self: center;
+    z-index: 15;
+    width: 50vmin;
+    height: 50vmin;
+    overflow: show;
+}
+#scores table{
+    display: grid;
+    justify-content: center;
+}
+
+
 @media (prefers-color-scheme: dark) {
     body{
         background: radial-gradient(circle at center, whitesmoke, var(--dark-mode-color) 50%);

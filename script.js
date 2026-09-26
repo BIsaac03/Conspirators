@@ -45,7 +45,7 @@ io.on("connection", (socket) => {
     if (myGame) {
         socket.join(`${myGame.getGameDetails().roomCode}`);
         const existingPlayer = myGame.getPlayers().find((player) => player.playerID == currentID);
-        socket.emit("reconnection", existingPlayer, myGame.getPlayers(), myGame.getGameDetails().shop, myGame.getGameDetails().gamePhase, myGame.getGameDetails().startPlayer, myGame.getGameDetails().isGameInProgress, myGame.getGameDetails().roomCode);
+        socket.emit("reconnection", existingPlayer, myGame.getPlayers(), myGame.getGameDetails().shop, myGame.getGameDetails().gamePhase, myGame.getGameDetails().startPlayer, myGame.getGameDetails().gameHasStarted, myGame.getGameDetails().roomCode, myGame.getGameDetails().EOR_Scores);
         socket.emit("displayExistingPlayers", myGame.getPlayers());
     }
     else{
@@ -88,7 +88,7 @@ io.on("connection", (socket) => {
             socket.join(`${roomCode}`);
         }
         else{
-            if (existingLobby.getGameDetails().isGameInProgress){
+            if (existingLobby.getGameDetails().gameHasStarted){
                 socket.emit("gameInProgress");
             }
             else{
@@ -99,7 +99,7 @@ io.on("connection", (socket) => {
     })
     socket.on("playerJoinedLobby", (playerID, playerName, playerColor, roomCode) => {
         const myLobby = ongoingGames.find((game) => game.getGameDetails().roomCode == roomCode);
-        if (myLobby.getGameDetails().isGameInProgress){
+        if (myLobby.getGameDetails().gameHasStarted){
             socket.emit("gameInProgress");
         }
         else{
@@ -163,11 +163,11 @@ io.on("connection", (socket) => {
 
     socket.on("startGame", (roomCode) => {
         const myLobby = ongoingGames.find((game) => game.getGameDetails().roomCode == roomCode);
-        if (!myLobby.getGameDetails().isGameInProgress){
+        if (!myLobby.getGameDetails().gameHasStarted){
             myLobby.getPlayers().forEach((player) => {
                 player.isInGame = true;
             })
-            myLobby.getGameDetails().isGameInProgress = true;
+            myLobby.startGame();
             roundStart(myLobby);
             io.to(`${roomCode}`).emit("sendToGame");
         }
@@ -504,6 +504,12 @@ function makeGame(code, actionShop){
         players.push(player);
     }
     const startGame = () => {
+        const startingScores = []
+        for (let i = 0; i < players.length; i++){
+            startingScores.push(0);
+        }
+        console.log(startingScores);
+        EOR_Scores.push(startingScores);
         gameHasStarted = true;
     }
     const changeGamePhase = (newPhase) => {
@@ -729,24 +735,31 @@ function endOfRound(players, shop){
     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, [], "hand", false);
     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, myGame.getGameDetails().shop, "shop", false);
 
-    if (!checkGameEnd(players)){
+    if (!players.some(player => player.countCards("hand") >= 20)){
         myGame.recordScore(players, false);
         roundStart(myGame);
         io.to(`${myGame.getGameDetails().roomCode}`).emit("resetGameDisplay");
     }
     else{
         myGame.recordScore(players, true);
-        // !! add end of game functionality & scoring
+        myGame.changeGamePhase("showScores");
+        endGame(myGame);
     }
 }
 
-function checkGameEnd(players){
-    players.forEach((player) => {
-        if (player.hand.length >= 20){
-            return true;
-        }
-    })
-    return false
+function endGame(myGame){
+    io.to(myGame.getGameDetails().roomCode).emit("acknowledgeGameEnd");
+
+    setTimeout(() => {
+        io.to(myGame.getGameDetails().roomCode).emit("displayScoreChart", myGame.getPlayers(), myGame.getGameDetails().EOR_Scores);
+    }, 5000);
+
+    /* !! add after testing
+    setTimeout(() => {
+        const myGameIndex = ongoingGames.indexOf(myGame);
+        ongoingGames.splice(myGameIndex, 1);
+    }, 180000);
+    */
 }
 
 function work(worker, workValue, modification, players){
@@ -754,7 +767,7 @@ function work(worker, workValue, modification, players){
     if (!worker.isSabotaged){
         const coinsEarned = Math.max(0, (workValue + modification))
         worker.numCoins += coinsEarned;
-        io.emit("animateCoinTransfer", coinsEarned, players.length, worker.playerNum);
+        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", coinsEarned, players.length, worker.playerNum);
 
         return coinsEarned*200 + Math.min(coinsEarned*1000, 1000);
     }

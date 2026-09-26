@@ -40,7 +40,7 @@ socket.on("gameInProgress", () => {
     lobby.gameInProgressError(bodyElement);
 })
 
-socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPlayer, isGameInProgress, roomCode) => {
+socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPlayer, isGameInProgress, roomCode, EOR_Scores) => {
     if (roomCode == "tutorial"){
         startTutorial(players, reconnectedPlayer.tutorialPhase)
     }
@@ -125,6 +125,10 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
                 break;
 
             case "buyCards":
+                break;
+
+            case "showScores":
+                displayScoreChart(players, EOR_Scores);
                 break;
         }
 
@@ -313,6 +317,23 @@ socket.on("notification", (notification, notificationType, playerNum) => {
         displayNotification(notification, notificationType);
     }
 })
+
+socket.on("acknowledgeGameEnd", () => {
+    const gameOverPopUp = document.createElement("div");
+    gameOverPopUp.classList.add("gameOver");
+    const gameOverText = document.createElement("p");
+    gameOverText.textContent = "A player has reached 20 cards in Hand, triggering the end of the game.";
+    gameOverPopUp.appendChild(gameOverText);
+    bodyElement.appendChild(gameOverPopUp);
+    setTimeout(() => {
+        gameOverPopUp.remove();
+    }, 4000);
+})
+
+socket.on("displayScoreChart", (players, EOR_Scores) => {
+    displayScoreChart(players, EOR_Scores);
+});
+
 
 function addMainMenuListeners(){
     const mainMenu = document.getElementById("mainMenu");
@@ -2663,6 +2684,44 @@ function cleanUpPlayerCard(playerNum){
             selectedPlayer.id = "";
         }
     }
+}
+
+function displayScoreChart(players, EOR_Scores){
+    const scoreDiv = document.createElement("div");
+    scoreDiv.id = "scores";
+
+    const playersScoreTable = document.createElement("table");
+    playersScoreTable.classList.add("charts-css", "line", "multiple", "hide-data");
+    playersScoreTable.style.setProperty("--datasets", players.length);
+    scoreDiv.appendChild(playersScoreTable);
+
+    const scoreCaption = document.createElement("caption");
+    scoreCaption.textContent = "Scores";
+    playersScoreTable.appendChild(scoreCaption);
+
+    const tableBody = document.createElement("tbody");
+    playersScoreTable.appendChild(tableBody);
+
+    const highestScore = Math.max(...EOR_Scores.flat(Infinity)) + 10;
+
+    for (let i = 0; i < EOR_Scores.length - 1; i++){
+        const roundRow = document.createElement("tr");
+
+        players.forEach((player) => {
+            const playerData = document.createElement("td");
+            playerData.style.setProperty("--start", EOR_Scores[i][player.playerNum] / highestScore);
+            playerData.style.setProperty("--end", EOR_Scores[i + 1][player.playerNum] / highestScore);
+
+            const dataSpan = document.createElement("span");
+            dataSpan.classList.add("data");
+            dataSpan.textContent = EOR_Scores[i+1][player.playerNum];
+            playerData.appendChild(dataSpan);
+
+            roundRow.appendChild(playerData);
+        })
+        tableBody.appendChild(roundRow);
+    }
+    bodyElement.appendChild(scoreDiv);
 }
 
 function tutorialMessage(message){
