@@ -836,16 +836,24 @@ div[id^="player"] #handIcon{
 #scores{
     position: absolute;
     place-self: center;
-    z-index: 15;
-    width: 50vmin;
-    height: 50vmin;
-    overflow: show;
-}
-#scores table{
     display: grid;
-    justify-content: center;
+    align-content: center;
+    width: 80vmin;
+    background-color: lightgray;
+    padding: 1vmin;
+    z-index: 15;
 }
-
+#scores span.data{
+    font-weight: bold;
+    font-size: 3vmin;
+    padding-bottom: 0.4vmin;
+}
+#scores .legend{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    font-size: 3vmin;
+}
 
 @media (prefers-color-scheme: dark) {
     body{

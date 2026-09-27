@@ -2686,12 +2686,14 @@ function cleanUpPlayerCard(playerNum){
     }
 }
 
-function displayScoreChart(players, EOR_Scores){
+function displayScoreChart(players, EOR_Score){
+    // !! chart testing
+    const EOR_Scores = [[0,0],[4,5],[2,6],[6,8],[8,5]];
     const scoreDiv = document.createElement("div");
     scoreDiv.id = "scores";
 
     const playersScoreTable = document.createElement("table");
-    playersScoreTable.classList.add("charts-css", "line", "multiple", "hide-data");
+    playersScoreTable.classList.add("charts-css", "line", "multiple", "hide-data", "show-labels", "show-primary-axis", "show-4-secondary-axes", "show-data-axes");
     playersScoreTable.style.setProperty("--datasets", players.length);
     scoreDiv.appendChild(playersScoreTable);
 
@@ -2707,6 +2709,11 @@ function displayScoreChart(players, EOR_Scores){
     for (let i = 0; i < EOR_Scores.length - 1; i++){
         const roundRow = document.createElement("tr");
 
+        const roundLabel = document.createElement("th");
+        roundLabel.setAttribute("scope", "row");
+        roundLabel.textContent = i + 1;
+        roundRow.appendChild(roundLabel);
+
         players.forEach((player) => {
             const playerData = document.createElement("td");
             playerData.style.setProperty("--start", EOR_Scores[i][player.playerNum] / highestScore);
@@ -2715,12 +2722,29 @@ function displayScoreChart(players, EOR_Scores){
             const dataSpan = document.createElement("span");
             dataSpan.classList.add("data");
             dataSpan.textContent = EOR_Scores[i+1][player.playerNum];
+            if (player.playerNum == myPlayerNum && (i-1) % 3 == 1){
+                playerData.style.zIndex = "1";
+            }
             playerData.appendChild(dataSpan);
 
             roundRow.appendChild(playerData);
         })
         tableBody.appendChild(roundRow);
     }
+
+    const scoreLegend = document.createElement("ul");
+    scoreLegend.classList.add("charts-css", "legend", "legend-square");
+    scoreDiv.appendChild(scoreLegend);
+
+    players.forEach((player) => {
+        const playerLegend = document.createElement("li");
+        playerLegend.textContent = player.playerName;
+        scoreLegend.appendChild(playerLegend);
+        
+        scoreLegend.style.setProperty(`--color-${player.playerNum+1}`, `${player.playerColor[0]}`);
+        playersScoreTable.style.setProperty(`--color-${player.playerNum+1}`, `${player.playerColor[0]}`);
+    })
+
     bodyElement.appendChild(scoreDiv);
 }
 

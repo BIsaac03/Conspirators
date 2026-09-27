@@ -129,7 +129,7 @@ ul#playerList{
     #roomCode img{
         filter: invert(1);
     }
-    #lobby p, #lobby ul, #lobby input{
+    #lobby p, #lobby ul, #lobby input, .title{
         color: white;
     }
     #playerCustomization #joinGame, #lobby input{
