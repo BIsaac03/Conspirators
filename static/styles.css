@@ -17,6 +17,7 @@
     --shop-color: rgb(230, 170, 30, 0.85);
     --work-color: #41A7BF;
     --steal-color: #BA0000;
+    --chart-color: lightgray;
     --dark-mode-color: #3f353a;
     --neutral-background-rgbs: 255, 248, 220;
     --display-toggle-width: max(3vw, 40px);
@@ -833,24 +834,52 @@ div[id^="player"] #handIcon{
     cursor: default;
 }
 
+.gameOver{
+    position: absolute;
+    align-self: center;
+    text-align: center;
+    background-color: rgba(211, 211, 211, 0.8);
+    padding: 5vh 15vw;
+    font-size: 4vw;
+    z-index: 20;
+}
+
 #scores{
     position: absolute;
     place-self: center;
-    display: grid;
-    align-content: center;
-    width: 80vmin;
-    background-color: lightgray;
-    padding: 1vmin;
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 1vw;
+    background-color: var(--chart-color);
+    padding: 2vmin;
     z-index: 15;
+}
+#scores table{
+    width: 60vw;
 }
 #scores span.data{
     font-weight: bold;
     font-size: 3vmin;
     padding-bottom: 0.4vmin;
+    text-shadow: 1px 1px 1px black;
 }
+#scoreConcealer{
+    position: absolute;
+    right: -2vmin;
+    background-color: var(--chart-color);
+    height: calc(100% - var(--labels-size) - var(--primary-axis-width));
+    animation: reveal-left-to-right 40s linear;
+}
+@keyframes reveal-left-to-right{
+  0%   {width: calc(100% + 2vmin);}
+  100% {width: 0;}
+}
+
 #scores .legend{
+    width: fit-content;
+    height: auto;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: space-around;
     font-size: 3vmin;
 }

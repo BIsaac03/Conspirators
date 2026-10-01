@@ -51,7 +51,6 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
         else{
             lobby.populateLobby(bodyElement, socket, roomCode);
             for (let i = 0; i < players.length; i++){
-                console.log("modify")
                 lobby.modifyPlayerList(players[i].playerID, players[i].playerName, players[i].playerColor, socket);
             }
             lobby.joinedLobbyUpdate();
@@ -251,7 +250,6 @@ socket.on("updateImpersonation", (playerNum, impersonatedAction) => {
     playedCard.setAttribute("action", impersonatedAction.name);
 })
 socket.on("displayRedirection", (owner, target, numPlayers) => {
-    console.log("redirection");
     orientCardToPlayer(owner, target, numPlayers);
     if (owner == myPlayerNum){
         document.getElementById("selectedPlayer").id = "";
@@ -327,7 +325,7 @@ socket.on("acknowledgeGameEnd", () => {
     bodyElement.appendChild(gameOverPopUp);
     setTimeout(() => {
         gameOverPopUp.remove();
-    }, 4000);
+    }, 4000000);
 })
 
 socket.on("displayScoreChart", (players, EOR_Scores) => {
@@ -406,7 +404,6 @@ function startTutorial(players, phase){
     bodyElement.appendChild(tutorialDiv);
 
     if (phase != 1){
-        console.log(players[0]);
         loadPreviousTutorialSteps(phase, players[0].currentTarget);
     }
     tutorialPhase(phase);
@@ -750,7 +747,7 @@ function tutorialPhase(phase){
             addTutorialProgressArrows([ "You can buy up to 3 <strong>different</strong> cards each round.",
                                         "If you buy more than 1, you'll get a rebate.",
                                         "Buying 2 cards will earn you 1 coin, while buying 3 will earn you 3.",
-                                        "The coins are earned <strong>after</strong> your purchase, so you cannot use them this round.",
+                                        "The rebate is earned <strong>after</strong> your purchase, so you cannot use the coins this round.",
                                         "While all players can place their orders simultaneously, the orders will be resolved in turn-order.",
                                         "If you tried to place an order for an action that is now unavaiable, you will be prompted to place a new order.",
                                         "If you ever want to view clarifying details about a card in the shop, you can RIGHT-click it instead of searching for it.",
@@ -1244,7 +1241,6 @@ function orientCardToPlayer(originPlayerNum, targetPlayerNum, numPlayers){
     const playedCard = document.querySelector(`#player${originPlayerNum} .playedCard`);
     playedCard.setAttribute("targetNum", targetPlayerNum);
     const targetAngle = calculateTargetAngle(originPlayerNum, targetPlayerNum, numPlayers);
-    console.log(`origin: ${originPlayerNum}, target: ${targetPlayerNum}, angle: ${targetAngle}`);
     const xTrans = 22 + 20*Math.sin(targetAngle);
     const yTrans = -12*Math.cos(targetAngle);
     playedCard.style.transform = `translateX(${xTrans*6}%) translateY(${yTrans*5}%) rotate(${targetAngle}rad)`;
@@ -2069,7 +2065,6 @@ function modifyCheckOutList(actionName, actionCost){
 
    else{
         const remainingCoins = checkOutList.querySelector(`.leftover`);
-        console.log(checkOutList.childElementCount)
         if (checkOutList.childElementCount < 5){
             if (Number(remainingCoins.textContent) >= actionCost){
                 shopAction.classList.add("selected");
@@ -2142,8 +2137,6 @@ function retrieveCards(player, numCardsToRetrieve){
                 numTotalRetrievals += numToReturn
             }
         })
-        console.log(numTotalRetrievals);
-        console.log(allRetrievedCards);
 
         if (numTotalRetrievals == numCardsToRetrieve){
             socket.emit("returnCardsToHand", myPlayerNum, allRetrievedCards, myID);
@@ -2240,9 +2233,7 @@ function promptImpersonate(numPlayers){
 
     for (let i = 0; i < 2; i++){
         const neighborModification = i*2 - 1;
-        console.log(neighborModification)
         const neighborNum = (myPlayerNum + neighborModification + numPlayers) % numPlayers;
-        console.log(neighborNum)
         const neighborCard = document.querySelector(`#player${neighborNum} .playedCard`);
         neighborCard.addEventListener("click", () => {
             const myCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
@@ -2688,14 +2679,22 @@ function cleanUpPlayerCard(playerNum){
 
 function displayScoreChart(players, EOR_Score){
     // !! chart testing
-    const EOR_Scores = [[0,0],[4,5],[2,6],[6,8],[8,5]];
+    const EOR_Scores = [[0,0],[4,5],[2,2],[6,8],[8,5]];
     const scoreDiv = document.createElement("div");
     scoreDiv.id = "scores";
 
+    let highestScore = Math.max(...EOR_Scores.flat(Infinity));
+    highestScore += (30 - highestScore % 10);
+    const numAxes = highestScore / 10;
+
     const playersScoreTable = document.createElement("table");
-    playersScoreTable.classList.add("charts-css", "line", "multiple", "hide-data", "show-labels", "show-primary-axis", "show-4-secondary-axes", "show-data-axes");
+    playersScoreTable.classList.add("charts-css", "line", "multiple", "show-data-on-hover", "show-labels", "show-primary-axis", `show-${numAxes}-secondary-axes`);
     playersScoreTable.style.setProperty("--datasets", players.length);
     scoreDiv.appendChild(playersScoreTable);
+
+    const scoreConcealer = document.createElement("div");
+    scoreConcealer.id = "scoreConcealer";
+    playersScoreTable.appendChild(scoreConcealer);
 
     const scoreCaption = document.createElement("caption");
     scoreCaption.textContent = "Scores";
@@ -2703,8 +2702,6 @@ function displayScoreChart(players, EOR_Score){
 
     const tableBody = document.createElement("tbody");
     playersScoreTable.appendChild(tableBody);
-
-    const highestScore = Math.max(...EOR_Scores.flat(Infinity)) + 10;
 
     for (let i = 0; i < EOR_Scores.length - 1; i++){
         const roundRow = document.createElement("tr");
@@ -2718,12 +2715,15 @@ function displayScoreChart(players, EOR_Score){
             const playerData = document.createElement("td");
             playerData.style.setProperty("--start", EOR_Scores[i][player.playerNum] / highestScore);
             playerData.style.setProperty("--end", EOR_Scores[i + 1][player.playerNum] / highestScore);
+            // hides player scores behind concealer
+            playerData.style.zIndex = "-2";
 
             const dataSpan = document.createElement("span");
             dataSpan.classList.add("data");
-            dataSpan.textContent = EOR_Scores[i+1][player.playerNum];
-            if (player.playerNum == myPlayerNum && (i-1) % 3 == 1){
-                playerData.style.zIndex = "1";
+            dataSpan.style.color = player.playerColor[0];
+            if (player.playerNum == myPlayerNum){
+                dataSpan.textContent = EOR_Scores[i+1][player.playerNum];
+                playerData.style.zIndex = "-1";
             }
             playerData.appendChild(dataSpan);
 
