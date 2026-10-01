@@ -43,14 +43,23 @@ const ongoingGames = [];
 io.on("connection", (socket) => {
     const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == currentID));
     if (myGame) {
-        socket.join(`${myGame.getGameDetails().roomCode}`);
-        const existingPlayer = myGame.getPlayers().find((player) => player.playerID == currentID);
-        socket.emit("reconnection", existingPlayer, myGame.getPlayers(), myGame.getGameDetails().shop, myGame.getGameDetails().gamePhase, myGame.getGameDetails().startPlayer, myGame.getGameDetails().gameHasStarted, myGame.getGameDetails().roomCode, myGame.getGameDetails().EOR_Scores);
-        socket.emit("displayExistingPlayers", myGame.getPlayers());
+        if (myGame.getGameDetails().gameHasStarted){
+            socket.emit("sendToGameSpace", myGame.getGameDetails().roomCode);
+        }
+        else{
+            socket.emit("checkIfStillInLobby", myGame.getGameDetails().roomCode);
+        }
     }
     else{
         socket.emit("outsideLobby");
     }
+
+    socket.on("requestReconnectionUpdate", (myID, roomCode) => {
+        socket.join(roomCode);
+        const myGame = ongoingGames.find((game) => game.getGameDetails().roomCode == roomCode);
+        const existingPlayer = myGame.getPlayers().find((player) => player.playerID == myID);
+        socket.emit("reconnection", existingPlayer, myGame.getPlayers(), myGame.getGameDetails().shop, myGame.getGameDetails().gamePhase, myGame.getGameDetails().startPlayer, myGame.getGameDetails().gameHasStarted, roomCode, myGame.getGameDetails().EOR_Scores);
+    })
 
     socket.on("setUpTutorial", (myID) => {
         const shop = createShop("basic");
@@ -85,14 +94,14 @@ io.on("connection", (socket) => {
             const shop = createShop("basic");
             const newGame = makeGame(roomCode, shop)
             ongoingGames.push(newGame);
-            socket.join(`${roomCode}`);
+            socket.join(roomCode);
         }
         else{
             if (existingLobby.getGameDetails().gameHasStarted){
                 socket.emit("gameInProgress");
             }
             else{
-                socket.join(`${roomCode}`);
+                socket.join(roomCode);
                 socket.emit("displayExistingPlayers", existingLobby.getPlayers());
             }     
         }  
@@ -134,6 +143,7 @@ io.on("connection", (socket) => {
 
     socket.on("leftLobby", (playerID) => {
         const myLobby = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == playerID));
+        socket.leave(myLobby.getGameDetails().roomCode);
         if (!myLobby.getGameDetails().gameHasStarted){
             const indexToRemove = myLobby.getPlayers().findIndex((player) => player.playerID == playerID);
             myLobby.getPlayers().splice(indexToRemove, 1);
@@ -508,7 +518,6 @@ function makeGame(code, actionShop){
         for (let i = 0; i < players.length; i++){
             startingScores.push(0);
         }
-        console.log(startingScores);
         EOR_Scores.push(startingScores);
         gameHasStarted = true;
     }

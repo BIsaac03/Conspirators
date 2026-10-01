@@ -17,7 +17,8 @@
     --shop-color: rgb(230, 170, 30, 0.85);
     --work-color: #41A7BF;
     --steal-color: #BA0000;
-    --chart-color: lightgray;
+    --chart-color: whitesmoke;
+    --dark-mode-chart-color: rgb(105, 23, 23);
     --dark-mode-color: #3f353a;
     --neutral-background-rgbs: 255, 248, 220;
     --display-toggle-width: max(3vw, 40px);
@@ -951,6 +952,15 @@ div[id^="player"] #handIcon{
     }
     #checkOutList .rebate{
         color: lightgreen;
+    }
+    #scores, #scoreConcealer{
+        color: white;
+        background-color: var(--dark-mode-chart-color);
+        --border-color: white;
+    }
+    #scores table{
+        --primary-axis-color: rgba(255, 255, 255, 1);
+        --secondary-axes-color: rgba(255, 255, 255, 0.15);
     }
     #tutorial{
         filter: invert(1);

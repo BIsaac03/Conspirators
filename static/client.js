@@ -16,7 +16,26 @@ const socket = io("http://localhost:3000", {
 });
 
 const bodyElement = document.body;
-
+socket.on("sendToGameSpace", (roomCode) => {
+    if (!window.location.href.includes(`gameSpace.html?roomCode=${roomCode}`)){
+        window.location.href = `gameSpace.html?roomCode=${roomCode}`
+    }
+    else{
+        socket.emit("requestReconnectionUpdate", myID, roomCode);
+    }
+})
+socket.on("checkIfStillInLobby", (roomCode) => {
+    if (!window.location.href.includes(`lobby.html?roomCode=${roomCode}`)){
+        socket.emit("leftLobby", myID);
+        if (window.location.href == "http://localhost:3000/" || window.location.href == "http://localhost:3000/index.html"){
+        //if (window.location.href == "https://conspirators.onrender.com/" || window.location.href == "https://conspirators.onrender.com/index.html"){
+            addMainMenuListeners();
+        }
+    }
+    else{
+        socket.emit("requestReconnectionUpdate", myID, roomCode);
+    }
+})
 socket.on("outsideLobby", () => {
     console.log(window.location.href);
     if (window.location.href == "http://localhost:3000/" || window.location.href == "http://localhost:3000/index.html"){
@@ -376,7 +395,7 @@ function addMainMenuListeners(){
     tutorial.addEventListener("click", () => {
         socket.emit("setUpTutorial", myID);
         setTimeout(()=> {
-            window.location.href = "gameSpace.html";
+            window.location.href = "gameSpace.html?roomCode=tutorial";
         }, 10)
     })
 }
@@ -2684,7 +2703,7 @@ function displayScoreChart(players, EOR_Score){
     scoreDiv.id = "scores";
 
     let highestScore = Math.max(...EOR_Scores.flat(Infinity));
-    highestScore += (30 - highestScore % 10);
+    highestScore += (50 - highestScore % 10);
     const numAxes = highestScore / 10;
 
     const playersScoreTable = document.createElement("table");
