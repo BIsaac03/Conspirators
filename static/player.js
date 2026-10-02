@@ -81,6 +81,10 @@ export class Player{
         //////
     }
 
+    updatePlayerNum(newPlayerNum){
+        this.playerNum = newPlayerNum;
+    }
+
     confirmAction(card, target, isFinal){
         this.playedCard = card;
         this.currentTarget = target;

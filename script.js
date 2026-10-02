@@ -84,10 +84,6 @@ io.on("connection", (socket) => {
         tutorialGame.startGame();
         socket.emit("startTutorial", tutorialGame.getPlayers());
     })
-    socket.on("leaveTutorial", (ID) => {
-        const indexToRemove = ongoingGames.findIndex((game) => game.getPlayers().find((player) => player.playerID == ID));
-        ongoingGames.splice(indexToRemove, 1);
-    })
     socket.on("connectToNewLobby", (roomCode) => {
         const existingLobby = ongoingGames.find((game) => game.getGameDetails().roomCode == roomCode);
         if (!existingLobby){
@@ -141,14 +137,22 @@ io.on("connection", (socket) => {
         }
     });
 
-    socket.on("leftLobby", (playerID) => {
+    socket.on("leftLobby", (playerID, hasLeftPage) => {
         const myLobby = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == playerID));
-        socket.leave(myLobby.getGameDetails().roomCode);
+        if (hasLeftPage){
+            socket.leave(myLobby.getGameDetails().roomCode);
+        }
         if (!myLobby.getGameDetails().gameHasStarted){
-            const indexToRemove = myLobby.getPlayers().findIndex((player) => player.playerID == playerID);
-            myLobby.getPlayers().splice(indexToRemove, 1);
+            myLobby.kickPlayer(playerID);
             io.to(`${myLobby.getGameDetails().roomCode}`).emit("playerKicked", playerID);
         }
+    })
+
+    socket.on("abandonGame", (playerID) => {
+        const gameIndexToRemove = ongoingGames.findIndex((game) => game.getPlayers().find((player) => player.playerID == playerID));
+        const roomCode = ongoingGames[gameIndexToRemove].getGameDetails().roomCode;
+        ongoingGames.splice(gameIndexToRemove, 1);
+        io.to(roomCode).emit("gameAbandoned");
     })
 
     socket.on("tutorialRequest", (what, data, ID) => {
@@ -179,7 +183,7 @@ io.on("connection", (socket) => {
             })
             myLobby.startGame();
             roundStart(myLobby);
-            io.to(`${roomCode}`).emit("sendToGame");
+            io.to(`${roomCode}`).emit("sendToGame", roomCode);
         }
     })
 
@@ -513,10 +517,15 @@ function makeGame(code, actionShop){
     const addPlayer = (player) => {
         players.push(player);
     }
+    const kickPlayer = (IDToKick) => {
+        const indexToRemove = players.findIndex((player) => player.playerID == IDToKick);
+        players.splice(indexToRemove, 1);
+    }
     const startGame = () => {
         const startingScores = []
         for (let i = 0; i < players.length; i++){
             startingScores.push(0);
+            players[i].updatePlayerNum(i);
         }
         EOR_Scores.push(startingScores);
         gameHasStarted = true;
@@ -535,7 +544,7 @@ function makeGame(code, actionShop){
         EOR_Scores.push(currentStandings);
     }
 
-    return {getPlayers, getGameDetails, addPlayer, startGame, changeGamePhase, rotateStartPlayer, recordScore}
+    return {getPlayers, getGameDetails, addPlayer, kickPlayer, startGame, changeGamePhase, rotateStartPlayer, recordScore}
 }
 
 function establishWorkValue(players){

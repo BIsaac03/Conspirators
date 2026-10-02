@@ -145,7 +145,7 @@ button:hover{
   100% {transform: translate(0, 0);}
 }
 
-#leaveTutorial{
+#abandonGame{
     position: absolute;
     right: 7vw;
     top: 3vw;

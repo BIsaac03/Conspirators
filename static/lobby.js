@@ -73,7 +73,7 @@ function modifyPlayerList(playerID, playerName, playerColor, socket){
             leaveLobbyButton.id = "leaveLobbyButton";
             leaveLobbyButton.textContent = "X";
             leaveLobbyButton.addEventListener("click", () => {
-                socket.emit("leftLobby", playerID);
+                socket.emit("leftLobby", playerID, false);
             })
             player.appendChild(leaveLobbyButton)
             playerList.appendChild(player);

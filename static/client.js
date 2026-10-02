@@ -26,7 +26,7 @@ socket.on("sendToGameSpace", (roomCode) => {
 })
 socket.on("checkIfStillInLobby", (roomCode) => {
     if (!window.location.href.includes(`lobby.html?roomCode=${roomCode}`)){
-        socket.emit("leftLobby", myID);
+        socket.emit("leftLobby", myID, true);
         if (window.location.href == "http://localhost:3000/" || window.location.href == "http://localhost:3000/index.html"){
         //if (window.location.href == "https://conspirators.onrender.com/" || window.location.href == "https://conspirators.onrender.com/index.html"){
             addMainMenuListeners();
@@ -37,18 +37,19 @@ socket.on("checkIfStillInLobby", (roomCode) => {
     }
 })
 socket.on("outsideLobby", () => {
-    console.log(window.location.href);
-    if (window.location.href == "http://localhost:3000/" || window.location.href == "http://localhost:3000/index.html"){
-    //if (window.location.href == "https://conspirators.onrender.com/" || window.location.href == "https://conspirators.onrender.com/index.html"){
-        addMainMenuListeners();
-    }
-    else if (window.location.href.startsWith("http://localhost:3000/lobby.html")){
-    //else if (window.location.href.startsWith("https://conspirators.onrender.com/lobby")){
+    if (window.location.href.includes("lobby.html")){
         const params = new URLSearchParams(window.location.search);
         const roomCode = params.get('roomCode');
         socket.emit("connectToNewLobby", roomCode); 
         lobby.populateLobby(bodyElement, socket, roomCode);
-    }    
+    } 
+    else if (window.location.href == "http://localhost:3000/" || window.location.href == "http://localhost:3000/index.html"){
+    //else if (window.location.href == "https://conspirators.onrender.com/" || window.location.href == "https://conspirators.onrender.com/index.html"){
+        addMainMenuListeners();
+    }
+    else{
+        window.location.href = "index.html";
+    }
 })
 
 socket.on("startTutorial", (players) => {
@@ -81,6 +82,7 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
         populateGameSpace(players);
         addActionSearchListeners(false);
         addScorecardListeners(players.length);
+        addAbandonGameListener(false);
         createStats(players);
         updateStats(players, startPlayer);
         addCardDisplayListeners();
@@ -219,9 +221,14 @@ socket.on("playerKicked", (playerID) => {
         startGameButton.style.visibility = "hidden";
     }
 })
+socket.on("gameAbandoned", () => {
+    setTimeout(() => {
+        window.location.href = "index.html";
+    }, 20);
+})
 
-socket.on("sendToGame", () => {
-    window.location.href = "gameSpace.html"
+socket.on("sendToGame", (roomCode) => {
+    window.location.href = `gameSpace.html?roomCode=${roomCode}`;
 })
 socket.on("selectAction", (players) => {
     displayCards(players[myPlayerNum], players[myPlayerNum].hand, "play", false);
@@ -414,6 +421,7 @@ function startTutorial(players, phase){
     
     addCardDisplayListeners();
     addScorecardListeners(3);
+    addAbandonGameListener(true);
 
     const tutorialDiv = document.createElement("div")
     tutorialDiv.id = "tutorial"
@@ -427,16 +435,8 @@ function startTutorial(players, phase){
     }
     tutorialPhase(phase);
 
-    const leaveTutorial = document.createElement("button");
-    leaveTutorial.textContent = "Leave tutorial";
-    leaveTutorial.id = "leaveTutorial";
-    leaveTutorial.addEventListener("click", () => {
-        socket.emit("leaveTutorial", myID);
-        setTimeout(() => {
-            window.location.href = "index.html";
-        }, 100);
-    })
-    bodyElement.appendChild(leaveTutorial);
+    const abandonGame = document.getElementById("abandonGame");
+    abandonGame.textContent = "Leave Tutorial";
 }
 function hideElementsForTutorial(){
     const actionSort = document.getElementById("sortActions");
@@ -1325,6 +1325,18 @@ function addProtectionIcon(playerNum){
     const protectionIcon = document.createElement("img");
     protectionIcon.src = "/static/Images/Icons/shield.svg"
     playerIcon.replaceChildren(protectionIcon);
+}
+
+function addAbandonGameListener(isTutorial){
+    const abandonGame = document.getElementById("abandonGame");
+    abandonGame.addEventListener("click", () => {
+        if (isTutorial){
+            socket.emit("abandonGame", myID);
+        }
+        else if (confirm("Are you sure you want to abandon this game? All players will be kicked.")){
+            socket.emit("abandonGame", myID);
+        }
+    })
 }
 
 function addScorecardListeners(numPlayers){
