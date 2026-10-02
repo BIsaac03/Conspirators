@@ -289,10 +289,10 @@ io.on("connection", (socket) => {
             }
             else{
                 if (card[0].name == "Bewitch"){
-                    retrievedCardsString += `${numRetrieved} <span>${card[0].name}</span>es`;
+                    retrievedCardsString += `<span class="sameLine">${numRetrieved} <span>${card[0].name}</span>es</span>`;
                 }
                 else{
-                    retrievedCardsString += `${numRetrieved} <span>${card[0].name}</span>s`;
+                    retrievedCardsString += `<span class="sameLine">${numRetrieved} <span>${card[0].name}</span>s</span>`;
                 }
             }
         })
@@ -376,7 +376,7 @@ io.on("connection", (socket) => {
         }, animationTime + 1000);
     })
 
-    socket.on("sortCards", (sortBy, isAscending, where, myID) => {
+    socket.on("sortCards", (sortBy, isAscending, where, myID, ongoingRetrievals) => {
         const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
         const me = myGame.getPlayers().find((player) => player.playerID == myID);
         switch (sortBy){
@@ -413,7 +413,7 @@ io.on("connection", (socket) => {
                 }
                 break;
         }
-        socket.emit("updateCards", myGame.getPlayers(), myGame.getGameDetails().shop, where, true, false);
+        socket.emit("updateCards", myGame.getPlayers(), myGame.getGameDetails().shop, where, true, false, ongoingRetrievals);
     });
 
     socket.on("getUpdatedCards", (where, shouldDisplay, myID) => {
@@ -526,6 +526,8 @@ function makeGame(code, actionShop){
         for (let i = 0; i < players.length; i++){
             startingScores.push(0);
             players[i].updatePlayerNum(i);
+            // !! remove after testing
+            players[i].discardHand();
         }
         EOR_Scores.push(startingScores);
         gameHasStarted = true;

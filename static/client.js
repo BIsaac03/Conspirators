@@ -321,12 +321,12 @@ socket.on("updateStats", (players, startPlayer) => {
     updateStats(players, startPlayer);
 })
 
-socket.on("updateCards", (players, shop, where, shouldDisplay, isTutorial) => {
+socket.on("updateCards", (players, shop, where, shouldDisplay, isTutorial, ongoingRetrievals) => {
     if (where == "hand"){
-        displayCards(players[myPlayerNum], players[myPlayerNum].hand, "play", isTutorial)
+        displayCards(players[myPlayerNum], players[myPlayerNum].hand, "play", isTutorial);
     }
     else if (where == "discard"){
-        displayCards(players[myPlayerNum], players[myPlayerNum].discard, "play", isTutorial)
+        displayCards(players[myPlayerNum], players[myPlayerNum].discard, "play", isTutorial, ongoingRetrievals);
     }
     else if (where == "shop"){
         displayCards(players[myPlayerNum], shop, "buy", isTutorial);
@@ -1548,12 +1548,14 @@ function addCardDisplayListeners(){
     actionSortIcon.addEventListener("mouseenter", () => {
         const sortBy = actionSortDiv.querySelector(`form`);
         sortBy.style.visibility = "visible";
+        sortBy.parentElement.style.zIndex = "2";
         actionSortDiv.style.cursor = "pointer";
 
     })
     actionSortDiv.addEventListener("mouseleave", () => {
         const sortBy = actionSortDiv.querySelector(`form`);
         sortBy.style.visibility = "hidden";
+        sortBy.parentElement.style.zIndex = "0";
         actionSortDiv.style.cursor = "default";
     })
 
@@ -1562,11 +1564,11 @@ function addCardDisplayListeners(){
         const where = whereInPlayerDisplay();
         if (actionSortIcon.src.includes("/static/Images/Icons/sort-ascending.svg")){
             actionSortIcon.src = "/static/Images/Icons/sort-descending.svg";
-            socket.emit("sortCards", sortBy.value, false, where, myID);
+            socket.emit("sortCards", sortBy.value, false, where, myID, saveCurrentRetrievals());
         }
         else{
             actionSortIcon.src = "/static/Images/Icons/sort-ascending.svg";
-            socket.emit("sortCards", sortBy.value, true, where, myID);
+            socket.emit("sortCards", sortBy.value, true, where, myID, saveCurrentRetrievals());
         }
     })
 
@@ -1576,7 +1578,7 @@ function addCardDisplayListeners(){
             if (e.target.checked) {
                 const where = whereInPlayerDisplay();
                 actionSortIcon.src = "/static/Images/Icons/sort-ascending.svg";
-                socket.emit("sortCards", sortBy.value, true, where, myID);
+                socket.emit("sortCards", sortBy.value, true, where, myID, saveCurrentRetrievals());
             }
         });
     });
@@ -1648,7 +1650,7 @@ function openRelevantPlayerDisplay(player, where, isTutorial){
     }
 }
 
-function displayCards(player, cardsToDisplay, why, isTutorial){
+function displayCards(player, cardsToDisplay, why, isTutorial, ongoingRetrievals){
     const actionSelection = document.querySelector(`.actionSelection.${why}`);
     actionSelection.innerHTML = "";
 
@@ -1775,6 +1777,12 @@ function displayCards(player, cardsToDisplay, why, isTutorial){
         actionDiv.appendChild(possibleAction);
         actionDiv.appendChild(numberOfAction);
         actionSelection.appendChild(actionDiv);
+    }
+
+    if (ongoingRetrievals){
+        setTimeout(() => {
+            displayOngoingRetrievals(ongoingRetrievals);
+        }, 50);
     }
 }
 
@@ -2182,6 +2190,34 @@ function retrieveCards(player, numCardsToRetrieve){
     retrieveDiv.appendChild(remainingRetrievals);
     retrieveDiv.appendChild(confirm);
     bodyElement.appendChild(retrieveDiv);
+}
+
+function saveCurrentRetrievals(){
+    const allRetrievedCards = [];
+
+    const retrievedActionNums = document.querySelectorAll(".retrieveIcon p");
+    retrievedActionNums.forEach(actionNum => {
+        const actionName = actionNum.parentElement.parentElement.firstChild.getAttribute("action");
+        const numToReturn = Number(actionNum.textContent);
+        allRetrievedCards.push([actionName, numToReturn]);
+    })
+    return allRetrievedCards;
+}
+
+function displayOngoingRetrievals(ongoingRetrievals){
+    ongoingRetrievals.forEach((retrievalPair) => {
+        const card = document.querySelector(`#playerDisplay [action="${retrievalPair[0]}"]`)
+        const cardIndex = [...card.parentElement.parentElement.children].indexOf(card.parentElement);
+
+        const retrieveIcon = document.createElement("div");
+        retrieveIcon.classList.add("retrieveIcon");
+        const numDuplicateRetrievals = document.createElement("p");
+        numDuplicateRetrievals.classList.add(`num${cardIndex}`);
+        numDuplicateRetrievals.textContent = retrievalPair[1];
+
+        retrieveIcon.appendChild(numDuplicateRetrievals);
+        card.parentElement.appendChild(retrieveIcon);
+    })
 }
 
 function promptDonation(giver, receiver, donationType){

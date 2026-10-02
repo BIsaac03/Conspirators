@@ -42,6 +42,9 @@ button{
 button:hover{
     cursor: pointer;
 }
+.sameLine{
+  white-space: nowrap;
+}
 
 #mainMenu{
     display: grid;
@@ -170,6 +173,7 @@ button:hover{
     border-radius: 10%;
     user-select: none;
     container-type: inline-size;
+    z-index: 1;
 }
 .card .cost{
     height: 70%;
@@ -520,6 +524,7 @@ div[id^="player"] #handIcon{
     grid-template-columns: 1fr 2fr;
     width: 15%;
     cursor: default;
+    z-index: 0;
 }
 #sortActions img{
     grid-column: 2 / 3;
@@ -672,6 +677,7 @@ div[id^="player"] #handIcon{
     border-radius: 50%;
     background-color: limegreen;
     box-shadow: 0 0 0 1px gray;
+    z-index: 1;
 }
 
 #workValueScorecard{
@@ -798,6 +804,7 @@ div[id^="player"] #handIcon{
     padding: 5px;
     min-height: 70px;
     font-size: 20px;
+    overflow: auto;
     display: grid;
     grid-template-columns: auto 1fr auto;
     gap: 5px;
@@ -927,7 +934,7 @@ div[id^="player"] #handIcon{
         filter: invert(1);
     }
     div[id^="player"] .playerIcon {
-        background-color: gray;
+        background-color: #adadad;
     }
     #actionSearch input, #actionSearch div p.highlighted{
         color: white;
