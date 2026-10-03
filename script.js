@@ -56,7 +56,7 @@ io.on("connection", (socket) => {
 
     socket.on("requestReconnectionUpdate", (myID, roomCode) => {
         socket.join(roomCode);
-        const myGame = ongoingGames.find((game) => game.getGameDetails().roomCode == roomCode);
+        const myGame = ongoingGames.find((game) => game.getPlayers().find((player) => player.playerID == myID));
         const existingPlayer = myGame.getPlayers().find((player) => player.playerID == myID);
         socket.emit("reconnection", existingPlayer, myGame.getPlayers(), myGame.getGameDetails().shop, myGame.getGameDetails().gamePhase, myGame.getGameDetails().startPlayer, myGame.getGameDetails().gameHasStarted, roomCode, myGame.getGameDetails().EOR_Scores);
     })
@@ -148,11 +148,16 @@ io.on("connection", (socket) => {
         }
     })
 
-    socket.on("abandonGame", (playerID) => {
+    socket.on("abandonGame", (playerID, isTutorial) => {
         const gameIndexToRemove = ongoingGames.findIndex((game) => game.getPlayers().find((player) => player.playerID == playerID));
         const roomCode = ongoingGames[gameIndexToRemove].getGameDetails().roomCode;
         ongoingGames.splice(gameIndexToRemove, 1);
-        io.to(roomCode).emit("gameAbandoned");
+        if (!isTutorial){
+            io.to(roomCode).emit("gameAbandoned");
+        }
+        else{
+            socket.emit("gameAbandoned");
+        }
     })
 
     socket.on("tutorialRequest", (what, data, ID) => {
@@ -285,14 +290,14 @@ io.on("connection", (socket) => {
                 retrievedCardsString += " and ";
             }
             if (numRetrieved == 1){
-                retrievedCardsString += `1 <span>${card[0].name}</span>`; 
+                retrievedCardsString += ` <span class="sameLine">1 <span class="cardName">${card[0].name}</span></span>`; 
             }
             else{
                 if (card[0].name == "Bewitch"){
-                    retrievedCardsString += `<span class="sameLine">${numRetrieved} <span>${card[0].name}</span>es</span>`;
+                    retrievedCardsString += ` <span class="sameLine">${numRetrieved} <span class="cardName">${card[0].name}es</span></span>`;
                 }
                 else{
-                    retrievedCardsString += `<span class="sameLine">${numRetrieved} <span>${card[0].name}</span>s</span>`;
+                    retrievedCardsString += ` <span class="sameLine">${numRetrieved} <span class="cardName">${card[0].name}s</span></span>`;
                 }
             }
         })
@@ -526,8 +531,6 @@ function makeGame(code, actionShop){
         for (let i = 0; i < players.length; i++){
             startingScores.push(0);
             players[i].updatePlayerNum(i);
-            // !! remove after testing
-            players[i].discardHand();
         }
         EOR_Scores.push(startingScores);
         gameHasStarted = true;
@@ -698,10 +701,10 @@ function attemptPurchase(players, startPlayer, shop){
                         boughtCardsString += " and ";
                     }
                     if(["A", "I", "Ho"].some((vowel) => card.name.startsWith(vowel))){
-                        boughtCardsString += ` an <span>${card.name}</span>`;
+                        boughtCardsString += ` an <span class="cardName">${card.name}</span>`;
                     }
                     else{
-                        boughtCardsString += ` a <span>${card.name}</span>`;
+                        boughtCardsString += ` a <span class="cardName>${card.name}</span>`;
                     }
                 })
 

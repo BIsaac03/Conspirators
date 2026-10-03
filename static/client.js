@@ -1331,10 +1331,10 @@ function addAbandonGameListener(isTutorial){
     const abandonGame = document.getElementById("abandonGame");
     abandonGame.addEventListener("click", () => {
         if (isTutorial){
-            socket.emit("abandonGame", myID);
+            socket.emit("abandonGame", myID, true);
         }
         else if (confirm("Are you sure you want to abandon this game? All players will be kicked.")){
-            socket.emit("abandonGame", myID);
+            socket.emit("abandonGame", myID, false);
         }
     })
 }
@@ -2651,7 +2651,7 @@ function displayNotification(notification, notificationType){
     notificationContent.id = "notification";
     notificationContent.innerHTML = notification;
     
-    const namedActions = notificationContent.querySelectorAll(`span`);
+    const namedActions = notificationContent.querySelectorAll(`span.cardName`);
     namedActions.forEach((action) => {
         const actionToBlowUp = allActions.find((toBlowUp) => toBlowUp.name == action.textContent);
         switch (actionToBlowUp.definingColor){
@@ -2674,7 +2674,6 @@ function displayNotification(notification, notificationType){
             case ("yellow"):
                 action.style.color = "#FFE166";
                 break;
-
         }
 
         action.addEventListener("mouseenter", () => {
