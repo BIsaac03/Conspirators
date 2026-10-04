@@ -378,7 +378,7 @@ io.on("connection", (socket) => {
         
         setTimeout(() => {
             determineResolutionOrder(players, myGame.getGameDetails().startPlayer, me.playerNum);
-        }, animationTime + 1000);
+        }, animationTime + 1500);
     })
 
     socket.on("sortCards", (sortBy, isAscending, where, myID, ongoingRetrievals) => {

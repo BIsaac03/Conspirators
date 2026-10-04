@@ -1802,7 +1802,6 @@ function promptActionSelection(player, isTutorial){
 
 function actionSelection(players, myPlayerNum, isFinal){
     const myCard = document.querySelector(`#player${myPlayerNum} .playedCard`);
-    promptActionSelection(players[myPlayerNum], false);
 
     // orients card to target player 
     addPlayerTargeting(myCard, myPlayerNum, players.length)
@@ -1837,6 +1836,7 @@ function actionSelection(players, myPlayerNum, isFinal){
         } 
     })
     bodyElement.appendChild(confirm);
+    promptActionSelection(players[myPlayerNum], false);
 }
 
 function addPlayerTargeting(card, playerNum, numPlayers){
