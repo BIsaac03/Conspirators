@@ -107,7 +107,7 @@ export const allActions = [
                     players[player.currentTarget].cooperatingWith = player.playerNum;
                     setTimeout(() => {
                         io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 5, players.length, player.currentTarget);
-                        setTimeour(() => {
+                        setTimeout(() => {
                             io.to(myGame.getGameDetails().roomCode).emit("cooperate", players[player.currentTarget], player);
                         }, 2000)
                     }, workTime)`,

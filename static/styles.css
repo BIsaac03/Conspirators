@@ -299,7 +299,7 @@ body:has(#mainMenu){
     box-shadow: 0 0 20px 10px gray;
     width: 40vh;
     border-radius: 10%;
-    z-index: 3;
+    z-index: 4;
 }
 #blownUp.FAQOnly{
     box-shadow: none;
@@ -943,7 +943,7 @@ div[id^="player"] #handIcon{
     #mainMenu button{
         background-color: #332a2e;
     }
-    button:disabled{
+    #cardSwapPopUp button:disabled, button:disabled{
         background-color: #938d90;
     }
 

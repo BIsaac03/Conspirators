@@ -294,10 +294,10 @@ io.on("connection", (socket) => {
             }
             else{
                 if (card[0].name == "Bewitch"){
-                    retrievedCardsString += ` <span class="sameLine">${numRetrieved} <span class="cardName">${card[0].name}es</span></span>`;
+                    retrievedCardsString += ` <span class="sameLine">${numRetrieved} <span class="cardName">${card[0].name}</span>es</span>`;
                 }
                 else{
-                    retrievedCardsString += ` <span class="sameLine">${numRetrieved} <span class="cardName">${card[0].name}s</span></span>`;
+                    retrievedCardsString += ` <span class="sameLine">${numRetrieved} <span class="cardName">${card[0].name}</span>s</span>`;
                 }
             }
         })
@@ -820,6 +820,8 @@ function cursed(cursed){
     if (cursed.playedCard.isBasicAction){
         cursed.discardPlayedCard(myGame.getGameDetails().shop);
         where += "discarded";
+        io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", myGame.getPlayers(), [], "discard", false);
+        io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", myGame.getPlayers(), [], "hand", false);
     }
     else{
         returnToShop(cursed.playedCard, myGame.getGameDetails().shop);
