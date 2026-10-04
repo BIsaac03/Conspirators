@@ -704,7 +704,7 @@ function attemptPurchase(players, startPlayer, shop){
                         boughtCardsString += ` an <span class="cardName">${card.name}</span>`;
                     }
                     else{
-                        boughtCardsString += ` a <span class="cardName>${card.name}</span>`;
+                        boughtCardsString += ` a <span class="cardName">${card.name}</span>`;
                     }
                 })
 
@@ -776,13 +776,6 @@ function endGame(myGame){
     setTimeout(() => {
         io.to(myGame.getGameDetails().roomCode).emit("displayScoreChart", myGame.getPlayers(), myGame.getGameDetails().EOR_Scores);
     }, 5000);
-
-    /* !! add after testing
-    setTimeout(() => {
-        const myGameIndex = ongoingGames.indexOf(myGame);
-        ongoingGames.splice(myGameIndex, 1);
-    }, 180000);
-    */
 }
 
 function work(worker, workValue, modification, players){

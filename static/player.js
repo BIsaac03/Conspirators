@@ -44,7 +44,7 @@ export class Player{
         this.hand.push([selectedBAs[0], 1]);
         this.hand.push([selectedBAs[1], 1])
 
-        ////// TESTING
+        ////// !! TESTING
         const ransack = allActions.find((action) => action.name == "Ransack");
         const bewitch = allActions.find((action) => action.name == "Bewitch");
         const communalize = allActions.find((action) => action.name == "Communalize");
@@ -87,7 +87,7 @@ export class Player{
 
     confirmAction(card, target, isFinal){
         this.playedCard = card;
-        this.currentTarget = target;
+        this.currentTarget = Number(target);
 
         if (isFinal){
             const indexOfSelectedAction = this.hand.findIndex((entry) => entry[0].name == card.name);

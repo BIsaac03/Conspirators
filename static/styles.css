@@ -29,7 +29,7 @@
 }
 body{
     display: grid;
-    background-color: var(--light-mode-color);
+    background: var(--light-mode-color);
     font-family: 'calistoMT';
     grid-template-rows: 9vh auto 2fr;
     width: 100vw;
@@ -49,6 +49,10 @@ button:hover{
 }
 .sameLine{
   white-space: nowrap;
+}
+
+body:has(#mainMenu){
+    background: radial-gradient(circle at top left, var(--light-mode-color), gray);
 }
 
 #mainMenu{
@@ -901,11 +905,19 @@ div[id^="player"] #handIcon{
     justify-content: space-around;
     font-size: 3vmin;
 }
+.legend span{
+    white-space: pre;
+    margin-left: auto;
+    padding-left: 10px;
+    font-weight: bold;
+}
 
 @media (prefers-color-scheme: dark) {
     body{
-        background: radial-gradient(circle at center, whitesmoke, var(--dark-mode-color) 50%);
         background: var(--dark-mode-color);
+    }
+    body:has(#mainMenu){
+        background: radial-gradient(circle at top left, rgb(100, 100, 100), var(--dark-mode-color));
     }
     #gameSpace{
         background-color: peru;
@@ -925,8 +937,11 @@ div[id^="player"] #handIcon{
         background-color: var(--dark-mode-color);
     }
 
-    button, #cardSwap button{
+    button, #cardSwapPopUp button{
         background-color: var(--dark-mode-color);
+    }
+    #mainMenu button{
+        background-color: #332a2e;
     }
 
     #blownUp .FAQ p{
@@ -985,6 +1000,7 @@ div[id^="player"] #handIcon{
     }
 
     #impersonateDiv, #retrieveDiv{
+        color: white;
         background-color: rgb(var(--dark-mode-neutral-rgbs));
     }
 

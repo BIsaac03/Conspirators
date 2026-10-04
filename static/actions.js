@@ -133,18 +133,19 @@ export const allActions = [
     {
         "name": "Ransack",
         "background": "static/Images/Backgrounds/red_arrow.png",
-        "text": "<b>Steal -1</b>.<br>Neighbors of target player each take 2 coins.",
+        "text": "<b>Steal -1</b>.<br>Neighbors of target player each take<br>2 coins.",
         "definingColor": "red",
         "isWork": false,
         "isSteal": true,
         "isTargeting": true,
-        "effect":  `const stealTime = steal(player, players[player.currentTarget], -1, players);
+        "effect":  `const myTarget = Number(player.currentTarget);
+                    const stealTime = steal(player, players[myTarget], -1, players);
                     animationTime = 1400 + stealTime;
                     setTimeout(() => {
-                        players[(player.currentTarget + 1) % players.length].numCoins += 2;
-                        players[(player.currentTarget - 1 + players.length) % players.length].numCoins += 2;
-                        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 2, players.length, (player.currentTarget + 1) % players.length);
-                        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 2, players.length, (player.currentTarget - 1 + players.length) % players.length);
+                        players[(myTarget + 1) % players.length].numCoins += 2;
+                        players[(myTarget - 1 + players.length) % players.length].numCoins += 2;
+                        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 2, players.length, (myTarget + 1) % players.length);
+                        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 2, players.length, (myTarget - 1 + players.length) % players.length);
                     }, stealTime)`,
         "priority": 0,
         "cost": 3,
@@ -451,7 +452,7 @@ export const allActions = [
         "isBasicAction": false,
         "isSecondaryBA": false,
         "isOneShot": false,
-        "FAQ": ["A player who <i>Retaliates</i>, is only a Thief if they are targeted by a Thief."]
+        "FAQ": ["A player who <i>Retaliates</i>, is only a Thief if the player they are targeting intends to <b>Steal</b> from them."]
     },
     {
         "name": "Abduct",

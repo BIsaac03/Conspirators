@@ -77,6 +77,13 @@ socket.on("reconnection", (reconnectedPlayer, players, shop, roundPhase, startPl
         }
     }
     else{
+        const myTarget = 3;
+        console.log(players.length);
+        console.log(myTarget);
+        console.log((myTarget + 1) % players.length);
+        console.log((myTarget - 1 + players.length) % players.length);
+
+
         myPlayerNum = reconnectedPlayer.playerNum;
 
         populateGameSpace(players);
@@ -351,7 +358,7 @@ socket.on("acknowledgeGameEnd", () => {
     bodyElement.appendChild(gameOverPopUp);
     setTimeout(() => {
         gameOverPopUp.remove();
-    }, 4000000);
+    }, 5000);
 })
 
 socket.on("displayScoreChart", (players, EOR_Scores) => {
@@ -1362,11 +1369,6 @@ function addScorecardListeners(numPlayers){
         scorecard.addEventListener("mouseleave", () => {
             removePreviousElement(`#blownUpScorecard`);
         })
-
-        // TESTING
-        scorecard.addEventListener("click", () => {
-            animateCoinTransfer(4, 3, 2);
-        })
     }
 }
 
@@ -2318,19 +2320,21 @@ function promptRedirects(type, players){
     switch(type){
         case "whistle":
             players.forEach((player) => {
-                if (player.playerNum != myPlayerNum){
-                    if (player.currentTarget == myPlayerNum){
+                const myNum = Number(player.playerNum);
+                const myTarget = Number(player.currentTarget);
+                if (myNum != myPlayerNum){
+                    if (myTarget == myPlayerNum){
                         const legalTargets = [myPlayerNum]
-                        if (player.playerNum != (myPlayerNum + 1) % players.length){
+                        if (myNum != (myPlayerNum + 1) % players.length){
                             legalTargets.push((myPlayerNum + 1) % players.length);
                         }
-                        if (player.playerNum != (myPlayerNum - 1 + players.length) % players.length){
+                        if (myNum != (myPlayerNum - 1 + players.length) % players.length){
                             legalTargets.push((myPlayerNum - 1 + players.length) % players.length);
                         }
-                        redirectableCards.push([player.playerNum, legalTargets]);
+                        redirectableCards.push([myNum, legalTargets]);
                     }
-                    else if (player.currentTarget == (myPlayerNum + 1) % players.length || player.currentTarget == (myPlayerNum - 1 + players.length) % players.length){
-                        redirectableCards.push([player.playerNum, [player.currentTarget, myPlayerNum]]);
+                    else if (myTarget == (myPlayerNum + 1) % players.length || myTarget == (myPlayerNum - 1 + players.length) % players.length){
+                        redirectableCards.push([myNum, [myTarget, myPlayerNum]]);
                     }
                 }
             })
@@ -2733,7 +2737,7 @@ function cleanUpPlayerCard(playerNum){
     playedCard.classList.remove("oneShot");
     playedCard.setAttribute("targeting", "open");
     playedCard.style.opacity = "0.3";
-    playedCard.style.transform = "translateX(min(5vh, calc(5vw * 2 / 3))) rotate(-90deg)";
+    playedCard.style.transform = "translateX(min(1.9vh, calc(1.9vw * 2 / 3))) rotate(-90deg)";
 
     if (playerNum == myPlayerNum){
         const selectedPlayer = document.getElementById("selectedPlayer");
@@ -2743,15 +2747,19 @@ function cleanUpPlayerCard(playerNum){
     }
 }
 
-function displayScoreChart(players, EOR_Score){
-    // !! chart testing
-    const EOR_Scores = [[0,0],[4,5],[2,2],[6,8],[8,5]];
+function displayScoreChart(players, EOR_Scores){
     const scoreDiv = document.createElement("div");
     scoreDiv.id = "scores";
 
+    // keeps axis scale as a multiple of 5, while ensuring they can be fully displayed 
     let highestScore = Math.max(...EOR_Scores.flat(Infinity));
-    highestScore += (50 - highestScore % 10);
-    const numAxes = highestScore / 10;
+    let ptsPerAxis = 5;
+    let numAxes = Math.ceil(highestScore / ptsPerAxis);
+    while (numAxes > 10){
+        ptsPerAxis += 5;
+        numAxes = Math.ceil(highestScore / ptsPerAxis);
+    }
+    highestScore += (ptsPerAxis - (highestScore % ptsPerAxis));
 
     const playersScoreTable = document.createElement("table");
     playersScoreTable.classList.add("charts-css", "line", "multiple", "show-data-on-hover", "show-labels", "show-primary-axis", `show-${numAxes}-secondary-axes`);
@@ -2804,7 +2812,11 @@ function displayScoreChart(players, EOR_Score){
 
     players.forEach((player) => {
         const playerLegend = document.createElement("li");
-        playerLegend.textContent = player.playerName;
+        playerLegend.innerHTML = player.playerName + `<span>      </span>`;
+        setTimeout(() => {
+            const finalPts = playerLegend.querySelector("span");
+            finalPts.textContent = EOR_Scores[EOR_Scores.length - 1][player.playerNum]; 
+        }, 40000);
         scoreLegend.appendChild(playerLegend);
         
         scoreLegend.style.setProperty(`--color-${player.playerNum+1}`, `${player.playerColor[0]}`);
