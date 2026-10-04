@@ -160,7 +160,7 @@ body:has(#mainMenu){
 #abandonGame{
     position: absolute;
     right: 7vw;
-    top: 3vw;
+    top: 1vw;
     height: fit-content;
     width: fit-content;
     font-size: 32px;
@@ -942,6 +942,9 @@ div[id^="player"] #handIcon{
     }
     #mainMenu button{
         background-color: #332a2e;
+    }
+    button:disabled{
+        background-color: #938d90;
     }
 
     #blownUp .FAQ p{

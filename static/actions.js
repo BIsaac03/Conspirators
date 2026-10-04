@@ -99,14 +99,18 @@ export const allActions = [
         "isWork": true,
         "isSteal": false,
         "isTargeting": true,
-        "effect":  `const workTime = work(player, workValue, -2, players); 
-                    players[player.currentTarget].numCoins += 5; 
-                    animationTime = Math.max(2000, workTime);
-                    io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 5, players.length, player.currentTarget);
+        "effect":  `const workTime = work(player, workValue, -2, players);
+                    animationTime = 2000 + workTime;
+                    players[player.currentTarget].numCoins += 5;
                     players[player.currentTarget].isReady = false;
                     players[player.currentTarget].waitingOn = "cooperate";
                     players[player.currentTarget].cooperatingWith = player.playerNum;
-                    io.to(myGame.getGameDetails().roomCode).emit("cooperate", players[player.currentTarget], player);`,
+                    setTimeout(() => {
+                        io.to(myGame.getGameDetails().roomCode).emit("animateCoinTransfer", 5, players.length, player.currentTarget);
+                        setTimeour(() => {
+                            io.to(myGame.getGameDetails().roomCode).emit("cooperate", players[player.currentTarget], player);
+                        }, 2000)
+                    }, workTime)`,
         "priority": 0,
         "cost": 0,
         "isBasicAction": true,

@@ -265,6 +265,11 @@ socket.on("allowShopPurchases", (shop, players) => {
     displayCards(players[myPlayerNum], shop, "buy", false);
     createCheckOutList(players[myPlayerNum].numCoins, false);
 })
+socket.on("redoShopOrder", (players, playerID) => {
+    if (playerID == myID){
+        createCheckOutList(players[myPlayerNum].numCoins, false);
+    }
+})
 socket.on("resetGameDisplay", () => {
     removePreviousElement(`#checkOutList`);
     populateCardBacks();
@@ -2394,6 +2399,7 @@ function promptRedirects(type, players){
             const clone = card.cloneNode(true);
             card.replaceWith(clone);
         })
+        removeAllPlayerTargeting(players.length);
         socket.emit("finishedRedirecting", newTargets, myID);
     })
     bodyElement.appendChild(finalizeTargeting);

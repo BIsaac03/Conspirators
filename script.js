@@ -324,7 +324,7 @@ io.on("connection", (socket) => {
         
         setTimeout(() => {
             determineResolutionOrder(myGame.getPlayers(), myGame.getGameDetails().startPlayer, cooperator.playerNum);
-        }, coins*200 + 3000);
+        }, coins*200 + 2000*Math.min(1, coins));
     })
 
     socket.on("honored", (giverID, receiverID, coins) => {
@@ -460,22 +460,22 @@ function createShop(type){
         const abduct = allActions.find((action) => action.name == "Abduct");
         const proselytize = allActions.find((action) => action.name == "Proselytize");
 
-        forSale.push([ransack, 4]);
-        forSale.push([honor, 4]);
-        forSale.push([hijack, 4]);
-        forSale.push([recruit, 4]);
-        forSale.push([impersonate, 4]);
-        forSale.push([unionize, 4]);
-        forSale.push([whistle, 4]);
-        forSale.push([communalize, 4]);
-        forSale.push([curse, 4]);
-        forSale.push([bewitch, 4]);
-        forSale.push([sabotage, 4]);
-        forSale.push([pillage, 4]);
-        forSale.push([sacrifice, 4]);
-        forSale.push([accuse, 4]);
-        forSale.push([abduct, 4]);
-        forSale.push([proselytize, 4]);
+        forSale.push([ransack, 5]);
+        forSale.push([honor, 5]);
+        forSale.push([hijack, 5]);
+        forSale.push([recruit, 5]);
+        forSale.push([impersonate, 5]);
+        forSale.push([unionize, 5]);
+        forSale.push([whistle, 5]);
+        forSale.push([communalize, 5]);
+        forSale.push([curse, 5]);
+        forSale.push([bewitch, 5]);
+        forSale.push([sabotage, 5]);
+        forSale.push([pillage, 5]);
+        forSale.push([sacrifice, 5]);
+        forSale.push([accuse, 5]);
+        forSale.push([abduct, 5]);
+        forSale.push([proselytize, 5]);
     }
 
     else if (type == "random"){
@@ -672,6 +672,7 @@ function attemptPurchase(players, startPlayer, shop){
                 if (!shopContainsAction){
                     currentBuyer.isReady = false;
                     io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", "An action you wished to buy has been purchased by a player ahead of you in turn order. Please place a new order.", "error", currentBuyer.playerNum);
+                    io.to(`${myGame.getGameDetails().roomCode}`).emit("redoShopOrder", players, currentBuyer.playerID);
                     io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
                     return;
                 }
@@ -681,6 +682,7 @@ function attemptPurchase(players, startPlayer, shop){
             if (totalCost > currentBuyer.numCoins){
                 currentBuyer.isReady = false;
                 io.to(`${myGame.getGameDetails().roomCode}`).emit("notification", "You do not have enough coins for the order you placed. Please place a new order.", "error", currentBuyer.playerNum);
+                io.to(`${myGame.getGameDetails().roomCode}`).emit("redoShopOrder", players, currentBuyer.playerID);
                 io.to(`${myGame.getGameDetails().roomCode}`).emit("updateCards", players, shop, "shop", false);
                 return;
             }

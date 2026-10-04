@@ -105,7 +105,7 @@ export class Player{
             if (this.playedCard.name === "Rest"){
                 this.hand.push([this.playedCard, 1]);
             }
-            if (!this.isAbducted){
+            else if (!this.isAbducted){
                 const returnToShop = this.playedCard.isOneShot;
                 if (this.isImpersonating){
                     this.playedCard = allActions.find((action) => action.name == "Impersonate");
