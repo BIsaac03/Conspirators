@@ -8,8 +8,8 @@ if (document.cookie == ""){
 const myID = document.cookie.slice(7);
 let myPlayerNum = undefined;
 
-const socket = io("http://localhost:3000", {
-//const socket = io("https://conspirators.onrender.com", {
+//const socket = io("http://localhost:3000", {
+const socket = io("https://conspirators.onrender.com", {
     auth: {
         token: myID
     }
@@ -27,8 +27,8 @@ socket.on("sendToGameSpace", (roomCode) => {
 socket.on("checkIfStillInLobby", (roomCode) => {
     if (!window.location.href.includes(`lobby.html?roomCode=${roomCode}`)){
         socket.emit("leftLobby", myID, true);
-        if (window.location.href == "http://localhost:3000/" || window.location.href == "http://localhost:3000/index.html"){
-        //if (window.location.href == "https://conspirators.onrender.com/" || window.location.href == "https://conspirators.onrender.com/index.html"){
+        //if (window.location.href == "http://localhost:3000/" || window.location.href == "http://localhost:3000/index.html"){
+        if (window.location.href == "https://conspirators.onrender.com/" || window.location.href == "https://conspirators.onrender.com/index.html"){
             addMainMenuListeners();
         }
     }
@@ -43,8 +43,8 @@ socket.on("outsideLobby", () => {
         socket.emit("connectToNewLobby", roomCode); 
         lobby.populateLobby(bodyElement, socket, roomCode);
     } 
-    else if (window.location.href == "http://localhost:3000/" || window.location.href == "http://localhost:3000/index.html"){
-    //else if (window.location.href == "https://conspirators.onrender.com/" || window.location.href == "https://conspirators.onrender.com/index.html"){
+    //else if (window.location.href == "http://localhost:3000/" || window.location.href == "http://localhost:3000/index.html"){
+    else if (window.location.href == "https://conspirators.onrender.com/" || window.location.href == "https://conspirators.onrender.com/index.html"){
         addMainMenuListeners();
     }
     else{
